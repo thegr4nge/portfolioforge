@@ -5,15 +5,14 @@ A beautiful, detailed aquarium for your terminal.
 """
 
 import random
-import shutil
-import time
-import sys
-import tty
-import termios
 import select
+import shutil
+import sys
+import termios
+import time
+import tty
 from dataclasses import dataclass
-from math import sin, cos, pi
-from typing import Optional
+from math import pi, sin
 
 
 # === COLORS ===
@@ -105,7 +104,7 @@ class Fish:
     speed: float
     wobble_offset: float
     vertical_speed: float = 0
-    target_y: Optional[float] = None
+    target_y: float | None = None
 
     @property
     def template(self):
@@ -566,7 +565,7 @@ class Aquarium:
         return "\n".join(lines)
 
 
-def get_key_nonblocking() -> Optional[str]:
+def get_key_nonblocking() -> str | None:
     """Non-blocking key read."""
     fd = sys.stdin.fileno()
     old = termios.tcgetattr(fd)

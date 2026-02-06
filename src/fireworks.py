@@ -7,11 +7,9 @@ Press Ctrl+C to exit.
 
 import random
 import shutil
-import sys
 import time
 from dataclasses import dataclass
-from math import cos, sin, pi
-
+from math import cos, pi, sin
 
 # Terminal colors (ANSI)
 COLORS = [

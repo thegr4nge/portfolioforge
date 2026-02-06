@@ -5,13 +5,12 @@ Navigate procedurally generated dungeons, fight monsters, find treasure.
 """
 
 import random
-import sys
-import tty
-import termios
 import shutil
-from dataclasses import dataclass, field
+import sys
+import termios
+import tty
+from dataclasses import dataclass
 from enum import Enum
-from typing import Optional
 
 
 # === COLORS ===
@@ -295,13 +294,13 @@ class Dungeon:
             armor = armors[min(self.floor - 1, len(armors) - 1)]
             self.items.append(Item(x, y, "[", C.BLUE, armor[0], "armor", armor[1]))
 
-    def get_entity_at(self, x: int, y: int) -> Optional[Entity]:
+    def get_entity_at(self, x: int, y: int) -> Entity | None:
         for e in self.entities:
             if e.x == x and e.y == y:
                 return e
         return None
 
-    def get_item_at(self, x: int, y: int) -> Optional[Item]:
+    def get_item_at(self, x: int, y: int) -> Item | None:
         for i in self.items:
             if i.x == x and i.y == y:
                 return i

@@ -105,12 +105,12 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DATA-01 | Phase 1 | Pending |
-| DATA-02 | Phase 1 | Pending |
-| DATA-03 | Phase 1 | Pending |
-| DATA-04 | Phase 1 | Pending |
-| DATA-05 | Phase 1 | Pending |
-| DATA-06 | Phase 1 | Pending |
+| DATA-01 | Phase 1 | Complete |
+| DATA-02 | Phase 1 | Complete |
+| DATA-03 | Phase 1 | Complete |
+| DATA-04 | Phase 1 | Complete |
+| DATA-05 | Phase 1 | Complete |
+| DATA-06 | Phase 1 | Complete |
 | BACK-01 | Phase 2 | Pending |
 | BACK-02 | Phase 2 | Pending |
 | BACK-03 | Phase 2 | Pending |
@@ -142,7 +142,7 @@
 | REBAL-01 | Phase 7 | Pending |
 | REBAL-02 | Phase 7 | Pending |
 | REBAL-03 | Phase 7 | Pending |
-| UX-01 | Phase 1 | Pending |
+| UX-01 | Phase 1 | Complete |
 | UX-02 | Phase 2 | Pending |
 | UX-03 | Phase 2 | Pending |
 | UX-04 | Phase 8 | Pending |

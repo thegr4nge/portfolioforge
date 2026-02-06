@@ -12,7 +12,7 @@ PortfolioForge delivers a complete CLI portfolio intelligence tool across 8 phas
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Data Pipeline & CLI Skeleton** - Reliable market data fetching, caching, FX conversion, and CLI entry point
+- [x] **Phase 1: Data Pipeline & CLI Skeleton** - Reliable market data fetching, caching, FX conversion, and CLI entry point
 - [ ] **Phase 2: Backtesting Engine** - Historical portfolio performance analysis with benchmark comparison and terminal charts
 - [ ] **Phase 3: Risk Analytics** - Comprehensive risk metrics, drawdown analysis, and correlation/sector exposure
 - [ ] **Phase 4: Portfolio Optimisation** - Mean-variance optimisation, efficient frontier, validate and suggest modes
@@ -36,9 +36,9 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: 3 plans
 
 Plans:
-- [ ] 01-01-PLAN.md — Project scaffolding, config, domain models, and CLI skeleton
-- [ ] 01-02-PLAN.md — Market data fetcher with yfinance and SQLite caching
-- [ ] 01-03-PLAN.md — FX conversion layer, benchmark fetching, and wired fetch command
+- [x] 01-01-PLAN.md — Project scaffolding, config, domain models, and CLI skeleton
+- [x] 01-02-PLAN.md — Market data fetcher with yfinance and SQLite caching
+- [x] 01-03-PLAN.md — FX conversion layer, benchmark fetching, and wired fetch command
 
 ### Phase 2: Backtesting Engine
 **Goal**: User can backtest any portfolio of tickers and weights against history and see performance compared to benchmarks
@@ -163,7 +163,7 @@ Note: Phase 7 depends on Phase 3 (not Phase 6), so Phases 5-6 and Phase 7 could 
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Data Pipeline & CLI Skeleton | 0/3 | Planned | - |
+| 1. Data Pipeline & CLI Skeleton | 3/3 | ✓ Complete | 2026-02-06 |
 | 2. Backtesting Engine | 0/3 | Not started | - |
 | 3. Risk Analytics | 0/3 | Not started | - |
 | 4. Portfolio Optimisation | 0/3 | Not started | - |

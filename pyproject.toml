@@ -26,12 +26,13 @@ select = [
 ignore = ["E501"]  # line too long (handled by formatter)
 
 [tool.ruff.lint.isort]
-known-first-party = ["src"]
+known-first-party = ["portfolioforge"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py", "*_test.py"]
 addopts = "-v --tb=short"
+pythonpath = ["src"]
 
 [tool.mypy]
 python_version = "3.12"

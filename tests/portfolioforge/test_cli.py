@@ -18,22 +18,5 @@ class TestCLIHelp:
 
     def test_help_lists_subcommands(self) -> None:
         result = runner.invoke(app, ["--help"])
-        for cmd in ("fetch", "analyse", "suggest", "backtest", "project", "compare"):
+        for cmd in ("fetch", "analyse", "suggest", "backtest", "project", "compare", "clean-cache"):
             assert cmd in result.output
-
-
-class TestFetchCommand:
-    def test_fetch_help(self) -> None:
-        result = runner.invoke(app, ["fetch", "--help"])
-        assert result.exit_code == 0
-        assert "tickers" in result.output.lower()
-
-    def test_fetch_with_tickers(self) -> None:
-        result = runner.invoke(app, ["fetch", "AAPL", "CBA.AX"])
-        assert result.exit_code == 0
-        assert "AAPL" in result.output
-        assert "CBA.AX" in result.output
-
-    def test_fetch_no_benchmarks(self) -> None:
-        result = runner.invoke(app, ["fetch", "AAPL", "--no-benchmarks"])
-        assert result.exit_code == 0

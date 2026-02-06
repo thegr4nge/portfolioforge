@@ -56,11 +56,21 @@ _SUFFIX_TO_MARKET: dict[str, Market] = {
     ".DE": Market.EURONEXT,
 }
 
+# Index tickers with known markets (no suffix to detect from)
+_INDEX_MARKET: dict[str, Market] = {
+    "^AXJO": Market.ASX,
+    "^AORD": Market.ASX,
+    "^XJO": Market.ASX,
+}
+
 
 def detect_market(ticker: str) -> Market:
-    """Infer market from ticker suffix. Default is NYSE for bare tickers."""
+    """Infer market from ticker suffix or index lookup. Default is NYSE."""
+    upper = ticker.upper()
+    if upper in _INDEX_MARKET:
+        return _INDEX_MARKET[upper]
     for suffix, market in _SUFFIX_TO_MARKET.items():
-        if ticker.upper().endswith(suffix):
+        if upper.endswith(suffix):
             return market
     return Market.NYSE
 

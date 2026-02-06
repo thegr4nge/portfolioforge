@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
+import plotext as plt
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
 from portfolioforge.models.backtest import BacktestResult
+
+_BENCHMARK_COLORS = ["blue", "red", "cyan", "magenta"]
 
 
 def _color_pct(value: float) -> str:
@@ -125,3 +128,33 @@ def render_backtest_results(result: BacktestResult, console: Console) -> None:
         f"Rebalancing: {result.rebalance_freq.value}",
         style="dim",
     )
+
+
+def render_cumulative_chart(result: BacktestResult) -> None:
+    """Render a cumulative returns line chart in the terminal via plotext."""
+    plt.clear_figure()
+    plt.date_form("Y-m-d")
+
+    date_strings = [d.isoformat() for d in result.dates]
+    portfolio_values = list(result.portfolio_cumulative)
+
+    # Downsample large datasets to keep chart responsive
+    n_points = len(date_strings)
+    if n_points > 1000:
+        step = n_points // 500
+        date_strings = date_strings[::step]
+        portfolio_values = portfolio_values[::step]
+
+    plt.plot(date_strings, portfolio_values, label="Portfolio", color="green")
+
+    for i, (bm_name, bm_values) in enumerate(result.benchmark_cumulative.items()):
+        bm_vals = list(bm_values)
+        if n_points > 1000:
+            bm_vals = bm_vals[::step]
+        color = _BENCHMARK_COLORS[i % len(_BENCHMARK_COLORS)]
+        plt.plot(date_strings, bm_vals, label=bm_name, color=color)
+
+    plt.title("Cumulative Returns (Growth of $1)")
+    plt.xlabel("Date")
+    plt.ylabel("Value ($)")
+    plt.show()

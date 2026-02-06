@@ -14,7 +14,10 @@ from portfolioforge.data.fetcher import fetch_multiple
 from portfolioforge.data.validators import normalize_ticker
 from portfolioforge.models.backtest import BacktestConfig, RebalanceFrequency
 from portfolioforge.models.types import Currency, detect_currency, detect_market
-from portfolioforge.output.backtest import render_backtest_results
+from portfolioforge.output.backtest import (
+    render_backtest_results,
+    render_cumulative_chart,
+)
 from portfolioforge.services.backtest import run_backtest
 
 app = typer.Typer(
@@ -208,6 +211,10 @@ def backtest(
         bool,
         typer.Option("--benchmarks/--no-benchmarks", help="Compare against benchmarks"),
     ] = True,
+    chart: Annotated[
+        bool,
+        typer.Option("--chart/--no-chart", help="Show cumulative returns chart"),
+    ] = True,
 ) -> None:
     """Backtest a portfolio against historical data."""
     period_years = _parse_period(period)
@@ -265,6 +272,9 @@ def backtest(
         raise typer.Exit(code=1) from None
 
     render_backtest_results(result, console)
+
+    if chart:
+        render_cumulative_chart(result)
 
 
 @app.command()

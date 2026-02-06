@@ -12,7 +12,10 @@ from portfolioforge import config
 from portfolioforge.data.cache import PriceCache
 from portfolioforge.data.fetcher import fetch_multiple
 from portfolioforge.data.validators import normalize_ticker
+from portfolioforge.models.backtest import BacktestConfig, RebalanceFrequency
 from portfolioforge.models.types import Currency, detect_currency, detect_market
+from portfolioforge.output.backtest import render_backtest_results
+from portfolioforge.services.backtest import run_backtest
 
 app = typer.Typer(
     name="portfolioforge",
@@ -188,15 +191,80 @@ def suggest() -> None:
 
 
 @app.command()
-def backtest() -> None:
+def backtest(
+    ticker: Annotated[
+        list[str],
+        typer.Option(help="Ticker:weight pairs (e.g. AAPL:0.4 MSFT:0.6)"),
+    ],
+    period: Annotated[
+        str,
+        typer.Option(help="Lookback period (e.g. 10y, 5y)"),
+    ] = f"{config.DEFAULT_PERIOD_YEARS}y",
+    rebalance: Annotated[
+        str,
+        typer.Option(help="Rebalancing frequency: monthly, quarterly, annually, never"),
+    ] = "never",
+    benchmarks: Annotated[
+        bool,
+        typer.Option("--benchmarks/--no-benchmarks", help="Compare against benchmarks"),
+    ] = True,
+) -> None:
     """Backtest a portfolio against historical data."""
-    console.print(
-        Panel(
-            "Not yet implemented (Phase 2)",
-            title="portfolioforge backtest",
-            border_style="dim",
+    period_years = _parse_period(period)
+
+    # Parse ticker:weight pairs
+    tickers: list[str] = []
+    weights: list[float] = []
+    for pair in ticker:
+        if ":" not in pair:
+            console.print(
+                f"[red]Invalid ticker format '{pair}'. Use TICKER:WEIGHT (e.g. AAPL:0.5)[/red]"
+            )
+            raise typer.Exit(code=1)
+        parts = pair.split(":", maxsplit=1)
+        tickers.append(parts[0].strip())
+        try:
+            weights.append(float(parts[1].strip()))
+        except ValueError:
+            console.print(
+                f"[red]Invalid weight '{parts[1]}' for {parts[0]}. Must be a number.[/red]"
+            )
+            raise typer.Exit(code=1) from None
+
+    # Validate rebalance frequency
+    try:
+        rebal_freq = RebalanceFrequency(rebalance.lower())
+    except ValueError:
+        valid = ", ".join(f.value for f in RebalanceFrequency)
+        console.print(f"[red]Invalid rebalance frequency '{rebalance}'. Use: {valid}[/red]")
+        raise typer.Exit(code=1) from None
+
+    # Build benchmark list
+    benchmark_tickers = []
+    if benchmarks:
+        benchmark_tickers = list(config.DEFAULT_BENCHMARKS.values())
+
+    # Build config
+    try:
+        bt_config = BacktestConfig(
+            tickers=tickers,
+            weights=weights,
+            period_years=period_years,
+            rebalance_freq=rebal_freq,
+            benchmarks=benchmark_tickers,
         )
-    )
+    except ValueError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(code=1) from None
+
+    # Run backtest
+    try:
+        result = run_backtest(bt_config)
+    except ValueError as exc:
+        console.print(f"[red]Backtest error: {exc}[/red]")
+        raise typer.Exit(code=1) from None
+
+    render_backtest_results(result, console)
 
 
 @app.command()

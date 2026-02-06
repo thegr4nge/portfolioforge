@@ -33,12 +33,12 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. All displayed prices and returns are in AUD, with FX conversion applied transparently using real exchange rates
   4. Invalid tickers, missing data, and network failures produce clear error messages instead of crashes or silent failures
   5. Benchmark data (S&P 500, ASX 200, MSCI World) is fetchable alongside user tickers
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 01-01: Project scaffolding, config, domain models, and CLI skeleton
-- [ ] 01-02: Market data fetcher with yfinance and SQLite caching
-- [ ] 01-03: FX conversion layer and benchmark data fetching
+- [ ] 01-01-PLAN.md — Project scaffolding, config, domain models, and CLI skeleton
+- [ ] 01-02-PLAN.md — Market data fetcher with yfinance and SQLite caching
+- [ ] 01-03-PLAN.md — FX conversion layer, benchmark fetching, and wired fetch command
 
 ### Phase 2: Backtesting Engine
 **Goal**: User can backtest any portfolio of tickers and weights against history and see performance compared to benchmarks
@@ -163,7 +163,7 @@ Note: Phase 7 depends on Phase 3 (not Phase 6), so Phases 5-6 and Phase 7 could 
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Data Pipeline & CLI Skeleton | 0/3 | Not started | - |
+| 1. Data Pipeline & CLI Skeleton | 0/3 | Planned | - |
 | 2. Backtesting Engine | 0/3 | Not started | - |
 | 3. Risk Analytics | 0/3 | Not started | - |
 | 4. Portfolio Optimisation | 0/3 | Not started | - |

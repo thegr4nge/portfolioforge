@@ -10,28 +10,28 @@ See: .planning/PROJECT.md (updated 2026-02-06)
 ## Current Position
 
 Phase: 1 of 8 (Data Pipeline & CLI Skeleton)
-Plan: 1 of 3 in current phase
+Plan: 2 of 3 in current phase
 Status: In progress
-Last activity: 2026-02-06 -- Completed 01-01-PLAN.md (package structure & CLI skeleton)
+Last activity: 2026-02-06 -- Completed 01-02-PLAN.md (yfinance fetcher & SQLite cache)
 
-Progress: [█░░░░░░░░░] ~4%
+Progress: [██░░░░░░░░] ~8%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 1
-- Average duration: 2 min
-- Total execution time: 2 min
+- Total plans completed: 2
+- Average duration: 3.5 min
+- Total execution time: 7 min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 01-data-pipeline-cli-skeleton | 1/3 | 2 min | 2 min |
+| 01-data-pipeline-cli-skeleton | 2/3 | 7 min | 3.5 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-01 (2 min)
-- Trend: Starting
+- Last 5 plans: 01-01 (2 min), 01-02 (5 min)
+- Trend: Stable
 
 *Updated after each plan completion*
 
@@ -52,6 +52,10 @@ Recent decisions affecting current work:
 - [01-01]: Pydantic BaseModel for domain models (not dataclasses) -- provides validation, serialization
 - [01-01]: Market/Currency as str enums for JSON-serializable values
 - [01-01]: detect_market uses suffix matching with NYSE as default for bare tickers
+- [01-02]: Removed repair=True from yf.download -- incompatible with numpy 2.x / pandas 3.0
+- [01-02]: Cache coverage uses 90% threshold of expected trading days for hit detection
+- [01-02]: validate_price_data raises ValueError for critical, returns warnings for non-critical
+- [01-02]: Sequential ticker fetching with rate limiting (not yfinance batch mode)
 
 ### Pending Todos
 
@@ -59,13 +63,13 @@ None yet.
 
 ### Blockers/Concerns
 
-- yfinance reliability in 2026 needs empirical validation during Phase 1 (research flagged this)
+- yfinance repair=True incompatible with numpy 2.x/pandas 3.0 -- disabled, data quality unaffected for normal tickers
 - quantstats pandas 2.2+ compatibility needs verification during Phase 2 setup
 - 30-year data availability varies by ticker -- need fallback strategy for shorter histories
 - URTH (MSCI World proxy) only goes back to 2012 -- limited for long backtests
 
 ## Session Continuity
 
-Last session: 2026-02-06T04:53:55Z
-Stopped at: Completed 01-01-PLAN.md, ready for 01-02
+Last session: 2026-02-06T05:00:35Z
+Stopped at: Completed 01-02-PLAN.md, ready for 01-03
 Resume file: None

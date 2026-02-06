@@ -5,33 +5,33 @@
 See: .planning/PROJECT.md (updated 2026-02-06)
 
 **Core value:** Make data-driven investment decisions with confidence -- see the numbers, understand the reasoning, verify against history before committing real money.
-**Current focus:** Phase 2 in progress. Backtesting engine core complete, service layer and output next.
+**Current focus:** Phase 2 in progress. Service layer and CLI backtest command complete, one plan remaining.
 
 ## Current Position
 
 Phase: 2 of 8 (Backtesting Engine)
-Plan: 1 of 3 in current phase
+Plan: 2 of 3 in current phase
 Status: In progress
-Last activity: 2026-02-06 -- Completed 02-01-PLAN.md (backtest models + engine computation)
+Last activity: 2026-02-06 -- Completed 02-02-PLAN.md (backtest service layer + CLI command + rich output)
 
-Progress: [████░░░░░░] ~17%
+Progress: [█████░░░░░] ~22%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 4
+- Total plans completed: 5
 - Average duration: 4 min
-- Total execution time: 15 min
+- Total execution time: 18 min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01-data-pipeline-cli-skeleton | 3/3 | 12 min | 4 min |
-| 02-backtesting-engine | 1/3 | 3 min | 3 min |
+| 02-backtesting-engine | 2/3 | 6 min | 3 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-01 (2 min), 01-02 (5 min), 01-03 (5 min), 02-01 (3 min)
+- Last 5 plans: 01-02 (5 min), 01-03 (5 min), 02-01 (3 min), 02-02 (3 min)
 - Trend: Stable
 
 *Updated after each plan completion*
@@ -63,6 +63,9 @@ Recent decisions affecting current work:
 - [01-03]: ^AXJO index mapped to ASX/AUD via explicit _INDEX_MARKET lookup
 - [02-01]: Engine functions take pandas primitives (DataFrame, ndarray, str) not Pydantic models -- keeps engine pure
 - [02-01]: quantstats not needed -- custom engine handles all computation in ~100 lines of numpy/pandas
+- [02-02]: Service layer pattern: services/ orchestrates engines/ + data/ + models/, output/ handles rich rendering
+- [02-02]: Portfolio name auto-generated from ticker:weight pairs for display
+- [02-02]: Benchmark display names resolved via config.DEFAULT_BENCHMARKS reverse lookup
 
 ### Pending Todos
 
@@ -76,6 +79,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-02-06T05:52:19Z
-Stopped at: Completed 02-01-PLAN.md
+Last session: 2026-02-06T05:57:45Z
+Stopped at: Completed 02-02-PLAN.md
 Resume file: None

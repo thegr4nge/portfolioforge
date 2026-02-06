@@ -5,32 +5,33 @@
 See: .planning/PROJECT.md (updated 2026-02-06)
 
 **Core value:** Make data-driven investment decisions with confidence -- see the numbers, understand the reasoning, verify against history before committing real money.
-**Current focus:** Phase 1 complete. Ready for Phase 2.
+**Current focus:** Phase 2 in progress. Backtesting engine core complete, service layer and output next.
 
 ## Current Position
 
-Phase: 1 of 8 (Data Pipeline & CLI Skeleton) -- COMPLETE
-Plan: 3 of 3 in current phase
-Status: Phase complete
-Last activity: 2026-02-06 -- Completed 01-03-PLAN.md (FX conversion, benchmarks, CLI wiring)
+Phase: 2 of 8 (Backtesting Engine)
+Plan: 1 of 3 in current phase
+Status: In progress
+Last activity: 2026-02-06 -- Completed 02-01-PLAN.md (backtest models + engine computation)
 
-Progress: [███░░░░░░░] ~12%
+Progress: [████░░░░░░] ~17%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 3
+- Total plans completed: 4
 - Average duration: 4 min
-- Total execution time: 12 min
+- Total execution time: 15 min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01-data-pipeline-cli-skeleton | 3/3 | 12 min | 4 min |
+| 02-backtesting-engine | 1/3 | 3 min | 3 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-01 (2 min), 01-02 (5 min), 01-03 (5 min)
+- Last 5 plans: 01-01 (2 min), 01-02 (5 min), 01-03 (5 min), 02-01 (3 min)
 - Trend: Stable
 
 *Updated after each plan completion*
@@ -60,6 +61,8 @@ Recent decisions affecting current work:
 - [01-03]: FX direction: fetch AUD->foreign rate, divide foreign price by rate for AUD conversion
 - [01-03]: Batch FX fetches: one fetch per currency pair, reused across tickers
 - [01-03]: ^AXJO index mapped to ASX/AUD via explicit _INDEX_MARKET lookup
+- [02-01]: Engine functions take pandas primitives (DataFrame, ndarray, str) not Pydantic models -- keeps engine pure
+- [02-01]: quantstats not needed -- custom engine handles all computation in ~100 lines of numpy/pandas
 
 ### Pending Todos
 
@@ -68,12 +71,11 @@ None yet.
 ### Blockers/Concerns
 
 - yfinance repair=True incompatible with numpy 2.x/pandas 3.0 -- disabled, data quality unaffected for normal tickers
-- quantstats pandas 2.2+ compatibility needs verification during Phase 2 setup
 - 30-year data availability varies by ticker -- need fallback strategy for shorter histories
 - URTH (MSCI World proxy) only goes back to 2012 -- limited for long backtests
 
 ## Session Continuity
 
-Last session: 2026-02-06T05:07:51Z
-Stopped at: Completed 01-03-PLAN.md, Phase 1 complete
+Last session: 2026-02-06T05:52:19Z
+Stopped at: Completed 02-01-PLAN.md
 Resume file: None

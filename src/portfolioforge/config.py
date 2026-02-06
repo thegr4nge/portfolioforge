@@ -34,4 +34,4 @@ SUPPORTED_MARKETS: dict[str, str] = {
 }
 
 # External APIs
-FRANKFURTER_BASE_URL: str = "https://api.frankfurter.dev"
+FRANKFURTER_BASE_URL: str = "https://api.frankfurter.dev/v1"

@@ -11,13 +11,17 @@ import yfinance as yf
 from rich.console import Console
 
 from portfolioforge.data.cache import PriceCache
+from portfolioforge.data.currency import (
+    convert_prices_to_aud,
+    fetch_fx_rates,
+)
 from portfolioforge.data.validators import (
     normalize_ticker,
     validate_price_data,
     validate_ticker_format,
 )
 from portfolioforge.models.portfolio import FetchResult, PriceData
-from portfolioforge.models.types import detect_currency
+from portfolioforge.models.types import Currency, detect_currency
 
 logger = logging.getLogger(__name__)
 _stderr = Console(stderr=True)
@@ -122,19 +126,61 @@ def fetch_ticker_data(
     return FetchResult(ticker=normalized, price_data=price_data)
 
 
+def fetch_with_fx(
+    ticker: str,
+    period_years: int = 10,
+    cache: PriceCache | None = None,
+    fx_cache: dict[tuple[str, str], pd.DataFrame] | None = None,
+) -> FetchResult:
+    """Fetch price data and apply AUD conversion if needed.
+
+    Uses pre-fetched FX rates from fx_cache dict when available to avoid
+    redundant API calls for tickers sharing the same currency.
+    """
+    result = fetch_ticker_data(ticker, period_years, cache)
+
+    if result.error or result.price_data is None:
+        return result
+
+    price_data = result.price_data
+    if price_data.currency == Currency.AUD:
+        price_data.aud_close = list(price_data.close_prices)
+        return result
+
+    # Get FX rates (from batch cache or fetch fresh)
+    pair = ("AUD", price_data.currency.value)
+    if fx_cache is not None and pair in fx_cache:
+        rates = fx_cache[pair]
+    else:
+        start = min(price_data.dates)
+        end = max(price_data.dates)
+        rates = fetch_fx_rates(pair[0], pair[1], start, end, cache)
+        if fx_cache is not None:
+            fx_cache[pair] = rates
+
+    convert_prices_to_aud(price_data, rates)
+    return result
+
+
 def fetch_multiple(
     tickers: list[str],
     period_years: int = 10,
     cache: PriceCache | None = None,
 ) -> list[FetchResult]:
-    """Fetch data for multiple tickers sequentially with rate limiting."""
+    """Fetch data for multiple tickers with FX conversion and rate limiting.
+
+    Batches FX fetches: each needed FX pair is fetched once and reused.
+    """
+    # First pass: fetch all price data
     results: list[FetchResult] = []
+    fx_rate_cache: dict[tuple[str, str], pd.DataFrame] = {}
+
     for i, ticker in enumerate(tickers):
         _stderr.print(
             f"  Fetching {ticker} ({i + 1}/{len(tickers)})...",
             style="dim",
         )
-        result = fetch_ticker_data(ticker, period_years, cache)
+        result = fetch_with_fx(ticker, period_years, cache, fx_rate_cache)
         results.append(result)
         if i < len(tickers) - 1:
             time.sleep(0.3)

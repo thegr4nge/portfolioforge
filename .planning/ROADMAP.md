@@ -50,12 +50,12 @@ Plans:
   3. Cumulative returns chart renders in the terminal via plotext showing portfolio vs benchmarks side-by-side
   4. User can choose rebalancing frequency (monthly, quarterly, annually, never) and see the impact on returns
   5. All output uses rich formatting with colored tables, section headers, and clear visual hierarchy
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 02-01: Backtesting engine core (portfolio returns, rebalancing, adjusted prices)
-- [ ] 02-02: Benchmark comparison and rich terminal output
-- [ ] 02-03: Terminal charts with plotext (cumulative returns, benchmark overlay)
+- [ ] 02-01-PLAN.md — Backtest data models and pure computation engine (returns, rebalancing, metrics)
+- [ ] 02-02-PLAN.md — Service layer, rich output tables, and wired CLI backtest command
+- [ ] 02-03-PLAN.md — Plotext cumulative returns chart with benchmark overlay
 
 ### Phase 3: Risk Analytics
 **Goal**: User can see a complete risk profile for any portfolio including drawdowns, VaR, correlations, and sector exposure

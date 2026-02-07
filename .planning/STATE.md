@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-06)
 
 **Core value:** Make data-driven investment decisions with confidence -- see the numbers, understand the reasoning, verify against history before committing real money.
-**Current focus:** Phase 3 in progress. Risk analytics engine and models delivered (plan 1/3). Service layer and output rendering next.
+**Current focus:** Phase 3 in progress. Risk service layer and analyse CLI wired (plan 2/3). Sector exposure next.
 
 ## Current Position
 
 Phase: 3 of 8 (Risk Analytics)
-Plan: 1 of 3 in current phase
+Plan: 2 of 3 in current phase
 Status: In progress
-Last activity: 2026-02-07 -- Completed 03-01-PLAN.md (risk engine functions and models)
+Last activity: 2026-02-07 -- Completed 03-02-PLAN.md (risk service layer and analyse CLI)
 
-Progress: [███████░░░] ~29%
+Progress: [████████░░] ~33%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 7
+- Total plans completed: 8
 - Average duration: 3 min
-- Total execution time: 24 min
+- Total execution time: 27 min
 
 **By Phase:**
 
@@ -29,10 +29,10 @@ Progress: [███████░░░] ~29%
 |-------|-------|-------|----------|
 | 01-data-pipeline-cli-skeleton | 3/3 | 12 min | 4 min |
 | 02-backtesting-engine | 3/3 | 9 min | 3 min |
-| 03-risk-analytics | 1/3 | 3 min | 3 min |
+| 03-risk-analytics | 2/3 | 6 min | 3 min |
 
 **Recent Trend:**
-- Last 5 plans: 02-01 (3 min), 02-02 (3 min), 02-03 (3 min), 03-01 (3 min)
+- Last 5 plans: 02-02 (3 min), 02-03 (3 min), 03-01 (3 min), 03-02 (3 min)
 - Trend: Stable at ~3 min/plan
 
 *Updated after each plan completion*
@@ -73,6 +73,9 @@ Recent decisions affecting current work:
 - [03-01]: Historical VaR method (np.percentile) -- no scipy needed, robust to fat tails
 - [03-01]: Sortino added to existing compute_metrics (standard performance metric, not separate function)
 - [03-01]: Correlation matrix stored as nested dict for JSON serialization in RiskAnalysisResult
+- [03-02]: Extracted _parse_ticker_weights helper to DRY up backtest/analyse CLI commands
+- [03-02]: Re-fetch individual ticker prices for correlation (BacktestResult only stores combined portfolio)
+- [03-02]: Import _color_pct from output/backtest.py rather than duplicating helper
 
 ### Pending Todos
 
@@ -87,5 +90,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-07
-Stopped at: Completed 03-01-PLAN.md
+Stopped at: Completed 03-02-PLAN.md
 Resume file: None

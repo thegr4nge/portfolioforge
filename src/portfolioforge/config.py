@@ -35,3 +35,6 @@ SUPPORTED_MARKETS: dict[str, str] = {
 
 # External APIs
 FRANKFURTER_BASE_URL: str = "https://api.frankfurter.dev/v1"
+
+# Sector cache TTL (sectors rarely change)
+SECTOR_CACHE_TTL_DAYS: int = 90

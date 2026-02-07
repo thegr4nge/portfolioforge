@@ -53,6 +53,13 @@ class PriceCache:
                     ON price_cache(fetched_at);
                 CREATE INDEX IF NOT EXISTS idx_fx_fetched
                     ON fx_cache(fetched_at);
+
+                CREATE TABLE IF NOT EXISTS sector_cache (
+                    ticker TEXT PRIMARY KEY,
+                    sector TEXT NOT NULL,
+                    quote_type TEXT NOT NULL,
+                    fetched_at TEXT NOT NULL
+                );
             """)
 
     # ------------------------------------------------------------------
@@ -191,6 +198,43 @@ class PriceCache:
             )
 
     # ------------------------------------------------------------------
+    # Sector cache
+    # ------------------------------------------------------------------
+
+    def get_sector(self, ticker: str) -> tuple[str, str] | None:
+        """Return cached (sector, quote_type) if fresh, else None."""
+        cutoff = (
+            datetime.now(UTC) - timedelta(days=config.SECTOR_CACHE_TTL_DAYS)
+        ).isoformat()
+
+        with self._connect() as conn:
+            row = conn.execute(
+                """
+                SELECT sector, quote_type
+                FROM sector_cache
+                WHERE ticker = ? AND fetched_at > ?
+                """,
+                (ticker, cutoff),
+            ).fetchone()
+
+        return (row[0], row[1]) if row else None
+
+    def store_sector(
+        self, ticker: str, sector: str, quote_type: str
+    ) -> None:
+        """Cache sector data for a ticker."""
+        now = datetime.now(UTC).isoformat()
+        with self._connect() as conn:
+            conn.execute(
+                """
+                INSERT OR REPLACE INTO sector_cache
+                    (ticker, sector, quote_type, fetched_at)
+                VALUES (?, ?, ?, ?)
+                """,
+                (ticker, sector, quote_type, now),
+            )
+
+    # ------------------------------------------------------------------
     # Maintenance
     # ------------------------------------------------------------------
 
@@ -213,6 +257,15 @@ class PriceCache:
                 "DELETE FROM fx_cache WHERE fetched_at <= ?", (fx_cutoff,)
             )
             total += cur.rowcount
+
+            sector_cutoff = (
+                datetime.now(UTC) - timedelta(days=config.SECTOR_CACHE_TTL_DAYS)
+            ).isoformat()
+            cur = conn.execute(
+                "DELETE FROM sector_cache WHERE fetched_at <= ?",
+                (sector_cutoff,),
+            )
+            total += cur.rowcount
         return total
 
     def clear(self) -> None:
@@ -220,3 +273,4 @@ class PriceCache:
         with self._connect() as conn:
             conn.execute("DELETE FROM price_cache")
             conn.execute("DELETE FROM fx_cache")
+            conn.execute("DELETE FROM sector_cache")

@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-06)
 
 **Core value:** Make data-driven investment decisions with confidence -- see the numbers, understand the reasoning, verify against history before committing real money.
-**Current focus:** Phase 2 complete. Backtesting engine fully delivered with computation, service layer, rich output, and terminal charts.
+**Current focus:** Phase 3 in progress. Risk analytics engine and models delivered (plan 1/3). Service layer and output rendering next.
 
 ## Current Position
 
-Phase: 2 of 8 (Backtesting Engine)
-Plan: 3 of 3 in current phase
-Status: Phase complete
-Last activity: 2026-02-07 -- Completed 02-03-PLAN.md (cumulative returns chart with plotext)
+Phase: 3 of 8 (Risk Analytics)
+Plan: 1 of 3 in current phase
+Status: In progress
+Last activity: 2026-02-07 -- Completed 03-01-PLAN.md (risk engine functions and models)
 
-Progress: [██████░░░░] ~25%
+Progress: [███████░░░] ~29%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 6
-- Average duration: 4 min
-- Total execution time: 21 min
+- Total plans completed: 7
+- Average duration: 3 min
+- Total execution time: 24 min
 
 **By Phase:**
 
@@ -29,9 +29,10 @@ Progress: [██████░░░░] ~25%
 |-------|-------|-------|----------|
 | 01-data-pipeline-cli-skeleton | 3/3 | 12 min | 4 min |
 | 02-backtesting-engine | 3/3 | 9 min | 3 min |
+| 03-risk-analytics | 1/3 | 3 min | 3 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-03 (5 min), 02-01 (3 min), 02-02 (3 min), 02-03 (3 min)
+- Last 5 plans: 02-01 (3 min), 02-02 (3 min), 02-03 (3 min), 03-01 (3 min)
 - Trend: Stable at ~3 min/plan
 
 *Updated after each plan completion*
@@ -69,6 +70,9 @@ Recent decisions affecting current work:
 - [02-03]: Plotext for terminal charts -- pure Python, renders in any terminal
 - [02-03]: Downsampling at 500 points for datasets >1000 -- keeps chart responsive
 - [02-03]: Chart enabled by default, --no-chart to suppress
+- [03-01]: Historical VaR method (np.percentile) -- no scipy needed, robust to fat tails
+- [03-01]: Sortino added to existing compute_metrics (standard performance metric, not separate function)
+- [03-01]: Correlation matrix stored as nested dict for JSON serialization in RiskAnalysisResult
 
 ### Pending Todos
 
@@ -83,5 +87,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-07
-Stopped at: Completed 02-03-PLAN.md (Phase 2 complete)
+Stopped at: Completed 03-01-PLAN.md
 Resume file: None

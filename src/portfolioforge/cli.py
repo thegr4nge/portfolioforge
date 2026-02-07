@@ -18,7 +18,9 @@ from portfolioforge.output.backtest import (
     render_backtest_results,
     render_cumulative_chart,
 )
+from portfolioforge.output.risk import render_risk_analysis
 from portfolioforge.services.backtest import run_backtest
+from portfolioforge.services.risk import run_risk_analysis
 
 app = typer.Typer(
     name="portfolioforge",
@@ -42,6 +44,28 @@ def _parse_period(period_str: str) -> int:
         console.print(f"[red]Invalid period '{period_str}'. Use format like 10y, 5y, 1y[/red]")
         raise typer.Exit(code=1)
     return int(m.group(1))
+
+
+def _parse_ticker_weights(pairs: list[str]) -> tuple[list[str], list[float]]:
+    """Parse ticker:weight pairs from CLI input."""
+    tickers: list[str] = []
+    weights: list[float] = []
+    for pair in pairs:
+        if ":" not in pair:
+            console.print(
+                f"[red]Invalid ticker format '{pair}'. Use TICKER:WEIGHT (e.g. AAPL:0.5)[/red]"
+            )
+            raise typer.Exit(code=1)
+        parts = pair.split(":", maxsplit=1)
+        tickers.append(parts[0].strip())
+        try:
+            weights.append(float(parts[1].strip()))
+        except ValueError:
+            console.print(
+                f"[red]Invalid weight '{parts[1]}' for {parts[0]}. Must be a number.[/red]"
+            )
+            raise typer.Exit(code=1) from None
+    return tickers, weights
 
 
 @app.command()
@@ -162,23 +186,68 @@ def clean_cache() -> None:
 
 @app.command()
 def analyse(
-    tickers: Annotated[
+    ticker: Annotated[
         list[str],
-        typer.Option(help="Ticker symbols"),
-    ] = [],  # noqa: B006
-    weights: Annotated[
-        list[float],
-        typer.Option(help="Portfolio weights (must sum to 1.0)"),
-    ] = [],  # noqa: B006
+        typer.Option(help="Ticker:weight pairs (e.g. AAPL:0.4 MSFT:0.6)"),
+    ],
+    period: Annotated[
+        str,
+        typer.Option(help="Lookback period (e.g. 10y, 5y)"),
+    ] = f"{config.DEFAULT_PERIOD_YEARS}y",
+    rebalance: Annotated[
+        str,
+        typer.Option(help="Rebalancing frequency: monthly, quarterly, annually, never"),
+    ] = "never",
+    benchmarks: Annotated[
+        bool,
+        typer.Option("--benchmarks/--no-benchmarks", help="Compare against benchmarks"),
+    ] = True,
+    chart: Annotated[
+        bool,
+        typer.Option("--chart/--no-chart", help="Show cumulative returns chart"),
+    ] = True,
 ) -> None:
     """Analyse a portfolio's risk and performance metrics."""
-    console.print(
-        Panel(
-            "Not yet implemented (Phase 2)",
-            title="portfolioforge analyse",
-            border_style="dim",
+    period_years = _parse_period(period)
+    tickers, weights = _parse_ticker_weights(ticker)
+
+    # Validate rebalance frequency
+    try:
+        rebal_freq = RebalanceFrequency(rebalance.lower())
+    except ValueError:
+        valid = ", ".join(f.value for f in RebalanceFrequency)
+        console.print(f"[red]Invalid rebalance frequency '{rebalance}'. Use: {valid}[/red]")
+        raise typer.Exit(code=1) from None
+
+    # Build benchmark list
+    benchmark_tickers = []
+    if benchmarks:
+        benchmark_tickers = list(config.DEFAULT_BENCHMARKS.values())
+
+    # Build config
+    try:
+        bt_config = BacktestConfig(
+            tickers=tickers,
+            weights=weights,
+            period_years=period_years,
+            rebalance_freq=rebal_freq,
+            benchmarks=benchmark_tickers,
         )
-    )
+    except ValueError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(code=1) from None
+
+    # Run risk analysis
+    try:
+        backtest_result, risk_result = run_risk_analysis(bt_config)
+    except ValueError as exc:
+        console.print(f"[red]Analysis error: {exc}[/red]")
+        raise typer.Exit(code=1) from None
+
+    render_risk_analysis(backtest_result, risk_result, console)
+
+    if chart:
+        render_cumulative_chart(backtest_result)
 
 
 @app.command()
@@ -218,25 +287,7 @@ def backtest(
 ) -> None:
     """Backtest a portfolio against historical data."""
     period_years = _parse_period(period)
-
-    # Parse ticker:weight pairs
-    tickers: list[str] = []
-    weights: list[float] = []
-    for pair in ticker:
-        if ":" not in pair:
-            console.print(
-                f"[red]Invalid ticker format '{pair}'. Use TICKER:WEIGHT (e.g. AAPL:0.5)[/red]"
-            )
-            raise typer.Exit(code=1)
-        parts = pair.split(":", maxsplit=1)
-        tickers.append(parts[0].strip())
-        try:
-            weights.append(float(parts[1].strip()))
-        except ValueError:
-            console.print(
-                f"[red]Invalid weight '{parts[1]}' for {parts[0]}. Must be a number.[/red]"
-            )
-            raise typer.Exit(code=1) from None
+    tickers, weights = _parse_ticker_weights(ticker)
 
     # Validate rebalance frequency
     try:

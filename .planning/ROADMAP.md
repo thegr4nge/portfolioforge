@@ -67,12 +67,12 @@ Plans:
   3. Correlation matrix between portfolio assets is displayed with color-coded output highlighting high/low correlations
   4. Top N worst drawdown periods are listed with depth, duration, and recovery time
   5. Sector exposure breakdown is shown with warnings when any single sector exceeds 40% concentration
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 03-01: Core risk metrics engine (CAGR, Sharpe, Sortino, volatility, VaR, CVaR)
-- [ ] 03-02: Drawdown analysis and correlation matrix display
-- [ ] 03-03: Sector exposure analysis with concentration warnings
+- [ ] 03-01-PLAN.md — Risk engine (Sortino, VaR, CVaR, drawdown periods, correlation) and data models
+- [ ] 03-02-PLAN.md — Risk service layer, rich output rendering, and wired analyse CLI command
+- [ ] 03-03-PLAN.md — Sector exposure with yfinance data fetching, caching, and concentration warnings
 
 ### Phase 4: Portfolio Optimisation
 **Goal**: User can either validate their proposed portfolio or get an optimal allocation suggested, with efficient frontier visualization

@@ -67,12 +67,14 @@ Plans:
   3. Correlation matrix between portfolio assets is displayed with color-coded output highlighting high/low correlations
   4. Top N worst drawdown periods are listed with depth, duration, and recovery time
   5. Sector exposure breakdown is shown with warnings when any single sector exceeds 40% concentration
-**Plans**: 3 plans
+**Plans**: 5 plans
 
 Plans:
-- [ ] 03-01-PLAN.md — Risk engine (Sortino, VaR, CVaR, drawdown periods, correlation) and data models
-- [ ] 03-02-PLAN.md — Risk service layer, rich output rendering, and wired analyse CLI command
-- [ ] 03-03-PLAN.md — Sector exposure with yfinance data fetching, caching, and concentration warnings
+- [x] 03-01-PLAN.md — Risk engine (Sortino, VaR, CVaR, drawdown periods, correlation) and data models
+- [x] 03-02-PLAN.md — Risk service layer, rich output rendering, and wired analyse CLI command
+- [x] 03-03-PLAN.md — Sector exposure with yfinance data fetching, caching, and concentration warnings
+- [ ] 03-04-PLAN.md — Gap closure: Unit tests for risk engine pure computation functions
+- [ ] 03-05-PLAN.md — Gap closure: Tests for risk service orchestration and sector data fetcher
 
 ### Phase 4: Portfolio Optimisation
 **Goal**: User can either validate their proposed portfolio or get an optimal allocation suggested, with efficient frontier visualization
@@ -165,7 +167,7 @@ Note: Phase 7 depends on Phase 3 (not Phase 6), so Phases 5-6 and Phase 7 could 
 |-------|----------------|--------|-----------|
 | 1. Data Pipeline & CLI Skeleton | 3/3 | ✓ Complete | 2026-02-06 |
 | 2. Backtesting Engine | 3/3 | ✓ Complete | 2026-02-07 |
-| 3. Risk Analytics | 0/3 | Not started | - |
+| 3. Risk Analytics | 3/5 | Gap closure in progress | - |
 | 4. Portfolio Optimisation | 0/3 | Not started | - |
 | 5. Monte Carlo & Projections | 0/3 | Not started | - |
 | 6. Contribution Modelling | 0/3 | Not started | - |

@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-06)
 
 **Core value:** Make data-driven investment decisions with confidence -- see the numbers, understand the reasoning, verify against history before committing real money.
-**Current focus:** Phase 3 complete with gap closure. Risk analytics fully integrated and tested (16 unit tests). Ready for Phase 4.
+**Current focus:** Phase 3 fully complete with gap closure. Risk analytics integrated and tested (27 tests across 5 plans). Ready for Phase 4.
 
 ## Current Position
 
 Phase: 3 of 8 (Risk Analytics)
-Plan: 4 of 4 in current phase (gap closure)
+Plan: 5 of 5 in current phase (gap closure)
 Status: Phase complete (including gap closure)
-Last activity: 2026-02-07 -- Completed 03-04-PLAN.md (risk engine tests)
+Last activity: 2026-02-07 -- Completed 03-05-PLAN.md (risk service and sector tests)
 
-Progress: [████████░░░░░░░░░░░░] ~40%
+Progress: [████████░░░░░░░░░░░░] ~42%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 10
+- Total plans completed: 11
 - Average duration: 3 min
-- Total execution time: 31 min
+- Total execution time: 32 min
 
 **By Phase:**
 
@@ -29,11 +29,11 @@ Progress: [████████░░░░░░░░░░░░] ~40%
 |-------|-------|-------|----------|
 | 01-data-pipeline-cli-skeleton | 3/3 | 12 min | 4 min |
 | 02-backtesting-engine | 3/3 | 9 min | 3 min |
-| 03-risk-analytics | 4/4 | 10 min | 2.5 min |
+| 03-risk-analytics | 5/5 | 11 min | 2.2 min |
 
 **Recent Trend:**
-- Last 5 plans: 03-01 (3 min), 03-02 (3 min), 03-03 (3 min), 03-04 (1 min)
-- Trend: Stable at ~2-3 min/plan
+- Last 5 plans: 03-01 (3 min), 03-02 (3 min), 03-03 (3 min), 03-04 (1 min), 03-05 (1 min)
+- Trend: Gap closure plans faster (~1 min) due to test-only scope
 
 *Updated after each plan completion*
 
@@ -79,6 +79,8 @@ Recent decisions affecting current work:
 - [03-03]: 90-day sector cache TTL -- sectors rarely change, avoids unnecessary yfinance API calls
 - [03-03]: Cache failed lookups as Unknown to avoid retrying broken tickers every run
 - [03-03]: Fixed early return in render_risk_analysis that would skip sector exposure for single-asset portfolios
+- [03-05]: Duplicated test helpers rather than importing cross-test to avoid coupling
+- [03-05]: Mocked yf module at import site rather than individual yf.Ticker for cleaner assertions
 
 ### Pending Todos
 
@@ -93,5 +95,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-07
-Stopped at: Completed 03-04-PLAN.md (Phase 3 gap closure complete)
+Stopped at: Completed 03-05-PLAN.md (Phase 3 gap closure fully complete)
 Resume file: None

@@ -13,7 +13,7 @@ PortfolioForge delivers a complete CLI portfolio intelligence tool across 8 phas
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Data Pipeline & CLI Skeleton** - Reliable market data fetching, caching, FX conversion, and CLI entry point
-- [ ] **Phase 2: Backtesting Engine** - Historical portfolio performance analysis with benchmark comparison and terminal charts
+- [x] **Phase 2: Backtesting Engine** - Historical portfolio performance analysis with benchmark comparison and terminal charts
 - [ ] **Phase 3: Risk Analytics** - Comprehensive risk metrics, drawdown analysis, and correlation/sector exposure
 - [ ] **Phase 4: Portfolio Optimisation** - Mean-variance optimisation, efficient frontier, validate and suggest modes
 - [ ] **Phase 5: Monte Carlo & Projections** - Forward-looking probability-weighted simulations over user's time horizon
@@ -53,9 +53,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 02-01-PLAN.md — Backtest data models and pure computation engine (returns, rebalancing, metrics)
-- [ ] 02-02-PLAN.md — Service layer, rich output tables, and wired CLI backtest command
-- [ ] 02-03-PLAN.md — Plotext cumulative returns chart with benchmark overlay
+- [x] 02-01-PLAN.md — Backtest data models and pure computation engine (returns, rebalancing, metrics)
+- [x] 02-02-PLAN.md — Service layer, rich output tables, and wired CLI backtest command
+- [x] 02-03-PLAN.md — Plotext cumulative returns chart with benchmark overlay
 
 ### Phase 3: Risk Analytics
 **Goal**: User can see a complete risk profile for any portfolio including drawdowns, VaR, correlations, and sector exposure
@@ -164,7 +164,7 @@ Note: Phase 7 depends on Phase 3 (not Phase 6), so Phases 5-6 and Phase 7 could 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Data Pipeline & CLI Skeleton | 3/3 | ✓ Complete | 2026-02-06 |
-| 2. Backtesting Engine | 0/3 | Not started | - |
+| 2. Backtesting Engine | 3/3 | ✓ Complete | 2026-02-07 |
 | 3. Risk Analytics | 0/3 | Not started | - |
 | 4. Portfolio Optimisation | 0/3 | Not started | - |
 | 5. Monte Carlo & Projections | 0/3 | Not started | - |

@@ -111,11 +111,11 @@
 | DATA-04 | Phase 1 | Complete |
 | DATA-05 | Phase 1 | Complete |
 | DATA-06 | Phase 1 | Complete |
-| BACK-01 | Phase 2 | Pending |
-| BACK-02 | Phase 2 | Pending |
-| BACK-03 | Phase 2 | Pending |
-| BACK-04 | Phase 2 | Pending |
-| BACK-05 | Phase 2 | Pending |
+| BACK-01 | Phase 2 | Complete |
+| BACK-02 | Phase 2 | Complete |
+| BACK-03 | Phase 2 | Complete |
+| BACK-04 | Phase 2 | Complete |
+| BACK-05 | Phase 2 | Complete |
 | RISK-01 | Phase 3 | Pending |
 | RISK-02 | Phase 3 | Pending |
 | RISK-03 | Phase 3 | Pending |
@@ -143,8 +143,8 @@
 | REBAL-02 | Phase 7 | Pending |
 | REBAL-03 | Phase 7 | Pending |
 | UX-01 | Phase 1 | Complete |
-| UX-02 | Phase 2 | Pending |
-| UX-03 | Phase 2 | Pending |
+| UX-02 | Phase 2 | Complete |
+| UX-03 | Phase 2 | Complete |
 | UX-04 | Phase 8 | Pending |
 | UX-05 | Phase 5 | Pending |
 | UX-06 | Phase 8 | Pending |

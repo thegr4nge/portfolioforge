@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-06)
 
 **Core value:** Make data-driven investment decisions with confidence -- see the numbers, understand the reasoning, verify against history before committing real money.
-**Current focus:** Phase 3 in progress. Risk service layer and analyse CLI wired (plan 2/3). Sector exposure next.
+**Current focus:** Phase 3 complete. Risk analytics fully integrated (VaR/CVaR, drawdowns, correlation, sector exposure). Ready for Phase 4.
 
 ## Current Position
 
 Phase: 3 of 8 (Risk Analytics)
-Plan: 2 of 3 in current phase
-Status: In progress
-Last activity: 2026-02-07 -- Completed 03-02-PLAN.md (risk service layer and analyse CLI)
+Plan: 3 of 3 in current phase
+Status: Phase complete
+Last activity: 2026-02-07 -- Completed 03-03-PLAN.md (sector exposure analysis)
 
-Progress: [████████░░] ~33%
+Progress: [████████░░░░░░░░░░░░] ~37%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 8
+- Total plans completed: 9
 - Average duration: 3 min
-- Total execution time: 27 min
+- Total execution time: 30 min
 
 **By Phase:**
 
@@ -29,10 +29,10 @@ Progress: [████████░░] ~33%
 |-------|-------|-------|----------|
 | 01-data-pipeline-cli-skeleton | 3/3 | 12 min | 4 min |
 | 02-backtesting-engine | 3/3 | 9 min | 3 min |
-| 03-risk-analytics | 2/3 | 6 min | 3 min |
+| 03-risk-analytics | 3/3 | 9 min | 3 min |
 
 **Recent Trend:**
-- Last 5 plans: 02-02 (3 min), 02-03 (3 min), 03-01 (3 min), 03-02 (3 min)
+- Last 5 plans: 02-03 (3 min), 03-01 (3 min), 03-02 (3 min), 03-03 (3 min)
 - Trend: Stable at ~3 min/plan
 
 *Updated after each plan completion*
@@ -76,6 +76,9 @@ Recent decisions affecting current work:
 - [03-02]: Extracted _parse_ticker_weights helper to DRY up backtest/analyse CLI commands
 - [03-02]: Re-fetch individual ticker prices for correlation (BacktestResult only stores combined portfolio)
 - [03-02]: Import _color_pct from output/backtest.py rather than duplicating helper
+- [03-03]: 90-day sector cache TTL -- sectors rarely change, avoids unnecessary yfinance API calls
+- [03-03]: Cache failed lookups as Unknown to avoid retrying broken tickers every run
+- [03-03]: Fixed early return in render_risk_analysis that would skip sector exposure for single-asset portfolios
 
 ### Pending Todos
 
@@ -90,5 +93,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-07
-Stopped at: Completed 03-02-PLAN.md
+Stopped at: Completed 03-03-PLAN.md (Phase 3 complete)
 Resume file: None

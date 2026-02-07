@@ -108,3 +108,112 @@ class TestComputeDrawdownPeriods:
         """Passing top_n limits the number of returned periods."""
         periods = compute_drawdown_periods(cumulative_with_drawdowns, top_n=2)
         assert len(periods) <= 2
+
+
+# ---------------------------------------------------------------------------
+# Correlation matrix
+# ---------------------------------------------------------------------------
+
+
+class TestComputeCorrelationMatrix:
+    def test_perfectly_correlated(self) -> None:
+        """Identical price series should have correlation 1.0."""
+        dates = pd.date_range("2024-01-01", periods=50, freq="D")
+        prices = pd.DataFrame(
+            {"A": range(100, 150), "B": range(100, 150)},
+            index=dates,
+            dtype=float,
+        )
+        corr = compute_correlation_matrix(prices)
+        assert corr.loc["A", "B"] == pytest.approx(1.0, abs=1e-10)
+
+    def test_uncorrelated(self) -> None:
+        """Independent random series should have near-zero correlation."""
+        np.random.seed(42)
+        dates = pd.date_range("2024-01-01", periods=100, freq="D")
+        prices = pd.DataFrame(
+            {
+                "X": np.cumsum(np.random.normal(0, 1, 100)) + 100,
+                "Y": np.cumsum(np.random.normal(0, 1, 100)) + 100,
+            },
+            index=dates,
+        )
+        corr = compute_correlation_matrix(prices)
+        assert abs(corr.loc["X", "Y"]) < 0.3
+
+    def test_single_asset_returns_empty(self) -> None:
+        """DataFrame with one column returns empty DataFrame."""
+        dates = pd.date_range("2024-01-01", periods=10, freq="D")
+        prices = pd.DataFrame({"ONLY": range(100, 110)}, index=dates, dtype=float)
+        result = compute_correlation_matrix(prices)
+        assert result.empty
+
+    def test_returns_square_dataframe(self) -> None:
+        """Result has same row and column labels as input columns."""
+        dates = pd.date_range("2024-01-01", periods=20, freq="D")
+        prices = pd.DataFrame(
+            {"A": range(100, 120), "B": range(200, 220), "C": range(50, 70)},
+            index=dates,
+            dtype=float,
+        )
+        corr = compute_correlation_matrix(prices)
+        assert list(corr.columns) == ["A", "B", "C"]
+        assert list(corr.index) == ["A", "B", "C"]
+
+
+# ---------------------------------------------------------------------------
+# Sector exposure
+# ---------------------------------------------------------------------------
+
+
+class TestComputeSectorExposure:
+    def test_basic_breakdown(self) -> None:
+        """Sector weights aggregate correctly."""
+        result = compute_sector_exposure(
+            tickers=["AAPL", "MSFT", "BHP"],
+            weights=[0.4, 0.3, 0.3],
+            sectors={"AAPL": "Technology", "MSFT": "Technology", "BHP": "Materials"},
+        )
+        assert result["breakdown"]["Technology"] == pytest.approx(0.7)
+        assert result["breakdown"]["Materials"] == pytest.approx(0.3)
+
+    def test_concentration_warning(self) -> None:
+        """Technology at 70% (above 40% threshold) triggers a warning."""
+        result = compute_sector_exposure(
+            tickers=["AAPL", "MSFT", "BHP"],
+            weights=[0.4, 0.3, 0.3],
+            sectors={"AAPL": "Technology", "MSFT": "Technology", "BHP": "Materials"},
+        )
+        assert len(result["warnings"]) == 1
+        assert "Technology" in result["warnings"][0]
+        assert "40%" in result["warnings"][0]
+
+    def test_no_warning_below_threshold(self) -> None:
+        """All sectors below 40% produces no warnings."""
+        result = compute_sector_exposure(
+            tickers=["A", "B", "C", "D"],
+            weights=[0.25, 0.25, 0.25, 0.25],
+            sectors={"A": "Tech", "B": "Health", "C": "Energy", "D": "Finance"},
+        )
+        assert result["warnings"] == []
+
+    def test_unknown_sector_no_warning(self) -> None:
+        """Ticker with missing sector maps to Unknown -- no warning even if >threshold."""
+        result = compute_sector_exposure(
+            tickers=["X", "Y"],
+            weights=[0.6, 0.4],
+            sectors={},  # both map to Unknown
+        )
+        assert result["breakdown"]["Unknown"] == pytest.approx(1.0)
+        assert result["warnings"] == []
+
+    def test_custom_threshold(self) -> None:
+        """Lower threshold triggers warning at lower concentration."""
+        result = compute_sector_exposure(
+            tickers=["A", "B"],
+            weights=[0.35, 0.65],
+            sectors={"A": "Tech", "B": "Health"},
+            concentration_threshold=0.30,
+        )
+        # Both exceed 0.30
+        assert len(result["warnings"]) == 2

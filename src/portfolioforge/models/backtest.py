@@ -68,5 +68,6 @@ class BacktestResult(BaseModel):
     max_drawdown: float
     volatility: float
     sharpe_ratio: float
+    sortino_ratio: float
     benchmark_metrics: dict[str, dict[str, float]]
     final_weights: list[float]

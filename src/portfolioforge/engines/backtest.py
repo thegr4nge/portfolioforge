@@ -86,6 +86,13 @@ def compute_metrics(
     volatility = float(daily_returns.std() * np.sqrt(252))
     sharpe = float((ann_return - risk_free_rate) / volatility) if volatility > 0 else 0.0
 
+    downside_returns = daily_returns[daily_returns < 0]
+    if len(downside_returns) > 1:
+        downside_std = float(downside_returns.std() * np.sqrt(252))
+        sortino = float((ann_return - risk_free_rate) / downside_std) if downside_std > 0 else 0.0
+    else:
+        sortino = 0.0
+
     running_max = cumulative.cummax()
     drawdown = cumulative / running_max - 1
     max_drawdown = float(drawdown.min())
@@ -96,6 +103,7 @@ def compute_metrics(
         "max_drawdown": max_drawdown,
         "volatility": volatility,
         "sharpe_ratio": sharpe,
+        "sortino_ratio": sortino,
     }
 
 

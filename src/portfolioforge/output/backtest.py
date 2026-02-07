@@ -65,6 +65,7 @@ def render_backtest_results(result: BacktestResult, console: Console) -> None:
         ("Max Drawdown", "max_drawdown", True),
         ("Volatility", "volatility", True),
         ("Sharpe Ratio", "sharpe_ratio", False),
+        ("Sortino Ratio", "sortino_ratio", False),
     ]
 
     portfolio_metrics = {
@@ -73,6 +74,7 @@ def render_backtest_results(result: BacktestResult, console: Console) -> None:
         "max_drawdown": result.max_drawdown,
         "volatility": result.volatility,
         "sharpe_ratio": result.sharpe_ratio,
+        "sortino_ratio": result.sortino_ratio,
     }
 
     for label, key, is_pct in metrics_rows:

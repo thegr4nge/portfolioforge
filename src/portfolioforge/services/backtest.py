@@ -169,6 +169,7 @@ def run_backtest(backtest_config: BacktestConfig) -> BacktestResult:
         max_drawdown=portfolio_metrics["max_drawdown"],
         volatility=portfolio_metrics["volatility"],
         sharpe_ratio=portfolio_metrics["sharpe_ratio"],
+        sortino_ratio=portfolio_metrics["sortino_ratio"],
         benchmark_metrics=benchmark_metrics,
         final_weights=final_weights,
     )

@@ -5,10 +5,12 @@ from __future__ import annotations
 import pandas as pd
 
 from portfolioforge.data.cache import PriceCache
+from portfolioforge.data.sector import fetch_sectors
 from portfolioforge.engines.backtest import align_price_data
 from portfolioforge.engines.risk import (
     compute_correlation_matrix,
     compute_drawdown_periods,
+    compute_sector_exposure,
     compute_var_cvar,
 )
 from portfolioforge.models.backtest import BacktestConfig, BacktestResult
@@ -16,6 +18,7 @@ from portfolioforge.models.risk import (
     DrawdownPeriod,
     RiskAnalysisResult,
     RiskMetrics,
+    SectorExposure,
 )
 from portfolioforge.services.backtest import _fetch_all, run_backtest
 
@@ -47,9 +50,9 @@ def run_risk_analysis(
     drawdown_dicts = compute_drawdown_periods(cumulative, top_n=5)
 
     # 6. Correlation matrix -- need per-asset aligned prices
+    cache = PriceCache()
     correlation_dict: dict[str, dict[str, float]] = {}
     if len(backtest_config.tickers) >= 2:
-        cache = PriceCache()
         fx_cache: dict[tuple[str, str], pd.DataFrame] = {}
         portfolio_results = _fetch_all(
             backtest_config.tickers,
@@ -63,7 +66,17 @@ def run_risk_analysis(
         if not corr_df.empty:
             correlation_dict = corr_df.to_dict()
 
-    # 7. Build result models
+    # 7. Sector exposure
+    sectors = fetch_sectors(backtest_config.tickers, cache)
+    sector_result = compute_sector_exposure(
+        backtest_config.tickers, backtest_config.weights, sectors
+    )
+    sector_exposure = SectorExposure(
+        breakdown=sector_result["breakdown"],
+        warnings=sector_result["warnings"],
+    )
+
+    # 8. Build result models
     risk_metrics = RiskMetrics(
         var_95=var_cvar["var"],
         cvar_95=var_cvar["cvar"],
@@ -85,7 +98,7 @@ def run_risk_analysis(
         risk_metrics=risk_metrics,
         drawdown_periods=drawdown_periods,
         correlation_matrix=correlation_dict,
-        sector_exposure=None,
+        sector_exposure=sector_exposure,
     )
 
     return backtest_result, risk_result

@@ -6,7 +6,7 @@ from rich.console import Console
 from rich.table import Table
 
 from portfolioforge.models.backtest import BacktestResult
-from portfolioforge.models.risk import RiskAnalysisResult
+from portfolioforge.models.risk import RiskAnalysisResult, SectorExposure
 from portfolioforge.output.backtest import _color_pct, render_backtest_results
 
 
@@ -81,19 +81,58 @@ def render_risk_analysis(
     # 4. Correlation Matrix
     if not risk_result.correlation_matrix:
         console.print("[dim]Correlation requires 2+ assets[/dim]")
-        return
+    else:
+        tickers = list(risk_result.correlation_matrix.keys())
+        corr_table = Table(title="Asset Correlation Matrix")
+        corr_table.add_column("", style="bold")
+        for ticker in tickers:
+            corr_table.add_column(ticker)
 
-    tickers = list(risk_result.correlation_matrix.keys())
-    corr_table = Table(title="Asset Correlation Matrix")
-    corr_table.add_column("", style="bold")
-    for ticker in tickers:
-        corr_table.add_column(ticker)
+        for row_ticker in tickers:
+            row_values: list[str] = [row_ticker]
+            for col_ticker in tickers:
+                val = risk_result.correlation_matrix[row_ticker][col_ticker]
+                row_values.append(_corr_color(val))
+            corr_table.add_row(*row_values)
 
-    for row_ticker in tickers:
-        row_values: list[str] = [row_ticker]
-        for col_ticker in tickers:
-            val = risk_result.correlation_matrix[row_ticker][col_ticker]
-            row_values.append(_corr_color(val))
-        corr_table.add_row(*row_values)
+        console.print(corr_table)
 
-    console.print(corr_table)
+    # 5. Sector Exposure
+    if risk_result.sector_exposure is not None:
+        _render_sector_exposure(risk_result.sector_exposure, console)
+
+
+def _render_sector_exposure(
+    sector_exposure: SectorExposure, console: Console
+) -> None:
+    """Render sector exposure table with concentration warnings."""
+    table = Table(title="Sector Exposure")
+    table.add_column("Sector", style="bold")
+    table.add_column("Weight", justify="right")
+    table.add_column("Status")
+
+    warning_sectors = set()
+    for warning in sector_exposure.warnings:
+        # Extract sector name from warning text (before the parenthesis)
+        sector_name = warning.split(" (")[0]
+        warning_sectors.add(sector_name)
+
+    # Sort by weight descending
+    sorted_sectors = sorted(
+        sector_exposure.breakdown.items(),
+        key=lambda x: x[1],
+        reverse=True,
+    )
+
+    for sector, weight in sorted_sectors:
+        weight_str = f"{weight:.1%}"
+        if sector in warning_sectors:
+            status = "[red bold]HIGH CONCENTRATION[/red bold]"
+        else:
+            status = "[green]OK[/green]"
+        table.add_row(sector, weight_str, status)
+
+    console.print(table)
+
+    for warning in sector_exposure.warnings:
+        console.print(f"[red]Warning: {warning}[/red]")

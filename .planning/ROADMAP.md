@@ -86,12 +86,12 @@ Plans:
   3. Covariance estimation uses Ledoit-Wolf shrinkage (not raw sample covariance) for stable optimisation results
   4. Position constraints are enforced (configurable min/max weight per asset, default 5-40%) preventing extreme allocations
   5. Efficient frontier chart renders in terminal showing the risk-return tradeoff with the user's portfolio position marked
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 04-01: Mean-variance optimisation engine with Ledoit-Wolf shrinkage and position constraints
-- [ ] 04-02: Validate mode (score user portfolio) and suggest mode (optimal weights)
-- [ ] 04-03: Efficient frontier visualization and portfolio comparison output
+- [ ] 04-01-PLAN.md — Optimisation engine (Ledoit-Wolf, max-Sharpe, frontier generation, scoring) and data models
+- [ ] 04-02-PLAN.md — Service layer, rich output rendering, and wired validate/suggest CLI commands
+- [ ] 04-03-PLAN.md — Efficient frontier chart with plotext and CLI chart wiring
 
 ### Phase 5: Monte Carlo & Projections
 **Goal**: User can see probability-weighted future outcomes for their portfolio over a 30-year horizon

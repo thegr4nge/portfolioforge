@@ -16,7 +16,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: Backtesting Engine** - Historical portfolio performance analysis with benchmark comparison and terminal charts
 - [x] **Phase 3: Risk Analytics** - Comprehensive risk metrics, drawdown analysis, and correlation/sector exposure
 - [x] **Phase 4: Portfolio Optimisation** - Mean-variance optimisation, efficient frontier, validate and suggest modes
-- [ ] **Phase 5: Monte Carlo & Projections** - Forward-looking probability-weighted simulations over user's time horizon
+- [x] **Phase 5: Monte Carlo & Projections** - Forward-looking probability-weighted simulations over user's time horizon
 - [ ] **Phase 6: Contribution Modelling** - DCA, lump sum, and regular contribution strategies integrated with projections
 - [ ] **Phase 7: Stress Testing & Rebalancing** - Historical crisis scenarios and rebalancing strategy analysis
 - [ ] **Phase 8: Explanations & Export** - Plain-English explanations, save/load portfolios, export results
@@ -108,9 +108,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 05-01-PLAN.md — Monte Carlo models (ProjectionConfig, ProjectionResult) and GBM simulation engine with tests
-- [ ] 05-02-PLAN.md — Service layer, Rich output rendering, and wired `project` CLI command
-- [ ] 05-03-PLAN.md — Fan chart visualization with plotext and service/output tests
+- [x] 05-01-PLAN.md — Monte Carlo models (ProjectionConfig, ProjectionResult) and GBM simulation engine with tests
+- [x] 05-02-PLAN.md — Service layer, Rich output rendering, and wired `project` CLI command
+- [x] 05-03-PLAN.md — Fan chart visualization with plotext and service/output tests
 
 ### Phase 6: Contribution Modelling
 **Goal**: User can model how regular contributions and lump sum injections affect projected portfolio growth
@@ -171,7 +171,7 @@ Note: Phase 7 depends on Phase 3 (not Phase 6), so Phases 5-6 and Phase 7 could 
 | 2. Backtesting Engine | 3/3 | ✓ Complete | 2026-02-07 |
 | 3. Risk Analytics | 5/5 | ✓ Complete | 2026-02-07 |
 | 4. Portfolio Optimisation | 5/5 | ✓ Complete | 2026-02-10 |
-| 5. Monte Carlo & Projections | 0/3 | Not started | - |
+| 5. Monte Carlo & Projections | 3/3 | ✓ Complete | 2026-02-11 |
 | 6. Contribution Modelling | 0/3 | Not started | - |
 | 7. Stress Testing & Rebalancing | 0/3 | Not started | - |
 | 8. Explanations & Export | 0/2 | Not started | - |

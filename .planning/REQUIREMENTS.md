@@ -127,11 +127,11 @@
 | OPT-04 | Phase 4 | Complete |
 | OPT-05 | Phase 4 | Complete |
 | OPT-06 | Phase 4 | Complete |
-| MC-01 | Phase 5 | Pending |
-| MC-02 | Phase 5 | Pending |
-| MC-03 | Phase 5 | Pending |
-| MC-04 | Phase 5 | Pending |
-| MC-05 | Phase 5 | Pending |
+| MC-01 | Phase 5 | Complete |
+| MC-02 | Phase 5 | Complete |
+| MC-03 | Phase 5 | Complete |
+| MC-04 | Phase 5 | Complete |
+| MC-05 | Phase 5 | Complete |
 | CONT-01 | Phase 6 | Pending |
 | CONT-02 | Phase 6 | Pending |
 | CONT-03 | Phase 6 | Pending |
@@ -146,7 +146,7 @@
 | UX-02 | Phase 2 | Complete |
 | UX-03 | Phase 2 | Complete |
 | UX-04 | Phase 8 | Pending |
-| UX-05 | Phase 5 | Pending |
+| UX-05 | Phase 5 | Complete |
 | UX-06 | Phase 8 | Pending |
 | UX-07 | Phase 8 | Pending |
 

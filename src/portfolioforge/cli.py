@@ -18,8 +18,12 @@ from portfolioforge.output.backtest import (
     render_backtest_results,
     render_cumulative_chart,
 )
+from portfolioforge.models.optimise import OptimiseConfig
+from portfolioforge.output.optimise import render_suggest_results, render_validate_results
 from portfolioforge.output.risk import render_risk_analysis
 from portfolioforge.services.backtest import run_backtest
+from portfolioforge.services.optimise import run_suggest as _run_suggest
+from portfolioforge.services.optimise import run_validate as _run_validate
 from portfolioforge.services.risk import run_risk_analysis
 
 app = typer.Typer(
@@ -251,15 +255,103 @@ def analyse(
 
 
 @app.command()
-def suggest() -> None:
+def suggest(
+    ticker: Annotated[
+        list[str],
+        typer.Option(help="Ticker symbols (e.g. AAPL MSFT CBA.AX)"),
+    ],
+    period: Annotated[
+        str,
+        typer.Option(help="Lookback period (e.g. 10y, 5y)"),
+    ] = f"{config.DEFAULT_PERIOD_YEARS}y",
+    min_weight: Annotated[
+        float,
+        typer.Option(help="Minimum weight per asset (default 5%)"),
+    ] = 0.05,
+    max_weight: Annotated[
+        float,
+        typer.Option(help="Maximum weight per asset (default 40%)"),
+    ] = 0.40,
+    chart: Annotated[
+        bool,
+        typer.Option("--chart/--no-chart", help="Show efficient frontier chart"),
+    ] = True,
+) -> None:
     """Suggest optimised portfolio allocations."""
-    console.print(
-        Panel(
-            "Not yet implemented (Phase 4)",
-            title="portfolioforge suggest",
-            border_style="dim",
+    period_years = _parse_period(period)
+
+    try:
+        opt_config = OptimiseConfig(
+            tickers=ticker,
+            min_weight=min_weight,
+            max_weight=max_weight,
+            period_years=period_years,
         )
-    )
+    except ValueError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(code=1) from None
+
+    try:
+        result = _run_suggest(opt_config)
+    except ValueError as exc:
+        console.print(f"[red]Optimisation error: {exc}[/red]")
+        raise typer.Exit(code=1) from None
+
+    render_suggest_results(result, console)
+
+    if chart:
+        pass  # TODO: efficient frontier chart (Plan 03)
+
+
+@app.command()
+def validate(
+    ticker: Annotated[
+        list[str],
+        typer.Option(help="Ticker:weight pairs (e.g. AAPL:0.4 MSFT:0.6)"),
+    ],
+    period: Annotated[
+        str,
+        typer.Option(help="Lookback period (e.g. 10y, 5y)"),
+    ] = f"{config.DEFAULT_PERIOD_YEARS}y",
+    min_weight: Annotated[
+        float,
+        typer.Option(help="Minimum weight per asset (default 5%)"),
+    ] = 0.05,
+    max_weight: Annotated[
+        float,
+        typer.Option(help="Maximum weight per asset (default 40%)"),
+    ] = 0.40,
+    chart: Annotated[
+        bool,
+        typer.Option("--chart/--no-chart", help="Show efficient frontier chart"),
+    ] = True,
+) -> None:
+    """Validate your portfolio against the efficient frontier."""
+    period_years = _parse_period(period)
+    tickers, weights = _parse_ticker_weights(ticker)
+
+    try:
+        opt_config = OptimiseConfig(
+            tickers=tickers,
+            weights=weights,
+            min_weight=min_weight,
+            max_weight=max_weight,
+            period_years=period_years,
+        )
+    except ValueError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(code=1) from None
+
+    try:
+        result = _run_validate(opt_config)
+    except ValueError as exc:
+        console.print(f"[red]Validation error: {exc}[/red]")
+        raise typer.Exit(code=1) from None
+
+    render_validate_results(result, console)
+
+    if chart:
+        pass  # TODO: efficient frontier chart (Plan 03)
 
 
 @app.command()

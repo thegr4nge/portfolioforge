@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-06)
 
 **Core value:** Make data-driven investment decisions with confidence -- see the numbers, understand the reasoning, verify against history before committing real money.
-**Current focus:** Phase 4 complete (including gap closure tests). All optimisation capabilities delivered and tested. Ready for Phase 5 (Monte Carlo).
+**Current focus:** Phase 4 fully complete (all gap closure plans done). All optimisation capabilities delivered and tested. Ready for Phase 5 (Monte Carlo).
 
 ## Current Position
 
 Phase: 4 of 8 (Portfolio Optimisation) -- COMPLETE
-Plan: 4 of 4 in current phase (includes gap closure)
+Plan: 5 of 5 in current phase (includes gap closure)
 Status: Phase complete
-Last activity: 2026-02-10 -- Completed 04-04-PLAN.md (optimise engine tests)
+Last activity: 2026-02-10 -- Completed 04-05-PLAN.md (optimise service tests)
 
-Progress: [█████████████░░░░░░░] ~62%
+Progress: [██████████████░░░░░░] ~66%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 15
+- Total plans completed: 16
 - Average duration: 3 min
-- Total execution time: 42 min
+- Total execution time: 44 min
 
 **By Phase:**
 
@@ -30,11 +30,11 @@ Progress: [█████████████░░░░░░░] ~62%
 | 01-data-pipeline-cli-skeleton | 3/3 | 12 min | 4 min |
 | 02-backtesting-engine | 3/3 | 9 min | 3 min |
 | 03-risk-analytics | 5/5 | 11 min | 2.2 min |
-| 04-portfolio-optimisation | 4/4 | 10 min | 2.5 min |
+| 04-portfolio-optimisation | 5/5 | 12 min | 2.4 min |
 
 **Recent Trend:**
-- Last 5 plans: 04-01 (3 min), 04-02 (3 min), 04-03 (2 min), 04-04 (2 min)
-- Trend: Consistent ~2-3 min per plan
+- Last 5 plans: 04-02 (3 min), 04-03 (2 min), 04-04 (2 min), 04-05 (2 min)
+- Trend: Consistent ~2 min per plan
 
 *Updated after each plan completion*
 
@@ -91,6 +91,8 @@ Recent decisions affecting current work:
 - [04-02]: Weight comparison shows only weights > 0.1% to avoid zero-weight clutter
 - [04-03]: Axis padding of 0.5 percentage points ensures single-point scatter markers are visible
 - [04-03]: Diamond marker for optimal, x marker for user portfolio -- visually distinct in terminal
+- [04-05]: Duplicated test helpers rather than importing cross-test (same pattern as phase 3)
+- [04-05]: max_weight=0.60 for 2-ticker validate tests to satisfy infeasible bounds validation
 
 ### Pending Todos
 
@@ -105,5 +107,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-10
-Stopped at: Completed 04-04-PLAN.md (optimise engine tests) -- Phase 4 fully complete
+Stopped at: Completed 04-05-PLAN.md (optimise service tests) -- Phase 4 fully complete
 Resume file: None

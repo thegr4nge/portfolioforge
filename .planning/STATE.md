@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-06)
 
 **Core value:** Make data-driven investment decisions with confidence -- see the numbers, understand the reasoning, verify against history before committing real money.
-**Current focus:** Phase 3 fully complete with gap closure. Risk analytics integrated and tested (27 tests across 5 plans). Ready for Phase 4.
+**Current focus:** Phase 4 in progress. Optimisation engine and models complete (plan 1 of 1). Ready for next phase.
 
 ## Current Position
 
-Phase: 3 of 8 (Risk Analytics)
-Plan: 5 of 5 in current phase (gap closure)
-Status: Phase complete (including gap closure)
-Last activity: 2026-02-07 -- Completed 03-05-PLAN.md (risk service and sector tests)
+Phase: 4 of 8 (Portfolio Optimisation)
+Plan: 1 of 1 in current phase
+Status: Phase complete
+Last activity: 2026-02-10 -- Completed 04-01-PLAN.md (optimisation engine and models)
 
-Progress: [████████░░░░░░░░░░░░] ~42%
+Progress: [█████████░░░░░░░░░░░] ~46%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 11
+- Total plans completed: 12
 - Average duration: 3 min
-- Total execution time: 32 min
+- Total execution time: 35 min
 
 **By Phase:**
 
@@ -30,10 +30,11 @@ Progress: [████████░░░░░░░░░░░░] ~42%
 | 01-data-pipeline-cli-skeleton | 3/3 | 12 min | 4 min |
 | 02-backtesting-engine | 3/3 | 9 min | 3 min |
 | 03-risk-analytics | 5/5 | 11 min | 2.2 min |
+| 04-portfolio-optimisation | 1/1 | 3 min | 3 min |
 
 **Recent Trend:**
-- Last 5 plans: 03-01 (3 min), 03-02 (3 min), 03-03 (3 min), 03-04 (1 min), 03-05 (1 min)
-- Trend: Gap closure plans faster (~1 min) due to test-only scope
+- Last 5 plans: 03-03 (3 min), 03-04 (1 min), 03-05 (1 min), 04-01 (3 min)
+- Trend: Consistent ~3 min for feature plans
 
 *Updated after each plan completion*
 
@@ -81,6 +82,10 @@ Recent decisions affecting current work:
 - [03-03]: Fixed early return in render_risk_analysis that would skip sector exposure for single-asset portfolios
 - [03-05]: Duplicated test helpers rather than importing cross-test to avoid coupling
 - [03-05]: Mocked yf module at import site rather than individual yf.Ticker for cleaner assertions
+- [04-01]: Ledoit-Wolf shrinkage via CovarianceShrinkage (not raw sample covariance) -- more robust for small samples
+- [04-01]: Fresh EfficientFrontier instance per optimisation call -- pypfopt EF is single-use
+- [04-01]: Efficiency ratio clamped to [0, 1] for clean scoring output
+- [04-01]: Broad except on frontier point generation -- gracefully skips infeasible targets
 
 ### Pending Todos
 
@@ -94,6 +99,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-02-07
-Stopped at: Completed 03-05-PLAN.md (Phase 3 gap closure fully complete)
+Last session: 2026-02-10
+Stopped at: Completed 04-01-PLAN.md (Phase 4 optimisation engine and models)
 Resume file: None

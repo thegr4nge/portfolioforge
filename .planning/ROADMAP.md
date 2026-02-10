@@ -105,12 +105,12 @@ Plans:
   3. Results display probability distribution showing 10th, 25th, 50th, 75th, and 90th percentile portfolio values at horizon
   4. Fan chart of simulation paths renders in terminal showing the spread of outcomes over time
   5. User can specify a target amount and timeline ("I need $500k in 15 years") and see the probability of achieving it
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 05-01: User profile input (capital, horizon, risk tolerance, contributions) via CLI and interactive prompts
-- [ ] 05-02: Monte Carlo simulation engine (log-normal paths, percentile extraction)
-- [ ] 05-03: Fan chart visualization and goal-based probability analysis
+- [ ] 05-01-PLAN.md — Monte Carlo models (ProjectionConfig, ProjectionResult) and GBM simulation engine with tests
+- [ ] 05-02-PLAN.md — Service layer, Rich output rendering, and wired `project` CLI command
+- [ ] 05-03-PLAN.md — Fan chart visualization with plotext and service/output tests
 
 ### Phase 6: Contribution Modelling
 **Goal**: User can model how regular contributions and lump sum injections affect projected portfolio growth

@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-02-06)
 ## Current Position
 
 Phase: 5 of 8 (Monte Carlo & Projections)
-Plan: 2 of 3 in current phase
-Status: In progress
-Last activity: 2026-02-11 -- Completed 05-02-PLAN.md (Monte Carlo service, output & CLI)
+Plan: 3 of 3 in current phase
+Status: Phase complete
+Last activity: 2026-02-11 -- Completed 05-03-PLAN.md (Fan chart & service tests)
 
-Progress: [█████████████████░░░] ~86%
+Progress: [██████████████████░░] ~90%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 18
+- Total plans completed: 19
 - Average duration: 3 min
-- Total execution time: 50 min
+- Total execution time: 53 min
 
 **By Phase:**
 
@@ -31,10 +31,10 @@ Progress: [█████████████████░░░] ~86%
 | 02-backtesting-engine | 3/3 | 9 min | 3 min |
 | 03-risk-analytics | 5/5 | 11 min | 2.2 min |
 | 04-portfolio-optimisation | 5/5 | 12 min | 2.4 min |
-| 05-monte-carlo-projections | 2/3 | 6 min | 3 min |
+| 05-monte-carlo-projections | 3/3 | 9 min | 3 min |
 
 **Recent Trend:**
-- Last 5 plans: 04-04 (2 min), 04-05 (2 min), 05-01 (3 min), 05-02 (3 min)
+- Last 5 plans: 04-05 (2 min), 05-01 (3 min), 05-02 (3 min), 05-03 (3 min)
 - Trend: Consistent ~2-3 min per plan
 
 *Updated after each plan completion*
@@ -100,6 +100,9 @@ Recent decisions affecting current work:
 - [05-02]: Lazy import render_fan_chart in CLI for graceful degradation until Plan 03
 - [05-02]: Risk tolerance sigma scaling applied before simulation (not after)
 - [05-02]: Convert numpy arrays to Python lists in service layer for JSON-serializable ProjectionResult
+- [05-03]: 2-point plt.plot for target line (plotext 5.3.2 hline availability unconfirmed)
+- [05-03]: Patch PriceCache at data.cache module (lazy import inside service function body)
+- [05-03]: Duplicated test helpers per established cross-test isolation pattern
 
 ### Pending Todos
 
@@ -114,5 +117,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-11
-Stopped at: Completed 05-02-PLAN.md (Monte Carlo service, output & CLI)
+Stopped at: Completed 05-03-PLAN.md (Fan chart & service tests) -- Phase 5 complete
 Resume file: None

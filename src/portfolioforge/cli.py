@@ -13,12 +13,14 @@ from portfolioforge.data.cache import PriceCache
 from portfolioforge.data.fetcher import fetch_multiple
 from portfolioforge.data.validators import normalize_ticker
 from portfolioforge.models.backtest import BacktestConfig, RebalanceFrequency
+from portfolioforge.models.montecarlo import ProjectionConfig, RiskTolerance
+from portfolioforge.models.optimise import OptimiseConfig
 from portfolioforge.models.types import Currency, detect_currency, detect_market
 from portfolioforge.output.backtest import (
     render_backtest_results,
     render_cumulative_chart,
 )
-from portfolioforge.models.optimise import OptimiseConfig
+from portfolioforge.output.montecarlo import render_projection_results
 from portfolioforge.output.optimise import (
     render_efficient_frontier_chart,
     render_suggest_results,
@@ -26,6 +28,7 @@ from portfolioforge.output.optimise import (
 )
 from portfolioforge.output.risk import render_risk_analysis
 from portfolioforge.services.backtest import run_backtest
+from portfolioforge.services.montecarlo import run_projection
 from portfolioforge.services.optimise import run_suggest as _run_suggest
 from portfolioforge.services.optimise import run_validate as _run_validate
 from portfolioforge.services.risk import run_risk_analysis
@@ -425,15 +428,87 @@ def backtest(
 
 
 @app.command()
-def project() -> None:
+def project(
+    ticker: Annotated[
+        list[str],
+        typer.Option(help="Ticker:weight pairs (e.g. AAPL:0.4 MSFT:0.6)"),
+    ],
+    capital: Annotated[float, typer.Option(help="Initial capital in AUD")],
+    years: Annotated[
+        int, typer.Option(help="Projection horizon in years (1-30)")
+    ] = 10,
+    contribution: Annotated[
+        float, typer.Option(help="Monthly contribution in AUD")
+    ] = 0.0,
+    risk: Annotated[
+        str, typer.Option(help="Risk tolerance: conservative, moderate, aggressive")
+    ] = "moderate",
+    target: Annotated[
+        float | None, typer.Option(help="Target portfolio value in AUD")
+    ] = None,
+    target_years: Annotated[
+        int | None, typer.Option("--target-years", help="Years to reach target")
+    ] = None,
+    paths: Annotated[
+        int, typer.Option(help="Number of simulation paths")
+    ] = 5000,
+    period: Annotated[
+        str, typer.Option(help="Historical lookback for parameter estimation")
+    ] = f"{config.DEFAULT_PERIOD_YEARS}y",
+    seed: Annotated[
+        int | None, typer.Option(help="Random seed for reproducibility")
+    ] = None,
+    chart: Annotated[
+        bool, typer.Option("--chart/--no-chart", help="Show fan chart")
+    ] = True,
+) -> None:
     """Project future portfolio performance with Monte Carlo simulation."""
-    console.print(
-        Panel(
-            "Not yet implemented (Phase 5)",
-            title="portfolioforge project",
-            border_style="dim",
+    tickers, weights = _parse_ticker_weights(ticker)
+    period_years = _parse_period(period)
+
+    # Validate risk tolerance
+    try:
+        risk_tolerance = RiskTolerance(risk.lower())
+    except ValueError:
+        valid = ", ".join(r.value for r in RiskTolerance)
+        console.print(f"[red]Invalid risk tolerance '{risk}'. Use: {valid}[/red]")
+        raise typer.Exit(code=1) from None
+
+    # Build projection config
+    try:
+        proj_config = ProjectionConfig(
+            tickers=tickers,
+            weights=weights,
+            initial_capital=capital,
+            years=years,
+            n_paths=paths,
+            monthly_contribution=contribution,
+            risk_tolerance=risk_tolerance,
+            period_years=period_years,
+            target_amount=target,
+            target_years=target_years,
+            seed=seed,
         )
-    )
+    except ValueError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(code=1) from None
+
+    # Run projection
+    try:
+        result = run_projection(proj_config)
+    except ValueError as exc:
+        console.print(f"[red]Projection error: {exc}[/red]")
+        raise typer.Exit(code=1) from None
+
+    render_projection_results(result, console)
+
+    if chart:
+        try:
+            from portfolioforge.output.montecarlo import render_fan_chart
+
+            render_fan_chart(result)
+        except (ImportError, AttributeError):
+            console.print("[dim]Fan chart not available[/dim]")
 
 
 @app.command()

@@ -19,7 +19,11 @@ from portfolioforge.output.backtest import (
     render_cumulative_chart,
 )
 from portfolioforge.models.optimise import OptimiseConfig
-from portfolioforge.output.optimise import render_suggest_results, render_validate_results
+from portfolioforge.output.optimise import (
+    render_efficient_frontier_chart,
+    render_suggest_results,
+    render_validate_results,
+)
 from portfolioforge.output.risk import render_risk_analysis
 from portfolioforge.services.backtest import run_backtest
 from portfolioforge.services.optimise import run_suggest as _run_suggest
@@ -300,7 +304,7 @@ def suggest(
     render_suggest_results(result, console)
 
     if chart:
-        pass  # TODO: efficient frontier chart (Plan 03)
+        render_efficient_frontier_chart(result)
 
 
 @app.command()
@@ -351,7 +355,7 @@ def validate(
     render_validate_results(result, console)
 
     if chart:
-        pass  # TODO: efficient frontier chart (Plan 03)
+        render_efficient_frontier_chart(result)
 
 
 @app.command()

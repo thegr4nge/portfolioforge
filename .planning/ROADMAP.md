@@ -15,7 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Data Pipeline & CLI Skeleton** - Reliable market data fetching, caching, FX conversion, and CLI entry point
 - [x] **Phase 2: Backtesting Engine** - Historical portfolio performance analysis with benchmark comparison and terminal charts
 - [x] **Phase 3: Risk Analytics** - Comprehensive risk metrics, drawdown analysis, and correlation/sector exposure
-- [ ] **Phase 4: Portfolio Optimisation** - Mean-variance optimisation, efficient frontier, validate and suggest modes
+- [x] **Phase 4: Portfolio Optimisation** - Mean-variance optimisation, efficient frontier, validate and suggest modes
 - [ ] **Phase 5: Monte Carlo & Projections** - Forward-looking probability-weighted simulations over user's time horizon
 - [ ] **Phase 6: Contribution Modelling** - DCA, lump sum, and regular contribution strategies integrated with projections
 - [ ] **Phase 7: Stress Testing & Rebalancing** - Historical crisis scenarios and rebalancing strategy analysis
@@ -92,8 +92,8 @@ Plans:
 - [x] 04-01-PLAN.md — Optimisation engine (Ledoit-Wolf, max-Sharpe, frontier generation, scoring) and data models
 - [x] 04-02-PLAN.md — Service layer, rich output rendering, and wired validate/suggest CLI commands
 - [x] 04-03-PLAN.md — Efficient frontier chart with plotext and CLI chart wiring
-- [ ] 04-04-PLAN.md — Gap closure: Unit tests for optimisation engine and model validation
-- [ ] 04-05-PLAN.md — Gap closure: Tests for optimisation service orchestration
+- [x] 04-04-PLAN.md — Gap closure: Unit tests for optimisation engine and model validation
+- [x] 04-05-PLAN.md — Gap closure: Tests for optimisation service orchestration
 
 ### Phase 5: Monte Carlo & Projections
 **Goal**: User can see probability-weighted future outcomes for their portfolio over a 30-year horizon
@@ -170,7 +170,7 @@ Note: Phase 7 depends on Phase 3 (not Phase 6), so Phases 5-6 and Phase 7 could 
 | 1. Data Pipeline & CLI Skeleton | 3/3 | ✓ Complete | 2026-02-06 |
 | 2. Backtesting Engine | 3/3 | ✓ Complete | 2026-02-07 |
 | 3. Risk Analytics | 5/5 | ✓ Complete | 2026-02-07 |
-| 4. Portfolio Optimisation | 3/5 | Gap closure | - |
+| 4. Portfolio Optimisation | 5/5 | ✓ Complete | 2026-02-10 |
 | 5. Monte Carlo & Projections | 0/3 | Not started | - |
 | 6. Contribution Modelling | 0/3 | Not started | - |
 | 7. Stress Testing & Rebalancing | 0/3 | Not started | - |

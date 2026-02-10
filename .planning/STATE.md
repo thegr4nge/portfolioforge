@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-06)
 
 **Core value:** Make data-driven investment decisions with confidence -- see the numbers, understand the reasoning, verify against history before committing real money.
-**Current focus:** Phase 4 fully complete (all gap closure plans done). All optimisation capabilities delivered and tested. Ready for Phase 5 (Monte Carlo).
+**Current focus:** Phase 5 in progress (Monte Carlo projections). Models and engine complete (05-01). Service layer and output next.
 
 ## Current Position
 
-Phase: 4 of 8 (Portfolio Optimisation) -- COMPLETE
-Plan: 5 of 5 in current phase (includes gap closure)
-Status: Phase complete
-Last activity: 2026-02-10 -- Completed 04-05-PLAN.md (optimise service tests)
+Phase: 5 of 8 (Monte Carlo & Projections)
+Plan: 1 of 3 in current phase
+Status: In progress
+Last activity: 2026-02-11 -- Completed 05-01-PLAN.md (Monte Carlo models & engine)
 
-Progress: [██████████████░░░░░░] ~66%
+Progress: [████████████████░░░░] ~81%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 16
+- Total plans completed: 17
 - Average duration: 3 min
-- Total execution time: 44 min
+- Total execution time: 47 min
 
 **By Phase:**
 
@@ -31,10 +31,11 @@ Progress: [██████████████░░░░░░] ~66%
 | 02-backtesting-engine | 3/3 | 9 min | 3 min |
 | 03-risk-analytics | 5/5 | 11 min | 2.2 min |
 | 04-portfolio-optimisation | 5/5 | 12 min | 2.4 min |
+| 05-monte-carlo-projections | 1/3 | 3 min | 3 min |
 
 **Recent Trend:**
-- Last 5 plans: 04-02 (3 min), 04-03 (2 min), 04-04 (2 min), 04-05 (2 min)
-- Trend: Consistent ~2 min per plan
+- Last 5 plans: 04-03 (2 min), 04-04 (2 min), 04-05 (2 min), 05-01 (3 min)
+- Trend: Consistent ~2-3 min per plan
 
 *Updated after each plan completion*
 
@@ -93,6 +94,9 @@ Recent decisions affecting current work:
 - [04-03]: Diamond marker for optimal, x marker for user portfolio -- visually distinct in terminal
 - [04-05]: Duplicated test helpers rather than importing cross-test (same pattern as phase 3)
 - [04-05]: max_weight=0.60 for 2-ticker validate tests to satisfy infeasible bounds validation
+- [05-01]: Log returns for parameter estimation (not arithmetic) to avoid upward bias
+- [05-01]: Sigma scaling only for risk profiles (no mu haircut) per research recommendation
+- [05-01]: Explicit paths type annotation to satisfy mypy strict with numpy Any returns
 
 ### Pending Todos
 
@@ -106,6 +110,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-02-10
-Stopped at: Completed 04-05-PLAN.md (optimise service tests) -- Phase 4 fully complete
+Last session: 2026-02-11
+Stopped at: Completed 05-01-PLAN.md (Monte Carlo models & engine)
 Resume file: None

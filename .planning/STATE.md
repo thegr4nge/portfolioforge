@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-06)
 
 **Core value:** Make data-driven investment decisions with confidence -- see the numbers, understand the reasoning, verify against history before committing real money.
-**Current focus:** Phase 4 complete. All optimisation capabilities delivered. Ready for Phase 5 (Monte Carlo).
+**Current focus:** Phase 4 complete (including gap closure tests). All optimisation capabilities delivered and tested. Ready for Phase 5 (Monte Carlo).
 
 ## Current Position
 
 Phase: 4 of 8 (Portfolio Optimisation) -- COMPLETE
-Plan: 3 of 3 in current phase
+Plan: 4 of 4 in current phase (includes gap closure)
 Status: Phase complete
-Last activity: 2026-02-10 -- Completed 04-03-PLAN.md (efficient frontier chart)
+Last activity: 2026-02-10 -- Completed 04-04-PLAN.md (optimise engine tests)
 
-Progress: [████████████░░░░░░░░] ~58%
+Progress: [█████████████░░░░░░░] ~62%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 14
+- Total plans completed: 15
 - Average duration: 3 min
-- Total execution time: 40 min
+- Total execution time: 42 min
 
 **By Phase:**
 
@@ -30,11 +30,11 @@ Progress: [████████████░░░░░░░░] ~58%
 | 01-data-pipeline-cli-skeleton | 3/3 | 12 min | 4 min |
 | 02-backtesting-engine | 3/3 | 9 min | 3 min |
 | 03-risk-analytics | 5/5 | 11 min | 2.2 min |
-| 04-portfolio-optimisation | 3/3 | 8 min | 2.7 min |
+| 04-portfolio-optimisation | 4/4 | 10 min | 2.5 min |
 
 **Recent Trend:**
-- Last 5 plans: 03-05 (1 min), 04-01 (3 min), 04-02 (3 min), 04-03 (2 min)
-- Trend: Consistent ~3 min for feature plans
+- Last 5 plans: 04-01 (3 min), 04-02 (3 min), 04-03 (2 min), 04-04 (2 min)
+- Trend: Consistent ~2-3 min per plan
 
 *Updated after each plan completion*
 
@@ -105,5 +105,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-10
-Stopped at: Completed 04-03-PLAN.md (efficient frontier chart) -- Phase 4 complete
+Stopped at: Completed 04-04-PLAN.md (optimise engine tests) -- Phase 4 fully complete
 Resume file: None

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import plotext as plt
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
@@ -129,3 +130,43 @@ def render_suggest_results(result: OptimiseResult, console: Console) -> None:
     console.print(
         "[dim]Based on mean-variance optimisation with Ledoit-Wolf covariance shrinkage[/dim]"
     )
+
+
+def render_efficient_frontier_chart(result: OptimiseResult) -> None:
+    """Render efficient frontier chart in terminal via plotext."""
+    plt.clear_figure()
+    plt.theme("dark")
+
+    # Plot efficient frontier curve
+    vols = [p.volatility * 100 for p in result.frontier_points]
+    rets = [p.expected_return * 100 for p in result.frontier_points]
+    plt.plot(vols, rets, label="Efficient Frontier", color="blue")
+
+    # Collect all x/y values for axis limits
+    all_x = list(vols)
+    all_y = list(rets)
+
+    # Plot max-Sharpe optimal portfolio
+    opt_x = result.volatility * 100
+    opt_y = result.expected_return * 100
+    plt.scatter([opt_x], [opt_y], label="Optimal (Max Sharpe)", color="green", marker="diamond")
+    all_x.append(opt_x)
+    all_y.append(opt_y)
+
+    # Plot user's portfolio (validate mode only)
+    if result.score is not None:
+        user_x = result.score.user_volatility * 100
+        user_y = result.score.user_return * 100
+        plt.scatter([user_x], [user_y], label="Your Portfolio", color="red", marker="x")
+        all_x.append(user_x)
+        all_y.append(user_y)
+
+    # Set axis limits with padding to ensure markers are visible
+    padding = 0.5
+    plt.xlim(min(all_x) - padding, max(all_x) + padding)
+    plt.ylim(min(all_y) - padding, max(all_y) + padding)
+
+    plt.title("Efficient Frontier")
+    plt.xlabel("Volatility (%)")
+    plt.ylabel("Expected Return (%)")
+    plt.show()

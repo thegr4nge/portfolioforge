@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-06)
 
 **Core value:** Make data-driven investment decisions with confidence -- see the numbers, understand the reasoning, verify against history before committing real money.
-**Current focus:** Phase 5 in progress (Monte Carlo projections). Models and engine complete (05-01). Service layer and output next.
+**Current focus:** Phase 5 complete (Monte Carlo projections). All 3 plans done: models/engine, service/CLI, fan chart/tests. Ready for Phase 6.
 
 ## Current Position
 
 Phase: 5 of 8 (Monte Carlo & Projections)
-Plan: 1 of 3 in current phase
+Plan: 2 of 3 in current phase
 Status: In progress
-Last activity: 2026-02-11 -- Completed 05-01-PLAN.md (Monte Carlo models & engine)
+Last activity: 2026-02-11 -- Completed 05-02-PLAN.md (Monte Carlo service, output & CLI)
 
-Progress: [████████████████░░░░] ~81%
+Progress: [█████████████████░░░] ~86%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 17
+- Total plans completed: 18
 - Average duration: 3 min
-- Total execution time: 47 min
+- Total execution time: 50 min
 
 **By Phase:**
 
@@ -31,10 +31,10 @@ Progress: [████████████████░░░░] ~81%
 | 02-backtesting-engine | 3/3 | 9 min | 3 min |
 | 03-risk-analytics | 5/5 | 11 min | 2.2 min |
 | 04-portfolio-optimisation | 5/5 | 12 min | 2.4 min |
-| 05-monte-carlo-projections | 1/3 | 3 min | 3 min |
+| 05-monte-carlo-projections | 2/3 | 6 min | 3 min |
 
 **Recent Trend:**
-- Last 5 plans: 04-03 (2 min), 04-04 (2 min), 04-05 (2 min), 05-01 (3 min)
+- Last 5 plans: 04-04 (2 min), 04-05 (2 min), 05-01 (3 min), 05-02 (3 min)
 - Trend: Consistent ~2-3 min per plan
 
 *Updated after each plan completion*
@@ -97,6 +97,9 @@ Recent decisions affecting current work:
 - [05-01]: Log returns for parameter estimation (not arithmetic) to avoid upward bias
 - [05-01]: Sigma scaling only for risk profiles (no mu haircut) per research recommendation
 - [05-01]: Explicit paths type annotation to satisfy mypy strict with numpy Any returns
+- [05-02]: Lazy import render_fan_chart in CLI for graceful degradation until Plan 03
+- [05-02]: Risk tolerance sigma scaling applied before simulation (not after)
+- [05-02]: Convert numpy arrays to Python lists in service layer for JSON-serializable ProjectionResult
 
 ### Pending Todos
 
@@ -111,5 +114,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-11
-Stopped at: Completed 05-01-PLAN.md (Monte Carlo models & engine)
+Stopped at: Completed 05-02-PLAN.md (Monte Carlo service, output & CLI)
 Resume file: None

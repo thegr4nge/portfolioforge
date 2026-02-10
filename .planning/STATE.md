@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-06)
 
 **Core value:** Make data-driven investment decisions with confidence -- see the numbers, understand the reasoning, verify against history before committing real money.
-**Current focus:** Phase 4 in progress. Optimisation engine and models complete (plan 1 of 1). Ready for next phase.
+**Current focus:** Phase 4 in progress. Service layer, output, and CLI wired (plan 2 of 3). Chart rendering next.
 
 ## Current Position
 
 Phase: 4 of 8 (Portfolio Optimisation)
-Plan: 1 of 1 in current phase
-Status: Phase complete
-Last activity: 2026-02-10 -- Completed 04-01-PLAN.md (optimisation engine and models)
+Plan: 2 of 3 in current phase
+Status: In progress
+Last activity: 2026-02-10 -- Completed 04-02-PLAN.md (service layer, output, CLI wiring)
 
-Progress: [█████████░░░░░░░░░░░] ~46%
+Progress: [██████████░░░░░░░░░░] ~50%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 12
+- Total plans completed: 13
 - Average duration: 3 min
-- Total execution time: 35 min
+- Total execution time: 38 min
 
 **By Phase:**
 
@@ -30,10 +30,10 @@ Progress: [█████████░░░░░░░░░░░] ~46%
 | 01-data-pipeline-cli-skeleton | 3/3 | 12 min | 4 min |
 | 02-backtesting-engine | 3/3 | 9 min | 3 min |
 | 03-risk-analytics | 5/5 | 11 min | 2.2 min |
-| 04-portfolio-optimisation | 1/1 | 3 min | 3 min |
+| 04-portfolio-optimisation | 2/3 | 6 min | 3 min |
 
 **Recent Trend:**
-- Last 5 plans: 03-03 (3 min), 03-04 (1 min), 03-05 (1 min), 04-01 (3 min)
+- Last 5 plans: 03-04 (1 min), 03-05 (1 min), 04-01 (3 min), 04-02 (3 min)
 - Trend: Consistent ~3 min for feature plans
 
 *Updated after each plan completion*
@@ -86,6 +86,9 @@ Recent decisions affecting current work:
 - [04-01]: Fresh EfficientFrontier instance per optimisation call -- pypfopt EF is single-use
 - [04-01]: Efficiency ratio clamped to [0, 1] for clean scoring output
 - [04-01]: Broad except on frontier point generation -- gracefully skips infeasible targets
+- [04-02]: Reuse _fetch_all from backtest service for optimisation price fetching
+- [04-02]: Import run_validate/run_suggest aliased in CLI to avoid name collision with command functions
+- [04-02]: Weight comparison shows only weights > 0.1% to avoid zero-weight clutter
 
 ### Pending Todos
 
@@ -100,5 +103,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-10
-Stopped at: Completed 04-01-PLAN.md (Phase 4 optimisation engine and models)
+Stopped at: Completed 04-02-PLAN.md (service layer, output, CLI wiring)
 Resume file: None

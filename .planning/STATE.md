@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-06)
 
 **Core value:** Make data-driven investment decisions with confidence -- see the numbers, understand the reasoning, verify against history before committing real money.
-**Current focus:** Phase 4 in progress. Service layer, output, and CLI wired (plan 2 of 3). Chart rendering next.
+**Current focus:** Phase 4 complete. All optimisation capabilities delivered. Ready for Phase 5 (Monte Carlo).
 
 ## Current Position
 
-Phase: 4 of 8 (Portfolio Optimisation)
-Plan: 2 of 3 in current phase
-Status: In progress
-Last activity: 2026-02-10 -- Completed 04-02-PLAN.md (service layer, output, CLI wiring)
+Phase: 4 of 8 (Portfolio Optimisation) -- COMPLETE
+Plan: 3 of 3 in current phase
+Status: Phase complete
+Last activity: 2026-02-10 -- Completed 04-03-PLAN.md (efficient frontier chart)
 
-Progress: [██████████░░░░░░░░░░] ~50%
+Progress: [████████████░░░░░░░░] ~58%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 13
+- Total plans completed: 14
 - Average duration: 3 min
-- Total execution time: 38 min
+- Total execution time: 40 min
 
 **By Phase:**
 
@@ -30,10 +30,10 @@ Progress: [██████████░░░░░░░░░░] ~50%
 | 01-data-pipeline-cli-skeleton | 3/3 | 12 min | 4 min |
 | 02-backtesting-engine | 3/3 | 9 min | 3 min |
 | 03-risk-analytics | 5/5 | 11 min | 2.2 min |
-| 04-portfolio-optimisation | 2/3 | 6 min | 3 min |
+| 04-portfolio-optimisation | 3/3 | 8 min | 2.7 min |
 
 **Recent Trend:**
-- Last 5 plans: 03-04 (1 min), 03-05 (1 min), 04-01 (3 min), 04-02 (3 min)
+- Last 5 plans: 03-05 (1 min), 04-01 (3 min), 04-02 (3 min), 04-03 (2 min)
 - Trend: Consistent ~3 min for feature plans
 
 *Updated after each plan completion*
@@ -89,6 +89,8 @@ Recent decisions affecting current work:
 - [04-02]: Reuse _fetch_all from backtest service for optimisation price fetching
 - [04-02]: Import run_validate/run_suggest aliased in CLI to avoid name collision with command functions
 - [04-02]: Weight comparison shows only weights > 0.1% to avoid zero-weight clutter
+- [04-03]: Axis padding of 0.5 percentage points ensures single-point scatter markers are visible
+- [04-03]: Diamond marker for optimal, x marker for user portfolio -- visually distinct in terminal
 
 ### Pending Todos
 
@@ -103,5 +105,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-10
-Stopped at: Completed 04-02-PLAN.md (service layer, output, CLI wiring)
+Stopped at: Completed 04-03-PLAN.md (efficient frontier chart) -- Phase 4 complete
 Resume file: None

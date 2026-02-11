@@ -47,8 +47,9 @@ def simulate_gbm(
     n_paths: int,
     monthly_contribution: float = 0.0,
     seed: int | None = None,
+    contributions: np.ndarray | None = None,
 ) -> np.ndarray:
-    """Run Monte Carlo GBM simulation with optional monthly contributions.
+    """Run Monte Carlo GBM simulation with optional contributions.
 
     Uses geometric (log-normal) returns with Ito correction.
     Monthly time steps (dt = 1/12).
@@ -61,6 +62,8 @@ def simulate_gbm(
         n_paths: Number of simulation paths.
         monthly_contribution: Fixed monthly addition (beginning-of-period).
         seed: RNG seed for reproducibility.
+        contributions: Optional per-month contribution array of shape
+            (years * 12,). Overrides monthly_contribution when provided.
 
     Returns:
         Array of shape (n_paths, years * 12) with portfolio values.
@@ -73,15 +76,24 @@ def simulate_gbm(
     drift = (mu - 0.5 * sigma**2) * dt
     diffusion = sigma * np.sqrt(dt) * z
 
-    if monthly_contribution == 0.0:
+    # Resolve contribution array
+    contrib: np.ndarray | None = None
+    if contributions is not None:
+        contrib = contributions
+    elif monthly_contribution > 0.0:
+        # Backward-compat: original code did not add contribution at step 0
+        contrib = np.full(n_steps, monthly_contribution)
+        contrib[0] = 0.0
+
+    if contrib is None:
         log_returns = drift + diffusion
         paths: np.ndarray = initial_value * np.exp(np.cumsum(log_returns, axis=1))
     else:
         growth = np.exp(drift + diffusion)
         paths = np.zeros((n_paths, n_steps))
-        paths[:, 0] = initial_value * growth[:, 0]
+        paths[:, 0] = (initial_value + contrib[0]) * growth[:, 0]
         for t in range(1, n_steps):
-            paths[:, t] = (paths[:, t - 1] + monthly_contribution) * growth[:, t]
+            paths[:, t] = (paths[:, t - 1] + contrib[t]) * growth[:, t]
 
     return paths
 

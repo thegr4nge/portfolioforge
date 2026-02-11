@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-06)
 
 **Core value:** Make data-driven investment decisions with confidence -- see the numbers, understand the reasoning, verify against history before committing real money.
-**Current focus:** Phase 5 complete (Monte Carlo projections). All 3 plans done: models/engine, service/CLI, fan chart/tests. Ready for Phase 6.
+**Current focus:** Phase 6 in progress (Contribution Modelling). Plan 01 done: models/engine. Plans 02-03 remaining (service/CLI, tests).
 
 ## Current Position
 
-Phase: 5 of 8 (Monte Carlo & Projections)
-Plan: 3 of 3 in current phase
-Status: Phase complete
-Last activity: 2026-02-11 -- Completed 05-03-PLAN.md (Fan chart & service tests)
+Phase: 6 of 8 (Contribution Modelling)
+Plan: 1 of 3 in current phase
+Status: In progress
+Last activity: 2026-02-11 -- Completed 06-01-PLAN.md (Contribution models & engine)
 
-Progress: [██████████████████░░] ~90%
+Progress: [███████████████████░] ~91%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 19
+- Total plans completed: 20
 - Average duration: 3 min
-- Total execution time: 53 min
+- Total execution time: 55 min
 
 **By Phase:**
 
@@ -32,9 +32,10 @@ Progress: [██████████████████░░] ~90%
 | 03-risk-analytics | 5/5 | 11 min | 2.2 min |
 | 04-portfolio-optimisation | 5/5 | 12 min | 2.4 min |
 | 05-monte-carlo-projections | 3/3 | 9 min | 3 min |
+| 06-contribution-modelling | 1/3 | 2 min | 2 min |
 
 **Recent Trend:**
-- Last 5 plans: 04-05 (2 min), 05-01 (3 min), 05-02 (3 min), 05-03 (3 min)
+- Last 5 plans: 05-01 (3 min), 05-02 (3 min), 05-03 (3 min), 06-01 (2 min)
 - Trend: Consistent ~2-3 min per plan
 
 *Updated after each plan completion*
@@ -103,6 +104,9 @@ Recent decisions affecting current work:
 - [05-03]: 2-point plt.plot for target line (plotext 5.3.2 hline availability unconfirmed)
 - [05-03]: Patch PriceCache at data.cache module (lazy import inside service function body)
 - [05-03]: Duplicated test helpers per established cross-test isolation pattern
+- [06-01]: Backward compat: monthly_contribution sets contrib[0]=0 to match original step-0 behavior
+- [06-01]: New contributions array applies at all steps including step 0 (beginning-of-period)
+- [06-01]: Out-of-range lump sum months silently skipped (not error)
 
 ### Pending Todos
 
@@ -117,5 +121,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-11
-Stopped at: Completed 05-03-PLAN.md (Fan chart & service tests) -- Phase 5 complete
+Stopped at: Completed 06-01-PLAN.md (Contribution models & engine)
 Resume file: None

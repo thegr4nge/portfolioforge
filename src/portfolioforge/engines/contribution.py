@@ -69,7 +69,6 @@ def compute_dca_vs_lump(
     """
     # Compute daily portfolio returns
     daily_returns = (prices.pct_change().dropna() * weights).sum(axis=1)
-    dates = daily_returns.index
 
     # Lump sum: invest everything on day 1
     cum_factors = (1 + daily_returns).cumprod()

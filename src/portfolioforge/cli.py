@@ -512,12 +512,51 @@ def project(
 
 
 @app.command()
-def compare() -> None:
-    """Compare investment strategies (DCA vs lump sum)."""
-    console.print(
-        Panel(
-            "Not yet implemented (Phase 7)",
-            title="portfolioforge compare",
-            border_style="dim",
+def compare(
+    ticker: Annotated[
+        list[str],
+        typer.Option(help="Ticker:weight pairs (e.g. AAPL:0.4 MSFT:0.6)"),
+    ],
+    capital: Annotated[float, typer.Option(help="Total capital to deploy in AUD")],
+    dca_months: Annotated[
+        int, typer.Option("--dca-months", help="DCA deployment period in months")
+    ] = 12,
+    period: Annotated[
+        str,
+        typer.Option(help="Historical lookback period (e.g. 10y, 5y)"),
+    ] = f"{config.DEFAULT_PERIOD_YEARS}y",
+    chart: Annotated[
+        bool,
+        typer.Option("--chart/--no-chart", help="Show comparison chart"),
+    ] = True,
+) -> None:
+    """Compare DCA vs lump sum deployment strategies historically."""
+    from portfolioforge.models.contribution import CompareConfig
+    from portfolioforge.output.contribution import render_compare_chart, render_compare_results
+    from portfolioforge.services.contribution import run_compare
+
+    period_years = _parse_period(period)
+    tickers, weights = _parse_ticker_weights(ticker)
+
+    try:
+        compare_config = CompareConfig(
+            tickers=tickers,
+            weights=weights,
+            total_capital=capital,
+            dca_months=dca_months,
+            period_years=period_years,
         )
-    )
+    except ValueError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(code=1) from None
+
+    try:
+        result = run_compare(compare_config)
+    except ValueError as exc:
+        console.print(f"[red]Comparison error: {exc}[/red]")
+        raise typer.Exit(code=1) from None
+
+    render_compare_results(result, console)
+
+    if chart:
+        render_compare_chart(result)

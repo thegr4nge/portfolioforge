@@ -121,12 +121,12 @@ Plans:
   2. User can model future lump sum injections at specified dates and see their impact on projections
   3. DCA vs lump sum comparison shows the historical outcome difference for the user's specific capital amount
   4. Contribution schedule integrates with Monte Carlo projections so simulated paths include regular additions
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 06-01: Regular contribution and lump sum modelling engine
-- [ ] 06-02: DCA vs lump sum historical comparison
-- [ ] 06-03: Integration of contributions with Monte Carlo projections
+- [ ] 06-01-PLAN.md — Contribution models and engine (schedule array builder, simulate_gbm update)
+- [ ] 06-02-PLAN.md — DCA vs lump sum historical comparison (engine, service, output, CLI compare command)
+- [ ] 06-03-PLAN.md — Wire contributions into project CLI/service/output and comprehensive tests
 
 ### Phase 7: Stress Testing & Rebalancing
 **Goal**: User can see how their portfolio would survive historical crises and what rebalancing strategy minimizes drift

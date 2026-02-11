@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-06)
 
 **Core value:** Make data-driven investment decisions with confidence -- see the numbers, understand the reasoning, verify against history before committing real money.
-**Current focus:** Phase 6 in progress (Contribution Modelling). Plan 01 done: models/engine. Plans 02-03 remaining (service/CLI, tests).
+**Current focus:** Phase 6 in progress (Contribution Modelling). Plans 01-02 done: models/engine/service/CLI. Plan 03 remaining (tests).
 
 ## Current Position
 
 Phase: 6 of 8 (Contribution Modelling)
-Plan: 1 of 3 in current phase
+Plan: 2 of 3 in current phase
 Status: In progress
-Last activity: 2026-02-11 -- Completed 06-01-PLAN.md (Contribution models & engine)
+Last activity: 2026-02-12 -- Completed 06-02-PLAN.md (DCA vs lump sum comparison)
 
-Progress: [███████████████████░] ~91%
+Progress: [████████████████████] ~95%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 20
+- Total plans completed: 21
 - Average duration: 3 min
-- Total execution time: 55 min
+- Total execution time: 59 min
 
 **By Phase:**
 
@@ -32,11 +32,11 @@ Progress: [███████████████████░] ~91%
 | 03-risk-analytics | 5/5 | 11 min | 2.2 min |
 | 04-portfolio-optimisation | 5/5 | 12 min | 2.4 min |
 | 05-monte-carlo-projections | 3/3 | 9 min | 3 min |
-| 06-contribution-modelling | 1/3 | 2 min | 2 min |
+| 06-contribution-modelling | 2/3 | 6 min | 3 min |
 
 **Recent Trend:**
-- Last 5 plans: 05-01 (3 min), 05-02 (3 min), 05-03 (3 min), 06-01 (2 min)
-- Trend: Consistent ~2-3 min per plan
+- Last 5 plans: 05-02 (3 min), 05-03 (3 min), 06-01 (2 min), 06-02 (4 min)
+- Trend: Consistent ~2-4 min per plan
 
 *Updated after each plan completion*
 
@@ -107,6 +107,9 @@ Recent decisions affecting current work:
 - [06-01]: Backward compat: monthly_contribution sets contrib[0]=0 to match original step-0 behavior
 - [06-01]: New contributions array applies at all steps including step 0 (beginning-of-period)
 - [06-01]: Out-of-range lump sum months silently skipped (not error)
+- [06-02]: Lazy imports in CLI compare command (same pattern as project command)
+- [06-02]: Holding months derived from available data minus dca_months for max rolling windows
+- [06-02]: Uninvested DCA capital earns 0% (conservative assumption, documented in output)
 
 ### Pending Todos
 
@@ -120,6 +123,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-02-11
-Stopped at: Completed 06-01-PLAN.md (Contribution models & engine)
+Last session: 2026-02-12
+Stopped at: Completed 06-02-PLAN.md (DCA vs lump sum comparison)
 Resume file: None

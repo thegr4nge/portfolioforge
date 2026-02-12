@@ -138,12 +138,12 @@ Plans:
   3. Tool shows portfolio drift from target allocation over any backtest period
   4. Tool recommends a rebalancing strategy (calendar vs threshold-based) with a concrete trade list
   5. Tool compares the impact of different rebalancing frequencies on historical returns
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 07-01: Historical crisis scenario engine (built-in scenarios + custom)
-- [ ] 07-02: Portfolio drift tracking and rebalancing recommendations
-- [ ] 07-03: Rebalancing frequency comparison and trade list generation
+- [ ] 07-01-PLAN.md — Stress testing: models, engine, service, output, CLI command, and tests (STRESS-01/02/03)
+- [ ] 07-02-PLAN.md — Rebalancing engine: drift tracking, trade list, threshold rebalancing, strategy comparison (REBAL-01/02/03)
+- [ ] 07-03-PLAN.md — Rebalancing service, output rendering, CLI rebalance command, and tests
 
 ### Phase 8: Explanations & Export
 **Goal**: Every number in the tool is accompanied by a plain-English explanation, and all analysis is persistable and exportable

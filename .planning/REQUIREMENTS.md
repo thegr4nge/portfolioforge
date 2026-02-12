@@ -132,10 +132,10 @@
 | MC-03 | Phase 5 | Complete |
 | MC-04 | Phase 5 | Complete |
 | MC-05 | Phase 5 | Complete |
-| CONT-01 | Phase 6 | Pending |
-| CONT-02 | Phase 6 | Pending |
-| CONT-03 | Phase 6 | Pending |
-| CONT-04 | Phase 6 | Pending |
+| CONT-01 | Phase 6 | Complete |
+| CONT-02 | Phase 6 | Complete |
+| CONT-03 | Phase 6 | Complete |
+| CONT-04 | Phase 6 | Complete |
 | STRESS-01 | Phase 7 | Pending |
 | STRESS-02 | Phase 7 | Pending |
 | STRESS-03 | Phase 7 | Pending |

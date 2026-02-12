@@ -17,7 +17,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 3: Risk Analytics** - Comprehensive risk metrics, drawdown analysis, and correlation/sector exposure
 - [x] **Phase 4: Portfolio Optimisation** - Mean-variance optimisation, efficient frontier, validate and suggest modes
 - [x] **Phase 5: Monte Carlo & Projections** - Forward-looking probability-weighted simulations over user's time horizon
-- [ ] **Phase 6: Contribution Modelling** - DCA, lump sum, and regular contribution strategies integrated with projections
+- [x] **Phase 6: Contribution Modelling** - DCA, lump sum, and regular contribution strategies integrated with projections
 - [ ] **Phase 7: Stress Testing & Rebalancing** - Historical crisis scenarios and rebalancing strategy analysis
 - [ ] **Phase 8: Explanations & Export** - Plain-English explanations, save/load portfolios, export results
 
@@ -124,9 +124,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 06-01-PLAN.md — Contribution models and engine (schedule array builder, simulate_gbm update)
-- [ ] 06-02-PLAN.md — DCA vs lump sum historical comparison (engine, service, output, CLI compare command)
-- [ ] 06-03-PLAN.md — Wire contributions into project CLI/service/output and comprehensive tests
+- [x] 06-01-PLAN.md — Contribution models and engine (schedule array builder, simulate_gbm update)
+- [x] 06-02-PLAN.md — DCA vs lump sum historical comparison (engine, service, output, CLI compare command)
+- [x] 06-03-PLAN.md — Wire contributions into project CLI/service/output and comprehensive tests
 
 ### Phase 7: Stress Testing & Rebalancing
 **Goal**: User can see how their portfolio would survive historical crises and what rebalancing strategy minimizes drift
@@ -172,6 +172,6 @@ Note: Phase 7 depends on Phase 3 (not Phase 6), so Phases 5-6 and Phase 7 could 
 | 3. Risk Analytics | 5/5 | ✓ Complete | 2026-02-07 |
 | 4. Portfolio Optimisation | 5/5 | ✓ Complete | 2026-02-10 |
 | 5. Monte Carlo & Projections | 3/3 | ✓ Complete | 2026-02-11 |
-| 6. Contribution Modelling | 0/3 | Not started | - |
+| 6. Contribution Modelling | 3/3 | ✓ Complete | 2026-02-12 |
 | 7. Stress Testing & Rebalancing | 0/3 | Not started | - |
 | 8. Explanations & Export | 0/2 | Not started | - |

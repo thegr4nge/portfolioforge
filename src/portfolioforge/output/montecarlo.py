@@ -28,7 +28,12 @@ def render_projection_results(result: ProjectionResult, console: Console) -> Non
 
     params_table.add_row("Initial Capital", f"${result.initial_capital:,.0f}")
     params_table.add_row("Time Horizon", f"{result.years} years")
-    if result.monthly_contribution > 0:
+    if result.contribution_summary:
+        params_table.add_row("Contribution Plan", result.contribution_summary)
+        params_table.add_row(
+            "Total Contributed", f"${result.total_contributed:,.0f}"
+        )
+    elif result.monthly_contribution > 0:
         params_table.add_row(
             "Monthly Contribution", f"${result.monthly_contribution:,.0f}"
         )

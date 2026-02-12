@@ -6,6 +6,8 @@ from enum import Enum
 
 from pydantic import BaseModel, ConfigDict, model_validator
 
+from portfolioforge.models.contribution import ContributionSchedule
+
 
 class RiskTolerance(str, Enum):
     """User risk tolerance level for projection simulations."""
@@ -24,6 +26,7 @@ class ProjectionConfig(BaseModel):
     years: int
     n_paths: int = 5000
     monthly_contribution: float = 0.0
+    contribution_schedule: ContributionSchedule | None = None
     risk_tolerance: RiskTolerance = RiskTolerance.MODERATE
     period_years: int = 10
     target_amount: float | None = None
@@ -31,7 +34,7 @@ class ProjectionConfig(BaseModel):
     seed: int | None = None
 
     @model_validator(mode="after")
-    def _validate_config(self) -> "ProjectionConfig":
+    def _validate_config(self) -> ProjectionConfig:
         if len(self.tickers) != len(self.weights):
             msg = (
                 f"tickers and weights must have same length, "
@@ -91,4 +94,6 @@ class ProjectionResult(BaseModel):
     sigma: float
     percentiles: dict[int, list[float]]
     final_values: dict[int, float]
+    total_contributed: float = 0.0
+    contribution_summary: str = ""
     goal: GoalAnalysis | None = None

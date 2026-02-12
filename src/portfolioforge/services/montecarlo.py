@@ -44,16 +44,52 @@ def run_projection(config: ProjectionConfig) -> ProjectionResult:
     # 4. Apply risk tolerance sigma scaling
     sigma_adjusted = sigma * RISK_PROFILES[config.risk_tolerance.value]["sigma_scale"]
 
-    # 5. Simulate GBM paths
-    paths = simulate_gbm(
-        config.initial_capital,
-        mu,
-        sigma_adjusted,
-        config.years,
-        config.n_paths,
-        config.monthly_contribution,
-        config.seed,
-    )
+    # 5. Build contribution array (if schedule provided) and simulate GBM
+    total_contributed = 0.0
+    contribution_summary = ""
+
+    schedule = config.contribution_schedule
+    if schedule is not None and schedule.has_contributions:
+        from portfolioforge.engines.contribution import build_contribution_array
+
+        contrib_array = build_contribution_array(
+            config.years,
+            schedule.regular_amount,
+            schedule.frequency,
+            schedule.lump_sums,
+        )
+        total_contributed = float(contrib_array.sum())
+
+        # Build human-readable summary
+        summary_parts: list[str] = []
+        if schedule.regular_amount > 0:
+            monthly_eq = schedule.monthly_equivalent
+            summary_parts.append(
+                f"${monthly_eq:,.0f}/month ({schedule.frequency.value})"
+            )
+        for ls in schedule.lump_sums:
+            summary_parts.append(f"${ls.amount:,.0f} at month {ls.month}")
+        contribution_summary = " + ".join(summary_parts)
+
+        paths = simulate_gbm(
+            config.initial_capital,
+            mu,
+            sigma_adjusted,
+            config.years,
+            config.n_paths,
+            seed=config.seed,
+            contributions=contrib_array,
+        )
+    else:
+        paths = simulate_gbm(
+            config.initial_capital,
+            mu,
+            sigma_adjusted,
+            config.years,
+            config.n_paths,
+            config.monthly_contribution,
+            config.seed,
+        )
 
     # 6. Extract percentile bands
     percentiles = extract_percentiles(paths)
@@ -100,5 +136,7 @@ def run_projection(config: ProjectionConfig) -> ProjectionResult:
         sigma=sigma_adjusted,
         percentiles=percentiles_list,
         final_values=final_values,
+        total_contributed=total_contributed,
+        contribution_summary=contribution_summary,
         goal=goal,
     )

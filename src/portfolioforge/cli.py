@@ -438,8 +438,16 @@ def project(
         int, typer.Option(help="Projection horizon in years (1-30)")
     ] = 10,
     contribution: Annotated[
-        float, typer.Option(help="Monthly contribution in AUD")
+        float, typer.Option(help="Regular contribution amount in AUD")
     ] = 0.0,
+    frequency: Annotated[
+        str,
+        typer.Option(help="Contribution frequency: weekly, fortnightly, monthly"),
+    ] = "monthly",
+    lump_sum: Annotated[
+        list[str] | None,
+        typer.Option("--lump-sum", help="Lump sum as MONTH:AMOUNT (e.g. 12:5000). Repeatable."),
+    ] = None,
     risk: Annotated[
         str, typer.Option(help="Risk tolerance: conservative, moderate, aggressive")
     ] = "moderate",
@@ -474,6 +482,50 @@ def project(
         console.print(f"[red]Invalid risk tolerance '{risk}'. Use: {valid}[/red]")
         raise typer.Exit(code=1) from None
 
+    # Build contribution schedule if contribution or lump sums provided
+    from portfolioforge.models.contribution import (
+        ContributionFrequency,
+        ContributionSchedule,
+        LumpSum,
+    )
+
+    # Validate frequency
+    try:
+        contrib_freq = ContributionFrequency(frequency.lower())
+    except ValueError:
+        valid = ", ".join(f.value for f in ContributionFrequency)
+        console.print(f"[red]Invalid frequency '{frequency}'. Use: {valid}[/red]")
+        raise typer.Exit(code=1) from None
+
+    # Parse lump sum options
+    parsed_lump_sums: list[LumpSum] = []
+    if lump_sum:
+        for ls_str in lump_sum:
+            if ":" not in ls_str:
+                console.print(
+                    f"[red]Invalid lump-sum format '{ls_str}'. Use MONTH:AMOUNT (e.g. 12:5000)[/red]"
+                )
+                raise typer.Exit(code=1)
+            parts = ls_str.split(":", maxsplit=1)
+            try:
+                month = int(parts[0].strip())
+                amount = float(parts[1].strip())
+            except ValueError:
+                console.print(
+                    f"[red]Invalid lump-sum format '{ls_str}'. Use MONTH:AMOUNT (e.g. 12:5000)[/red]"
+                )
+                raise typer.Exit(code=1) from None
+            parsed_lump_sums.append(LumpSum(month=month, amount=amount))
+
+    # Build schedule if contributions are configured
+    contrib_schedule: ContributionSchedule | None = None
+    if contribution > 0 or parsed_lump_sums:
+        contrib_schedule = ContributionSchedule(
+            regular_amount=contribution,
+            frequency=contrib_freq,
+            lump_sums=parsed_lump_sums,
+        )
+
     # Build projection config
     try:
         proj_config = ProjectionConfig(
@@ -482,7 +534,8 @@ def project(
             initial_capital=capital,
             years=years,
             n_paths=paths,
-            monthly_contribution=contribution,
+            monthly_contribution=0.0 if contrib_schedule else contribution,
+            contribution_schedule=contrib_schedule,
             risk_tolerance=risk_tolerance,
             period_years=period_years,
             target_amount=target,
@@ -532,7 +585,10 @@ def compare(
 ) -> None:
     """Compare DCA vs lump sum deployment strategies historically."""
     from portfolioforge.models.contribution import CompareConfig
-    from portfolioforge.output.contribution import render_compare_chart, render_compare_results
+    from portfolioforge.output.contribution import (
+        render_compare_chart,
+        render_compare_results,
+    )
     from portfolioforge.services.contribution import run_compare
 
     period_years = _parse_period(period)

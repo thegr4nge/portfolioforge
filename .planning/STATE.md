@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-06)
 
 **Core value:** Make data-driven investment decisions with confidence -- see the numbers, understand the reasoning, verify against history before committing real money.
-**Current focus:** Phase 6 in progress (Contribution Modelling). Plans 01-02 done: models/engine/service/CLI. Plan 03 remaining (tests).
+**Current focus:** Phase 6 complete (Contribution Modelling). All 3 plans done: models/engine/service/CLI/tests. Ready for Phase 7.
 
 ## Current Position
 
 Phase: 6 of 8 (Contribution Modelling)
-Plan: 2 of 3 in current phase
-Status: In progress
-Last activity: 2026-02-12 -- Completed 06-02-PLAN.md (DCA vs lump sum comparison)
+Plan: 3 of 3 in current phase
+Status: Phase complete
+Last activity: 2026-02-12 -- Completed 06-03-PLAN.md (wire contributions and tests)
 
-Progress: [████████████████████] ~95%
+Progress: [██████████████████████] ~96%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 21
+- Total plans completed: 22
 - Average duration: 3 min
-- Total execution time: 59 min
+- Total execution time: 62 min
 
 **By Phase:**
 
@@ -32,10 +32,10 @@ Progress: [████████████████████] ~95%
 | 03-risk-analytics | 5/5 | 11 min | 2.2 min |
 | 04-portfolio-optimisation | 5/5 | 12 min | 2.4 min |
 | 05-monte-carlo-projections | 3/3 | 9 min | 3 min |
-| 06-contribution-modelling | 2/3 | 6 min | 3 min |
+| 06-contribution-modelling | 3/3 | 9 min | 3 min |
 
 **Recent Trend:**
-- Last 5 plans: 05-02 (3 min), 05-03 (3 min), 06-01 (2 min), 06-02 (4 min)
+- Last 5 plans: 05-03 (3 min), 06-01 (2 min), 06-02 (4 min), 06-03 (3 min)
 - Trend: Consistent ~2-4 min per plan
 
 *Updated after each plan completion*
@@ -110,6 +110,9 @@ Recent decisions affecting current work:
 - [06-02]: Lazy imports in CLI compare command (same pattern as project command)
 - [06-02]: Holding months derived from available data minus dca_months for max rolling windows
 - [06-02]: Uninvested DCA capital earns 0% (conservative assumption, documented in output)
+- [06-03]: contribution_schedule on ProjectionConfig replaces monthly_contribution when present (no double-counting)
+- [06-03]: Backward compat: contributions array with [0]=0 matches monthly_contribution step-0 behavior
+- [06-03]: Duplicated test helpers per established cross-test isolation pattern
 
 ### Pending Todos
 
@@ -124,5 +127,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-12
-Stopped at: Completed 06-02-PLAN.md (DCA vs lump sum comparison)
+Stopped at: Completed 06-03-PLAN.md (wire contributions and tests) -- Phase 6 complete
 Resume file: None

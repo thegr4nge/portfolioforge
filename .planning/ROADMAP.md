@@ -18,7 +18,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 4: Portfolio Optimisation** - Mean-variance optimisation, efficient frontier, validate and suggest modes
 - [x] **Phase 5: Monte Carlo & Projections** - Forward-looking probability-weighted simulations over user's time horizon
 - [x] **Phase 6: Contribution Modelling** - DCA, lump sum, and regular contribution strategies integrated with projections
-- [ ] **Phase 7: Stress Testing & Rebalancing** - Historical crisis scenarios and rebalancing strategy analysis
+- [x] **Phase 7: Stress Testing & Rebalancing** - Historical crisis scenarios and rebalancing strategy analysis
 - [ ] **Phase 8: Explanations & Export** - Plain-English explanations, save/load portfolios, export results
 
 ## Phase Details
@@ -141,9 +141,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 07-01-PLAN.md — Stress testing: models, engine, service, output, CLI command, and tests (STRESS-01/02/03)
-- [ ] 07-02-PLAN.md — Rebalancing engine: drift tracking, trade list, threshold rebalancing, strategy comparison (REBAL-01/02/03)
-- [ ] 07-03-PLAN.md — Rebalancing service, output rendering, CLI rebalance command, and tests
+- [x] 07-01-PLAN.md — Stress testing: models, engine, service, output, CLI command, and tests (STRESS-01/02/03)
+- [x] 07-02-PLAN.md — Rebalancing engine: drift tracking, trade list, threshold rebalancing, strategy comparison (REBAL-01/02/03)
+- [x] 07-03-PLAN.md — Rebalancing service, output rendering, CLI rebalance command, and tests
 
 ### Phase 8: Explanations & Export
 **Goal**: Every number in the tool is accompanied by a plain-English explanation, and all analysis is persistable and exportable
@@ -173,5 +173,5 @@ Note: Phase 7 depends on Phase 3 (not Phase 6), so Phases 5-6 and Phase 7 could 
 | 4. Portfolio Optimisation | 5/5 | ✓ Complete | 2026-02-10 |
 | 5. Monte Carlo & Projections | 3/3 | ✓ Complete | 2026-02-11 |
 | 6. Contribution Modelling | 3/3 | ✓ Complete | 2026-02-12 |
-| 7. Stress Testing & Rebalancing | 0/3 | Not started | - |
+| 7. Stress Testing & Rebalancing | 3/3 | ✓ Complete | 2026-02-17 |
 | 8. Explanations & Export | 0/2 | Not started | - |

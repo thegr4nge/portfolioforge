@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-06)
 
 **Core value:** Make data-driven investment decisions with confidence -- see the numbers, understand the reasoning, verify against history before committing real money.
-**Current focus:** Phase 7 in progress (Stress Testing & Rebalancing). Plans 01-02 complete: stress testing + rebalancing engine. Plan 03 (wiring) remains.
+**Current focus:** Phase 7 complete (Stress Testing & Rebalancing). All 3 plans done. Ready for Phase 8 (Polish & Reporting).
 
 ## Current Position
 
 Phase: 7 of 8 (Stress Testing & Rebalancing)
-Plan: 2 of 3 in current phase
-Status: In progress
-Last activity: 2026-02-13 -- Completed 07-02-PLAN.md (rebalancing engine)
+Plan: 3 of 3 in current phase
+Status: Phase complete
+Last activity: 2026-02-13 -- Completed 07-03-PLAN.md (rebalancing wiring)
 
-Progress: [████████████████████████░] ~96%
+Progress: [█████████████████████████] ~100%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 24
+- Total plans completed: 25
 - Average duration: 3 min
-- Total execution time: 68 min
+- Total execution time: 72 min
 
 **By Phase:**
 
@@ -33,10 +33,10 @@ Progress: [███████████████████████
 | 04-portfolio-optimisation | 5/5 | 12 min | 2.4 min |
 | 05-monte-carlo-projections | 3/3 | 9 min | 3 min |
 | 06-contribution-modelling | 3/3 | 9 min | 3 min |
-| 07-stress-testing-rebalancing | 2/3 | 6 min | 3 min |
+| 07-stress-testing-rebalancing | 3/3 | 10 min | 3.3 min |
 
 **Recent Trend:**
-- Last 5 plans: 06-02 (4 min), 06-03 (3 min), 07-01 (3 min), 07-02 (3 min)
+- Last 5 plans: 06-03 (3 min), 07-01 (3 min), 07-02 (3 min), 07-03 (4 min)
 - Trend: Consistent ~2-4 min per plan
 
 *Updated after each plan completion*
@@ -120,6 +120,9 @@ Recent decisions affecting current work:
 - [07-02]: Added strict=True to zip() calls to satisfy ruff B905 (ensures length mismatch detection)
 - [07-02]: Threshold drift check before applying daily returns (pre-trade detection)
 - [07-02]: Rebalance engine composes backtest engine primitives (compute_cumulative_returns, compute_metrics)
+- [07-03]: Lazy imports in CLI rebalance command (same pattern as stress-test, project, compare)
+- [07-03]: CliRunner for CLI tests (not subprocess) matching existing test_cli.py pattern
+- [07-03]: Import _color_pct from output/backtest for consistent formatting across output modules
 
 ### Pending Todos
 
@@ -134,5 +137,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-13
-Stopped at: Completed 07-02-PLAN.md (rebalancing engine)
+Stopped at: Completed 07-03-PLAN.md (rebalancing wiring) -- Phase 7 complete
 Resume file: None

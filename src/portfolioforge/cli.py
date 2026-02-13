@@ -720,3 +720,51 @@ def stress_test(
         raise typer.Exit(code=1) from None
 
     render_stress_results(result, console)
+
+
+@app.command()
+def rebalance(
+    ticker: Annotated[
+        list[str],
+        typer.Option(help="Ticker:weight pairs (e.g. AAPL:0.60 MSFT:0.40)"),
+    ],
+    period: Annotated[
+        str,
+        typer.Option(help="Lookback period (e.g. 10y, 5y)"),
+    ] = f"{config.DEFAULT_PERIOD_YEARS}y",
+    threshold: Annotated[
+        float,
+        typer.Option(help="Drift threshold for threshold-based strategy (e.g. 0.05 for 5%)"),
+    ] = 0.05,
+    value: Annotated[
+        float | None,
+        typer.Option(help="Portfolio value in AUD for dollar trade amounts"),
+    ] = None,
+) -> None:
+    """Analyse portfolio drift and compare rebalancing strategies."""
+    from portfolioforge.models.rebalance import RebalanceConfig
+    from portfolioforge.output.rebalance import render_rebalance_results
+    from portfolioforge.services.rebalance import run_rebalance_analysis
+
+    period_years = _parse_period(period)
+    tickers, weights = _parse_ticker_weights(ticker)
+
+    try:
+        rebal_config = RebalanceConfig(
+            tickers=tickers,
+            weights=weights,
+            period_years=period_years,
+            threshold=threshold,
+            portfolio_value=value,
+        )
+    except ValueError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(code=1) from None
+
+    try:
+        result = run_rebalance_analysis(rebal_config)
+    except ValueError as exc:
+        console.print(f"[red]Rebalance error: {exc}[/red]")
+        raise typer.Exit(code=1) from None
+
+    render_rebalance_results(result, console)

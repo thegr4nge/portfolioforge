@@ -28,7 +28,7 @@ class StressConfig(BaseModel):
     period_years: int = 20
 
     @model_validator(mode="after")
-    def _validate_tickers_weights(self) -> "StressConfig":
+    def _validate_tickers_weights(self) -> StressConfig:
         if len(self.tickers) != len(self.weights):
             msg = (
                 f"tickers and weights must have same length, "

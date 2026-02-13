@@ -616,3 +616,107 @@ def compare(
 
     if chart:
         render_compare_chart(result)
+
+
+@app.command(name="stress-test")
+def stress_test(
+    ticker: Annotated[
+        list[str],
+        typer.Option(help="Ticker:weight pairs (e.g. AAPL:0.60 MSFT:0.40)"),
+    ],
+    scenario: Annotated[
+        list[str] | None,
+        typer.Option(help="Scenarios: gfc, covid, rates"),
+    ] = None,
+    custom: Annotated[
+        str | None,
+        typer.Option(help="Custom shock: SECTOR:-0.40 e.g. Technology:-0.40"),
+    ] = None,
+    period: Annotated[
+        str,
+        typer.Option(help="Lookback period (e.g. 20y, 10y)"),
+    ] = f"{config.DEFAULT_PERIOD_YEARS}y",
+) -> None:
+    """Stress test a portfolio against historical crises or custom shocks."""
+    from portfolioforge.engines.stress import HISTORICAL_SCENARIOS
+    from portfolioforge.models.stress import StressConfig, StressScenario
+    from portfolioforge.output.stress import render_stress_results
+    from portfolioforge.services.stress import run_stress_test
+
+    period_years = _parse_period(period)
+    tickers, weights = _parse_ticker_weights(ticker)
+
+    # Map scenario shorthand to full names
+    scenario_map = {
+        "gfc": "2008 GFC",
+        "covid": "2020 COVID",
+        "rates": "2022 Rate Hikes",
+    }
+
+    # Build scenario list
+    scenarios: list[StressScenario] = []
+    selected = scenario if scenario else list(scenario_map.keys())
+    for s in selected:
+        key = s.lower().strip()
+        full_name = scenario_map.get(key)
+        if full_name is None:
+            valid = ", ".join(scenario_map.keys())
+            console.print(f"[red]Unknown scenario '{s}'. Use: {valid}[/red]")
+            raise typer.Exit(code=1)
+        start, end = HISTORICAL_SCENARIOS[full_name]
+        scenarios.append(
+            StressScenario(
+                name=full_name,
+                start_date=start,
+                end_date=end,
+                scenario_type="historical",
+            )
+        )
+
+    # Parse custom shock if provided
+    if custom:
+        if ":" not in custom:
+            console.print(
+                f"[red]Invalid custom format '{custom}'. Use SECTOR:PCT (e.g. Technology:-0.40)[/red]"
+            )
+            raise typer.Exit(code=1)
+        parts = custom.split(":", maxsplit=1)
+        shock_sector = parts[0].strip()
+        try:
+            shock_pct = float(parts[1].strip())
+        except ValueError:
+            console.print(f"[red]Invalid shock percentage '{parts[1]}'[/red]")
+            raise typer.Exit(code=1) from None
+
+        from datetime import date
+
+        scenarios.append(
+            StressScenario(
+                name=f"Custom: {shock_sector} {shock_pct:+.0%}",
+                start_date=date(2000, 1, 1),
+                end_date=date(2099, 12, 31),
+                scenario_type="custom",
+                shock_sector=shock_sector,
+                shock_pct=shock_pct,
+            )
+        )
+
+    # Build config and run
+    try:
+        stress_config = StressConfig(
+            tickers=tickers,
+            weights=weights,
+            scenarios=scenarios,
+            period_years=period_years,
+        )
+    except ValueError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(code=1) from None
+
+    try:
+        result = run_stress_test(stress_config)
+    except ValueError as exc:
+        console.print(f"[red]Stress test error: {exc}[/red]")
+        raise typer.Exit(code=1) from None
+
+    render_stress_results(result, console)

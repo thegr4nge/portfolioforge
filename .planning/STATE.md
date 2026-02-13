@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-06)
 
 **Core value:** Make data-driven investment decisions with confidence -- see the numbers, understand the reasoning, verify against history before committing real money.
-**Current focus:** Phase 6 complete (Contribution Modelling). All 3 plans done: models/engine/service/CLI/tests. Ready for Phase 7.
+**Current focus:** Phase 7 in progress (Stress Testing & Rebalancing). Plan 01 complete: stress testing models/engine/service/CLI/tests.
 
 ## Current Position
 
-Phase: 6 of 8 (Contribution Modelling)
-Plan: 3 of 3 in current phase
-Status: Phase complete
-Last activity: 2026-02-12 -- Completed 06-03-PLAN.md (wire contributions and tests)
+Phase: 7 of 8 (Stress Testing & Rebalancing)
+Plan: 1 of 2 in current phase
+Status: In progress
+Last activity: 2026-02-13 -- Completed 07-01-PLAN.md (stress testing feature)
 
-Progress: [██████████████████████] ~96%
+Progress: [███████████████████████] ~96%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 22
+- Total plans completed: 23
 - Average duration: 3 min
-- Total execution time: 62 min
+- Total execution time: 65 min
 
 **By Phase:**
 
@@ -33,9 +33,10 @@ Progress: [██████████████████████] ~
 | 04-portfolio-optimisation | 5/5 | 12 min | 2.4 min |
 | 05-monte-carlo-projections | 3/3 | 9 min | 3 min |
 | 06-contribution-modelling | 3/3 | 9 min | 3 min |
+| 07-stress-testing-rebalancing | 1/2 | 3 min | 3 min |
 
 **Recent Trend:**
-- Last 5 plans: 05-03 (3 min), 06-01 (2 min), 06-02 (4 min), 06-03 (3 min)
+- Last 5 plans: 06-01 (2 min), 06-02 (4 min), 06-03 (3 min), 07-01 (3 min)
 - Trend: Consistent ~2-4 min per plan
 
 *Updated after each plan completion*
@@ -113,6 +114,9 @@ Recent decisions affecting current work:
 - [06-03]: contribution_schedule on ProjectionConfig replaces monthly_contribution when present (no double-counting)
 - [06-03]: Backward compat: contributions array with [0]=0 matches monthly_contribution step-0 behavior
 - [06-03]: Duplicated test helpers per established cross-test isolation pattern
+- [07-01]: Lazy import fetch_sectors inside service (only needed for custom shocks)
+- [07-01]: Custom shock start/end dates set to 2000-2099 (full data range, dates not meaningful for custom)
+- [07-01]: Insufficient data scenarios produce zero-result with '(insufficient data)' suffix instead of failing
 
 ### Pending Todos
 
@@ -126,6 +130,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-02-12
-Stopped at: Completed 06-03-PLAN.md (wire contributions and tests) -- Phase 6 complete
+Last session: 2026-02-13
+Stopped at: Completed 07-01-PLAN.md (stress testing feature)
 Resume file: None

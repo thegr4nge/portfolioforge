@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-06)
 
 **Core value:** Make data-driven investment decisions with confidence -- see the numbers, understand the reasoning, verify against history before committing real money.
-**Current focus:** Phase 7 in progress (Stress Testing & Rebalancing). Plan 01 complete: stress testing models/engine/service/CLI/tests.
+**Current focus:** Phase 7 in progress (Stress Testing & Rebalancing). Plans 01-02 complete: stress testing + rebalancing engine. Plan 03 (wiring) remains.
 
 ## Current Position
 
 Phase: 7 of 8 (Stress Testing & Rebalancing)
-Plan: 1 of 2 in current phase
+Plan: 2 of 3 in current phase
 Status: In progress
-Last activity: 2026-02-13 -- Completed 07-01-PLAN.md (stress testing feature)
+Last activity: 2026-02-13 -- Completed 07-02-PLAN.md (rebalancing engine)
 
-Progress: [███████████████████████] ~96%
+Progress: [████████████████████████░] ~96%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 23
+- Total plans completed: 24
 - Average duration: 3 min
-- Total execution time: 65 min
+- Total execution time: 68 min
 
 **By Phase:**
 
@@ -33,10 +33,10 @@ Progress: [███████████████████████
 | 04-portfolio-optimisation | 5/5 | 12 min | 2.4 min |
 | 05-monte-carlo-projections | 3/3 | 9 min | 3 min |
 | 06-contribution-modelling | 3/3 | 9 min | 3 min |
-| 07-stress-testing-rebalancing | 1/2 | 3 min | 3 min |
+| 07-stress-testing-rebalancing | 2/3 | 6 min | 3 min |
 
 **Recent Trend:**
-- Last 5 plans: 06-01 (2 min), 06-02 (4 min), 06-03 (3 min), 07-01 (3 min)
+- Last 5 plans: 06-02 (4 min), 06-03 (3 min), 07-01 (3 min), 07-02 (3 min)
 - Trend: Consistent ~2-4 min per plan
 
 *Updated after each plan completion*
@@ -117,6 +117,9 @@ Recent decisions affecting current work:
 - [07-01]: Lazy import fetch_sectors inside service (only needed for custom shocks)
 - [07-01]: Custom shock start/end dates set to 2000-2099 (full data range, dates not meaningful for custom)
 - [07-01]: Insufficient data scenarios produce zero-result with '(insufficient data)' suffix instead of failing
+- [07-02]: Added strict=True to zip() calls to satisfy ruff B905 (ensures length mismatch detection)
+- [07-02]: Threshold drift check before applying daily returns (pre-trade detection)
+- [07-02]: Rebalance engine composes backtest engine primitives (compute_cumulative_returns, compute_metrics)
 
 ### Pending Todos
 
@@ -131,5 +134,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-13
-Stopped at: Completed 07-01-PLAN.md (stress testing feature)
+Stopped at: Completed 07-02-PLAN.md (rebalancing engine)
 Resume file: None

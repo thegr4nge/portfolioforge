@@ -153,11 +153,11 @@ Plans:
   1. Every metric and recommendation includes a plain-English explanation ("Your Sharpe of 0.82 means...")
   2. User can save portfolio configurations to JSON files and reload them later without re-entering tickers and weights
   3. User can export any analysis result to JSON and CSV for use in spreadsheets or other tools
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 08-01: Plain-English explanation engine for all metrics and recommendations
-- [ ] 08-02: Portfolio save/load (JSON) and analysis export (JSON/CSV)
+- [ ] 08-01-PLAN.md — Explanation engine with metric templates, output module integration, and --no-explain CLI flag
+- [ ] 08-02-PLAN.md — Portfolio save/load (JSON), analysis export (JSON/CSV), and CLI save/load/export commands
 
 ## Progress
 

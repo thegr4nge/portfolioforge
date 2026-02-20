@@ -217,6 +217,10 @@ def analyse(
         bool,
         typer.Option("--chart/--no-chart", help="Show cumulative returns chart"),
     ] = True,
+    explain: Annotated[
+        bool,
+        typer.Option("--explain/--no-explain", help="Show plain-English metric explanations"),
+    ] = True,
 ) -> None:
     """Analyse a portfolio's risk and performance metrics."""
     period_years = _parse_period(period)
@@ -255,7 +259,7 @@ def analyse(
         console.print(f"[red]Analysis error: {exc}[/red]")
         raise typer.Exit(code=1) from None
 
-    render_risk_analysis(backtest_result, risk_result, console)
+    render_risk_analysis(backtest_result, risk_result, console, explain=explain)
 
     if chart:
         render_cumulative_chart(backtest_result)
@@ -283,6 +287,10 @@ def suggest(
         bool,
         typer.Option("--chart/--no-chart", help="Show efficient frontier chart"),
     ] = True,
+    explain: Annotated[
+        bool,
+        typer.Option("--explain/--no-explain", help="Show plain-English metric explanations"),
+    ] = True,
 ) -> None:
     """Suggest optimised portfolio allocations."""
     period_years = _parse_period(period)
@@ -304,7 +312,7 @@ def suggest(
         console.print(f"[red]Optimisation error: {exc}[/red]")
         raise typer.Exit(code=1) from None
 
-    render_suggest_results(result, console)
+    render_suggest_results(result, console, explain=explain)
 
     if chart:
         render_efficient_frontier_chart(result)
@@ -332,6 +340,10 @@ def validate(
         bool,
         typer.Option("--chart/--no-chart", help="Show efficient frontier chart"),
     ] = True,
+    explain: Annotated[
+        bool,
+        typer.Option("--explain/--no-explain", help="Show plain-English metric explanations"),
+    ] = True,
 ) -> None:
     """Validate your portfolio against the efficient frontier."""
     period_years = _parse_period(period)
@@ -355,7 +367,7 @@ def validate(
         console.print(f"[red]Validation error: {exc}[/red]")
         raise typer.Exit(code=1) from None
 
-    render_validate_results(result, console)
+    render_validate_results(result, console, explain=explain)
 
     if chart:
         render_efficient_frontier_chart(result)
@@ -382,6 +394,10 @@ def backtest(
     chart: Annotated[
         bool,
         typer.Option("--chart/--no-chart", help="Show cumulative returns chart"),
+    ] = True,
+    explain: Annotated[
+        bool,
+        typer.Option("--explain/--no-explain", help="Show plain-English metric explanations"),
     ] = True,
 ) -> None:
     """Backtest a portfolio against historical data."""
@@ -421,7 +437,7 @@ def backtest(
         console.print(f"[red]Backtest error: {exc}[/red]")
         raise typer.Exit(code=1) from None
 
-    render_backtest_results(result, console)
+    render_backtest_results(result, console, explain=explain)
 
     if chart:
         render_cumulative_chart(result)
@@ -468,6 +484,10 @@ def project(
     ] = None,
     chart: Annotated[
         bool, typer.Option("--chart/--no-chart", help="Show fan chart")
+    ] = True,
+    explain: Annotated[
+        bool,
+        typer.Option("--explain/--no-explain", help="Show plain-English metric explanations"),
     ] = True,
 ) -> None:
     """Project future portfolio performance with Monte Carlo simulation."""
@@ -553,7 +573,7 @@ def project(
         console.print(f"[red]Projection error: {exc}[/red]")
         raise typer.Exit(code=1) from None
 
-    render_projection_results(result, console)
+    render_projection_results(result, console, explain=explain)
 
     if chart:
         try:
@@ -581,6 +601,10 @@ def compare(
     chart: Annotated[
         bool,
         typer.Option("--chart/--no-chart", help="Show comparison chart"),
+    ] = True,
+    explain: Annotated[
+        bool,
+        typer.Option("--explain/--no-explain", help="Show plain-English metric explanations"),
     ] = True,
 ) -> None:
     """Compare DCA vs lump sum deployment strategies historically."""
@@ -612,7 +636,7 @@ def compare(
         console.print(f"[red]Comparison error: {exc}[/red]")
         raise typer.Exit(code=1) from None
 
-    render_compare_results(result, console)
+    render_compare_results(result, console, explain=explain)
 
     if chart:
         render_compare_chart(result)
@@ -636,6 +660,10 @@ def stress_test(
         str,
         typer.Option(help="Lookback period (e.g. 20y, 10y)"),
     ] = f"{config.DEFAULT_PERIOD_YEARS}y",
+    explain: Annotated[
+        bool,
+        typer.Option("--explain/--no-explain", help="Show plain-English metric explanations"),
+    ] = True,
 ) -> None:
     """Stress test a portfolio against historical crises or custom shocks."""
     from portfolioforge.engines.stress import HISTORICAL_SCENARIOS
@@ -719,7 +747,7 @@ def stress_test(
         console.print(f"[red]Stress test error: {exc}[/red]")
         raise typer.Exit(code=1) from None
 
-    render_stress_results(result, console)
+    render_stress_results(result, console, explain=explain)
 
 
 @app.command()
@@ -740,6 +768,10 @@ def rebalance(
         float | None,
         typer.Option(help="Portfolio value in AUD for dollar trade amounts"),
     ] = None,
+    explain: Annotated[
+        bool,
+        typer.Option("--explain/--no-explain", help="Show plain-English metric explanations"),
+    ] = True,
 ) -> None:
     """Analyse portfolio drift and compare rebalancing strategies."""
     from portfolioforge.models.rebalance import RebalanceConfig
@@ -767,4 +799,4 @@ def rebalance(
         console.print(f"[red]Rebalance error: {exc}[/red]")
         raise typer.Exit(code=1) from None
 
-    render_rebalance_results(result, console)
+    render_rebalance_results(result, console, explain=explain)

@@ -6,7 +6,9 @@ import plotext as plt
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
+from rich.text import Text
 
+from portfolioforge.engines.explain import explain_metric
 from portfolioforge.models.backtest import BacktestResult
 
 _BENCHMARK_COLORS = ["blue", "red", "cyan", "magenta"]
@@ -33,7 +35,9 @@ def _drift_color(drift_pp: float) -> str:
     return f"[red]{pct_str}[/red]"
 
 
-def render_backtest_results(result: BacktestResult, console: Console) -> None:
+def render_backtest_results(
+    result: BacktestResult, console: Console, *, explain: bool = True
+) -> None:
     """Render backtest results as rich tables."""
     # Header panel
     subtitle = (
@@ -94,6 +98,25 @@ def render_backtest_results(result: BacktestResult, console: Console) -> None:
         perf_table.add_row(*row)
 
     console.print(perf_table)
+
+    # Explanation panel
+    if explain:
+        explanations: list[str] = []
+        for key in [
+            "total_return", "annualised_return", "max_drawdown",
+            "volatility", "sharpe_ratio", "sortino_ratio",
+        ]:
+            text = explain_metric(key, portfolio_metrics[key])
+            if text:
+                explanations.append(text)
+        if explanations:
+            console.print(
+                Panel(
+                    Text("\n".join(explanations)),
+                    title="What This Means",
+                    border_style="dim",
+                )
+            )
 
     # Portfolio Allocation table
     if result.final_weights:

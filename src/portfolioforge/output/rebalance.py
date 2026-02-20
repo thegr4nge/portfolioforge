@@ -5,7 +5,9 @@ from __future__ import annotations
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
+from rich.text import Text
 
+from portfolioforge.engines.explain import explain_metric
 from portfolioforge.models.rebalance import RebalanceResult
 from portfolioforge.output.backtest import _color_pct
 
@@ -20,7 +22,9 @@ def _drift_level_color(drift: float) -> str:
     return f"[red]{pct_str}[/red]"
 
 
-def render_rebalance_results(result: RebalanceResult, console: Console) -> None:
+def render_rebalance_results(
+    result: RebalanceResult, console: Console, *, explain: bool = True
+) -> None:
     """Render full rebalancing analysis: drift, trades, strategy comparison."""
     # 1. Header panel
     console.print(
@@ -122,3 +126,24 @@ def render_rebalance_results(result: RebalanceResult, console: Console) -> None:
             )
 
         console.print(strat_table)
+
+        # Explanation panel for best strategy
+        if explain:
+            best_strat = max(
+                result.strategy_comparisons, key=lambda s: s.sharpe_ratio
+            )
+            rebal_explanations: list[str] = []
+            sharpe_text = explain_metric("sharpe_ratio", best_strat.sharpe_ratio)
+            if sharpe_text:
+                rebal_explanations.append(sharpe_text)
+            dd_text = explain_metric("max_drawdown", best_strat.max_drawdown)
+            if dd_text:
+                rebal_explanations.append(dd_text)
+            if rebal_explanations:
+                console.print(
+                    Panel(
+                        Text("\n".join(rebal_explanations)),
+                        title="What This Means",
+                        border_style="dim",
+                    )
+                )

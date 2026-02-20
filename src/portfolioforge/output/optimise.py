@@ -6,7 +6,9 @@ import plotext as plt
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
+from rich.text import Text
 
+from portfolioforge.engines.explain import explain_metric
 from portfolioforge.models.optimise import OptimiseResult
 from portfolioforge.output.backtest import _color_pct
 
@@ -22,7 +24,9 @@ def _weight_diff_color(diff: float) -> str:
     return f"[red]{pct_str}[/red]"
 
 
-def render_validate_results(result: OptimiseResult, console: Console) -> None:
+def render_validate_results(
+    result: OptimiseResult, console: Console, *, explain: bool = True
+) -> None:
     """Render portfolio validation: user vs optimal comparison with efficiency score."""
     assert result.score is not None
     assert result.user_weights is not None
@@ -95,8 +99,31 @@ def render_validate_results(result: OptimiseResult, console: Console) -> None:
 
     console.print(comp_table)
 
+    # Explanation panel
+    if explain:
+        explanations: list[str] = []
+        for key, value in [
+            ("annualised_return", result.score.user_return),
+            ("volatility", result.score.user_volatility),
+            ("sharpe_ratio", result.score.user_sharpe),
+            ("efficiency_ratio", result.score.efficiency_ratio),
+        ]:
+            text = explain_metric(key, value)
+            if text:
+                explanations.append(text)
+        if explanations:
+            console.print(
+                Panel(
+                    Text("\n".join(explanations)),
+                    title="What This Means",
+                    border_style="dim",
+                )
+            )
 
-def render_suggest_results(result: OptimiseResult, console: Console) -> None:
+
+def render_suggest_results(
+    result: OptimiseResult, console: Console, *, explain: bool = True
+) -> None:
     """Render optimal portfolio suggestion with expected performance."""
     console.print(Panel("[bold]Optimal Portfolio[/bold]", border_style="cyan"))
 
@@ -126,6 +153,26 @@ def render_suggest_results(result: OptimiseResult, console: Console) -> None:
     perf_table.add_row("Sharpe Ratio", f"{result.sharpe_ratio:.2f}")
 
     console.print(perf_table)
+
+    # Explanation panel
+    if explain:
+        suggest_explanations: list[str] = []
+        for key, value in [
+            ("annualised_return", result.expected_return),
+            ("volatility", result.volatility),
+            ("sharpe_ratio", result.sharpe_ratio),
+        ]:
+            text = explain_metric(key, value)
+            if text:
+                suggest_explanations.append(text)
+        if suggest_explanations:
+            console.print(
+                Panel(
+                    Text("\n".join(suggest_explanations)),
+                    title="What This Means",
+                    border_style="dim",
+                )
+            )
 
     console.print(
         "[dim]Based on mean-variance optimisation with Ledoit-Wolf covariance shrinkage[/dim]"

@@ -5,12 +5,16 @@ from __future__ import annotations
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
+from rich.text import Text
 
+from portfolioforge.engines.explain import explain_metric
 from portfolioforge.models.stress import StressResult
 from portfolioforge.output.backtest import _color_pct
 
 
-def render_stress_results(result: StressResult, console: Console | None = None) -> None:
+def render_stress_results(
+    result: StressResult, console: Console | None = None, *, explain: bool = True
+) -> None:
     """Render stress test results as Rich tables."""
     if console is None:
         console = Console()
@@ -56,3 +60,20 @@ def render_stress_results(result: StressResult, console: Console | None = None) 
             console.print(asset_table)
 
         console.print()
+
+    # Explanation panel for worst drawdown across all scenarios
+    if explain and result.scenarios:
+        worst_dd = min(
+            (s.portfolio_drawdown for s in result.scenarios if s.portfolio_drawdown != 0.0),
+            default=None,
+        )
+        if worst_dd is not None:
+            dd_text = explain_metric("stress_drawdown", worst_dd)
+            if dd_text:
+                console.print(
+                    Panel(
+                        Text(dd_text),
+                        title="What This Means",
+                        border_style="dim",
+                    )
+                )

@@ -6,11 +6,15 @@ import plotext as plt
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
+from rich.text import Text
 
+from portfolioforge.engines.explain import explain_metric
 from portfolioforge.models.montecarlo import ProjectionResult
 
 
-def render_projection_results(result: ProjectionResult, console: Console) -> None:
+def render_projection_results(
+    result: ProjectionResult, console: Console, *, explain: bool = True
+) -> None:
     """Render Monte Carlo projection results as rich tables."""
     # Header panel
     console.print(
@@ -128,6 +132,28 @@ def render_projection_results(result: ProjectionResult, console: Console) -> Non
                 border_style=prob_color,
             )
         )
+
+    # Explanation panel
+    if explain:
+        mc_explanations: list[str] = []
+        ret_text = explain_metric("annualised_return", result.mu)
+        if ret_text:
+            mc_explanations.append(ret_text)
+        vol_text = explain_metric("volatility", result.sigma)
+        if vol_text:
+            mc_explanations.append(vol_text)
+        if result.goal is not None:
+            prob_text = explain_metric("probability", result.goal.probability)
+            if prob_text:
+                mc_explanations.append(prob_text)
+        if mc_explanations:
+            console.print(
+                Panel(
+                    Text("\n".join(mc_explanations)),
+                    title="What This Means",
+                    border_style="dim",
+                )
+            )
 
 
 def _format_currency(value: float) -> str:

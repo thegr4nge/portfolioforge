@@ -6,11 +6,15 @@ import plotext as plt
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
+from rich.text import Text
 
+from portfolioforge.engines.explain import explain_metric
 from portfolioforge.models.contribution import CompareResult
 
 
-def render_compare_results(result: CompareResult, console: Console) -> None:
+def render_compare_results(
+    result: CompareResult, console: Console, *, explain: bool = True
+) -> None:
     """Render DCA vs lump sum comparison as rich tables and panels."""
     # Header panel
     console.print(
@@ -71,6 +75,18 @@ def render_compare_results(result: CompareResult, console: Console) -> None:
         console.print(
             Panel(rolling_text, title="Rolling Window Analysis", border_style=pct_color)
         )
+
+    # Explanation panel
+    if explain and result.rolling_windows_tested > 0:
+        lump_text = explain_metric("lump_win_pct", result.lump_win_pct)
+        if lump_text:
+            console.print(
+                Panel(
+                    Text(lump_text),
+                    title="What This Means",
+                    border_style="dim",
+                )
+            )
 
     console.print(
         "[dim]Note: Uninvested DCA capital assumed to earn 0% (conservative for DCA)[/dim]"

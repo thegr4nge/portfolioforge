@@ -3,8 +3,11 @@
 from __future__ import annotations
 
 from rich.console import Console
+from rich.panel import Panel
 from rich.table import Table
+from rich.text import Text
 
+from portfolioforge.engines.explain import explain_metric
 from portfolioforge.models.backtest import BacktestResult
 from portfolioforge.models.risk import RiskAnalysisResult, SectorExposure
 from portfolioforge.output.backtest import _color_pct, render_backtest_results
@@ -26,10 +29,12 @@ def render_risk_analysis(
     backtest_result: BacktestResult,
     risk_result: RiskAnalysisResult,
     console: Console,
+    *,
+    explain: bool = True,
 ) -> None:
     """Render full risk analysis: backtest results + risk metrics + drawdowns + correlation."""
     # 1. Render standard backtest output first
-    render_backtest_results(backtest_result, console)
+    render_backtest_results(backtest_result, console, explain=explain)
 
     # 2. Risk Metrics table
     risk_table = Table(title="Risk Metrics")
@@ -46,6 +51,24 @@ def render_risk_analysis(
     )
 
     console.print(risk_table)
+
+    # Risk metrics explanation panel
+    if explain:
+        risk_explanations: list[str] = []
+        var_text = explain_metric("var_95", risk_result.risk_metrics.var_95)
+        if var_text:
+            risk_explanations.append(var_text)
+        cvar_text = explain_metric("cvar_95", risk_result.risk_metrics.cvar_95)
+        if cvar_text:
+            risk_explanations.append(cvar_text)
+        if risk_explanations:
+            console.print(
+                Panel(
+                    Text("\n".join(risk_explanations)),
+                    title="What This Means",
+                    border_style="dim",
+                )
+            )
 
     # 3. Drawdown Periods table
     dd_table = Table(title="Worst Drawdown Periods")
@@ -96,6 +119,26 @@ def render_risk_analysis(
             corr_table.add_row(*row_values)
 
         console.print(corr_table)
+
+        # Correlation explanation for highest off-diagonal pair
+        if explain and len(tickers) >= 2:
+            max_corr = float("-inf")
+            for i_idx, t1 in enumerate(tickers):
+                for j_idx, t2 in enumerate(tickers):
+                    if i_idx >= j_idx:
+                        continue
+                    val = risk_result.correlation_matrix[t1][t2]
+                    if abs(val) > abs(max_corr):
+                        max_corr = val
+            corr_text = explain_metric("correlation", max_corr)
+            if corr_text:
+                console.print(
+                    Panel(
+                        Text(corr_text),
+                        title="What This Means",
+                        border_style="dim",
+                    )
+                )
 
     # 5. Sector Exposure
     if risk_result.sector_exposure is not None:

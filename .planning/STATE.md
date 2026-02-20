@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-06)
 
 **Core value:** Make data-driven investment decisions with confidence -- see the numbers, understand the reasoning, verify against history before committing real money.
-**Current focus:** Phase 7 complete (Stress Testing & Rebalancing). All 3 plans done. Ready for Phase 8 (Polish & Reporting).
+**Current focus:** Phase 8 in progress (Explanations & Export). Plan 1 of 2 done. Ready for Plan 08-02.
 
 ## Current Position
 
-Phase: 7 of 8 (Stress Testing & Rebalancing)
-Plan: 3 of 3 in current phase
-Status: Phase complete
-Last activity: 2026-02-13 -- Completed 07-03-PLAN.md (rebalancing wiring)
+Phase: 8 of 8 (Explanations & Export)
+Plan: 1 of 2 in current phase
+Status: In progress
+Last activity: 2026-02-20 -- Completed 08-01-PLAN.md (explanations engine + CLI flag)
 
-Progress: [█████████████████████████] ~100%
+Progress: [██████████████████████████░░] 96% (26/27 plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 25
-- Average duration: 3 min
-- Total execution time: 72 min
+- Total plans completed: 26
+- Average duration: 3.1 min
+- Total execution time: 81 min
 
 **By Phase:**
 
@@ -34,10 +34,11 @@ Progress: [███████████████████████
 | 05-monte-carlo-projections | 3/3 | 9 min | 3 min |
 | 06-contribution-modelling | 3/3 | 9 min | 3 min |
 | 07-stress-testing-rebalancing | 3/3 | 10 min | 3.3 min |
+| 08-explanations-export | 1/2 | 9 min | 9 min |
 
 **Recent Trend:**
-- Last 5 plans: 06-03 (3 min), 07-01 (3 min), 07-02 (3 min), 07-03 (4 min)
-- Trend: Consistent ~2-4 min per plan
+- Last 5 plans: 07-01 (3 min), 07-02 (3 min), 07-03 (4 min), 08-01 (9 min)
+- Trend: 08-01 longer due to modifying 10 files across entire output layer
 
 *Updated after each plan completion*
 
@@ -123,6 +124,9 @@ Recent decisions affecting current work:
 - [07-03]: Lazy imports in CLI rebalance command (same pattern as stress-test, project, compare)
 - [07-03]: CliRunner for CLI tests (not subprocess) matching existing test_cli.py pattern
 - [07-03]: Import _color_pct from output/backtest for consistent formatting across output modules
+- [08-01]: rich.text.Text wrapping prevents bracket interpretation in explanation strings
+- [08-01]: Separate panel below metrics table (not inline in cells) avoids verbosity overwhelming output
+- [08-01]: Volatility thresholds ordered high-to-low (>=0.25 first) for correct >= matching
 
 ### Pending Todos
 
@@ -136,6 +140,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-02-13
-Stopped at: Completed 07-03-PLAN.md (rebalancing wiring) -- Phase 7 complete
+Last session: 2026-02-20
+Stopped at: Completed 08-01-PLAN.md (explanations engine + CLI flag)
 Resume file: None

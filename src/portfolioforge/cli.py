@@ -79,6 +79,39 @@ def _parse_ticker_weights(pairs: list[str]) -> tuple[list[str], list[float]]:
     return tickers, weights
 
 
+def _load_portfolio_tickers(portfolio_path: str) -> tuple[list[str], list[float]]:
+    """Load tickers and weights from a saved portfolio JSON file."""
+    from pathlib import Path
+
+    from portfolioforge.engines.export import load_portfolio
+
+    path = Path(portfolio_path).resolve()
+    if not path.exists():
+        console.print(f"[red]Portfolio file not found: {path}[/red]")
+        raise typer.Exit(code=1)
+
+    try:
+        portfolio_config = load_portfolio(path)
+    except Exception as exc:
+        console.print(f"[red]Error loading portfolio: {exc}[/red]")
+        raise typer.Exit(code=1) from None
+
+    return portfolio_config.tickers, portfolio_config.weights
+
+
+def _resolve_tickers(
+    ticker: list[str] | None,
+    portfolio: str | None,
+) -> tuple[list[str], list[float]]:
+    """Resolve tickers/weights from --portfolio or --ticker flags."""
+    if portfolio:
+        return _load_portfolio_tickers(portfolio)
+    if ticker:
+        return _parse_ticker_weights(ticker)
+    console.print("[red]Provide --ticker or --portfolio[/red]")
+    raise typer.Exit(code=1)
+
+
 @app.command()
 def fetch(
     tickers: Annotated[
@@ -196,11 +229,101 @@ def clean_cache() -> None:
 
 
 @app.command()
-def analyse(
+def save(
     ticker: Annotated[
         list[str],
         typer.Option(help="Ticker:weight pairs (e.g. AAPL:0.4 MSFT:0.6)"),
     ],
+    name: Annotated[str, typer.Option(help="Portfolio name")] = "",
+    output: Annotated[str, typer.Option(help="Output file path (default: {name}.json in CWD)")] = "",
+    period: Annotated[str, typer.Option(help="Default analysis period")] = f"{config.DEFAULT_PERIOD_YEARS}y",
+    rebalance: Annotated[str, typer.Option(help="Default rebalance frequency")] = "never",
+) -> None:
+    """Save a portfolio configuration to a JSON file for reuse."""
+    from pathlib import Path
+
+    from portfolioforge.engines.export import save_portfolio
+    from portfolioforge.models.portfolio import PortfolioConfig
+
+    tickers, weights = _parse_ticker_weights(ticker)
+    period_years = _parse_period(period)
+
+    # Auto-generate name from tickers if not provided
+    portfolio_name = name or " + ".join(
+        f"{t}:{w:.0%}" for t, w in zip(tickers, weights, strict=True)
+    )
+
+    try:
+        portfolio_config = PortfolioConfig(
+            name=portfolio_name,
+            tickers=tickers,
+            weights=weights,
+            period_years=period_years,
+            rebalance_freq=rebalance.lower(),
+        )
+    except ValueError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(code=1) from None
+
+    # Determine output path
+    if output:
+        out_path = Path(output).resolve()
+    else:
+        safe_name = portfolio_name.replace(" ", "_").replace("+", "").replace(":", "-")
+        out_path = Path.cwd() / f"{safe_name}.json"
+
+    save_portfolio(portfolio_config, out_path)
+    console.print(f"[green]Portfolio saved to {out_path}[/green]")
+
+
+@app.command()
+def load(
+    file: Annotated[str, typer.Argument(help="JSON file to load")],
+) -> None:
+    """Load and display a saved portfolio configuration."""
+    from pathlib import Path
+
+    from portfolioforge.engines.export import load_portfolio
+
+    path = Path(file).resolve()
+    if not path.exists():
+        console.print(f"[red]File not found: {path}[/red]")
+        raise typer.Exit(code=1)
+
+    try:
+        portfolio_config = load_portfolio(path)
+    except Exception as exc:
+        console.print(f"[red]Error loading portfolio: {exc}[/red]")
+        raise typer.Exit(code=1) from None
+
+    # Display loaded config
+    table = Table(title=f"Portfolio: {portfolio_config.name}")
+    table.add_column("Ticker", style="bold")
+    table.add_column("Weight", justify="right")
+
+    for t, w in zip(portfolio_config.tickers, portfolio_config.weights, strict=True):
+        table.add_row(t, f"{w:.1%}")
+
+    console.print(table)
+    console.print(
+        f"Period: {portfolio_config.period_years}y | Rebalance: {portfolio_config.rebalance_freq}",
+        style="dim",
+    )
+    console.print("\n[dim]Use this portfolio directly with any analysis command:[/dim]")
+    console.print(f"  portfolioforge backtest --portfolio {path}", style="dim")
+    console.print(f"  portfolioforge analyse --portfolio {path}", style="dim")
+
+
+@app.command()
+def analyse(
+    ticker: Annotated[
+        list[str] | None,
+        typer.Option(help="Ticker:weight pairs (e.g. AAPL:0.4 MSFT:0.6)"),
+    ] = None,
+    portfolio: Annotated[
+        str | None,
+        typer.Option("--portfolio", help="Load tickers/weights from a saved portfolio JSON file"),
+    ] = None,
     period: Annotated[
         str,
         typer.Option(help="Lookback period (e.g. 10y, 5y)"),
@@ -221,10 +344,18 @@ def analyse(
         bool,
         typer.Option("--explain/--no-explain", help="Show plain-English metric explanations"),
     ] = True,
+    export_json_path: Annotated[
+        str | None,
+        typer.Option("--export-json", help="Export results to JSON file"),
+    ] = None,
+    export_csv_path: Annotated[
+        str | None,
+        typer.Option("--export-csv", help="Export metrics to CSV file"),
+    ] = None,
 ) -> None:
     """Analyse a portfolio's risk and performance metrics."""
     period_years = _parse_period(period)
-    tickers, weights = _parse_ticker_weights(ticker)
+    tickers, weights = _resolve_tickers(ticker, portfolio)
 
     # Validate rebalance frequency
     try:
@@ -264,13 +395,38 @@ def analyse(
     if chart:
         render_cumulative_chart(backtest_result)
 
+    if export_json_path:
+        from pathlib import Path
+
+        from portfolioforge.engines.export import export_json
+
+        export_json(backtest_result, Path(export_json_path).resolve())
+        console.print(f"[green]Results exported to {export_json_path}[/green]")
+
+    if export_csv_path:
+        from pathlib import Path
+
+        from portfolioforge.engines.export import (
+            export_csv,
+            flatten_backtest_metrics,
+            flatten_risk_metrics,
+        )
+
+        rows = flatten_backtest_metrics(backtest_result) + flatten_risk_metrics(risk_result)
+        export_csv(rows, Path(export_csv_path).resolve())
+        console.print(f"[green]Metrics exported to {export_csv_path}[/green]")
+
 
 @app.command()
 def suggest(
     ticker: Annotated[
-        list[str],
+        list[str] | None,
         typer.Option(help="Ticker symbols (e.g. AAPL MSFT CBA.AX)"),
-    ],
+    ] = None,
+    portfolio: Annotated[
+        str | None,
+        typer.Option("--portfolio", help="Load tickers/weights from a saved portfolio JSON file"),
+    ] = None,
     period: Annotated[
         str,
         typer.Option(help="Lookback period (e.g. 10y, 5y)"),
@@ -291,13 +447,30 @@ def suggest(
         bool,
         typer.Option("--explain/--no-explain", help="Show plain-English metric explanations"),
     ] = True,
+    export_json_path: Annotated[
+        str | None,
+        typer.Option("--export-json", help="Export results to JSON file"),
+    ] = None,
+    export_csv_path: Annotated[
+        str | None,
+        typer.Option("--export-csv", help="Export metrics to CSV file"),
+    ] = None,
 ) -> None:
     """Suggest optimised portfolio allocations."""
     period_years = _parse_period(period)
 
+    # Resolve tickers: suggest uses tickers only (no weights)
+    if portfolio:
+        tickers, _weights = _load_portfolio_tickers(portfolio)
+    elif ticker:
+        tickers = list(ticker)
+    else:
+        console.print("[red]Provide --ticker or --portfolio[/red]")
+        raise typer.Exit(code=1)
+
     try:
         opt_config = OptimiseConfig(
-            tickers=ticker,
+            tickers=tickers,
             min_weight=min_weight,
             max_weight=max_weight,
             period_years=period_years,
@@ -317,13 +490,34 @@ def suggest(
     if chart:
         render_efficient_frontier_chart(result)
 
+    if export_json_path:
+        from pathlib import Path
+
+        from portfolioforge.engines.export import export_json
+
+        export_json(result, Path(export_json_path).resolve())
+        console.print(f"[green]Results exported to {export_json_path}[/green]")
+
+    if export_csv_path:
+        from pathlib import Path
+
+        from portfolioforge.engines.export import export_csv, flatten_optimise_metrics
+
+        rows = flatten_optimise_metrics(result)
+        export_csv(rows, Path(export_csv_path).resolve())
+        console.print(f"[green]Metrics exported to {export_csv_path}[/green]")
+
 
 @app.command()
 def validate(
     ticker: Annotated[
-        list[str],
+        list[str] | None,
         typer.Option(help="Ticker:weight pairs (e.g. AAPL:0.4 MSFT:0.6)"),
-    ],
+    ] = None,
+    portfolio: Annotated[
+        str | None,
+        typer.Option("--portfolio", help="Load tickers/weights from a saved portfolio JSON file"),
+    ] = None,
     period: Annotated[
         str,
         typer.Option(help="Lookback period (e.g. 10y, 5y)"),
@@ -344,10 +538,18 @@ def validate(
         bool,
         typer.Option("--explain/--no-explain", help="Show plain-English metric explanations"),
     ] = True,
+    export_json_path: Annotated[
+        str | None,
+        typer.Option("--export-json", help="Export results to JSON file"),
+    ] = None,
+    export_csv_path: Annotated[
+        str | None,
+        typer.Option("--export-csv", help="Export metrics to CSV file"),
+    ] = None,
 ) -> None:
     """Validate your portfolio against the efficient frontier."""
     period_years = _parse_period(period)
-    tickers, weights = _parse_ticker_weights(ticker)
+    tickers, weights = _resolve_tickers(ticker, portfolio)
 
     try:
         opt_config = OptimiseConfig(
@@ -372,13 +574,34 @@ def validate(
     if chart:
         render_efficient_frontier_chart(result)
 
+    if export_json_path:
+        from pathlib import Path
+
+        from portfolioforge.engines.export import export_json
+
+        export_json(result, Path(export_json_path).resolve())
+        console.print(f"[green]Results exported to {export_json_path}[/green]")
+
+    if export_csv_path:
+        from pathlib import Path
+
+        from portfolioforge.engines.export import export_csv, flatten_optimise_metrics
+
+        rows = flatten_optimise_metrics(result)
+        export_csv(rows, Path(export_csv_path).resolve())
+        console.print(f"[green]Metrics exported to {export_csv_path}[/green]")
+
 
 @app.command()
 def backtest(
     ticker: Annotated[
-        list[str],
+        list[str] | None,
         typer.Option(help="Ticker:weight pairs (e.g. AAPL:0.4 MSFT:0.6)"),
-    ],
+    ] = None,
+    portfolio: Annotated[
+        str | None,
+        typer.Option("--portfolio", help="Load tickers/weights from a saved portfolio JSON file"),
+    ] = None,
     period: Annotated[
         str,
         typer.Option(help="Lookback period (e.g. 10y, 5y)"),
@@ -399,10 +622,18 @@ def backtest(
         bool,
         typer.Option("--explain/--no-explain", help="Show plain-English metric explanations"),
     ] = True,
+    export_json_path: Annotated[
+        str | None,
+        typer.Option("--export-json", help="Export results to JSON file"),
+    ] = None,
+    export_csv_path: Annotated[
+        str | None,
+        typer.Option("--export-csv", help="Export metrics to CSV file"),
+    ] = None,
 ) -> None:
     """Backtest a portfolio against historical data."""
     period_years = _parse_period(period)
-    tickers, weights = _parse_ticker_weights(ticker)
+    tickers, weights = _resolve_tickers(ticker, portfolio)
 
     # Validate rebalance frequency
     try:
@@ -442,14 +673,35 @@ def backtest(
     if chart:
         render_cumulative_chart(result)
 
+    if export_json_path:
+        from pathlib import Path
+
+        from portfolioforge.engines.export import export_json
+
+        export_json(result, Path(export_json_path).resolve())
+        console.print(f"[green]Results exported to {export_json_path}[/green]")
+
+    if export_csv_path:
+        from pathlib import Path
+
+        from portfolioforge.engines.export import export_csv, flatten_backtest_metrics
+
+        rows = flatten_backtest_metrics(result)
+        export_csv(rows, Path(export_csv_path).resolve())
+        console.print(f"[green]Metrics exported to {export_csv_path}[/green]")
+
 
 @app.command()
 def project(
     ticker: Annotated[
-        list[str],
+        list[str] | None,
         typer.Option(help="Ticker:weight pairs (e.g. AAPL:0.4 MSFT:0.6)"),
-    ],
-    capital: Annotated[float, typer.Option(help="Initial capital in AUD")],
+    ] = None,
+    portfolio: Annotated[
+        str | None,
+        typer.Option("--portfolio", help="Load tickers/weights from a saved portfolio JSON file"),
+    ] = None,
+    capital: Annotated[float, typer.Option(help="Initial capital in AUD")] = 0.0,
     years: Annotated[
         int, typer.Option(help="Projection horizon in years (1-30)")
     ] = 10,
@@ -489,9 +741,17 @@ def project(
         bool,
         typer.Option("--explain/--no-explain", help="Show plain-English metric explanations"),
     ] = True,
+    export_json_path: Annotated[
+        str | None,
+        typer.Option("--export-json", help="Export results to JSON file"),
+    ] = None,
+    export_csv_path: Annotated[
+        str | None,
+        typer.Option("--export-csv", help="Export metrics to CSV file"),
+    ] = None,
 ) -> None:
     """Project future portfolio performance with Monte Carlo simulation."""
-    tickers, weights = _parse_ticker_weights(ticker)
+    tickers, weights = _resolve_tickers(ticker, portfolio)
     period_years = _parse_period(period)
 
     # Validate risk tolerance
@@ -583,14 +843,35 @@ def project(
         except (ImportError, AttributeError):
             console.print("[dim]Fan chart not available[/dim]")
 
+    if export_json_path:
+        from pathlib import Path
+
+        from portfolioforge.engines.export import export_json
+
+        export_json(result, Path(export_json_path).resolve())
+        console.print(f"[green]Results exported to {export_json_path}[/green]")
+
+    if export_csv_path:
+        from pathlib import Path
+
+        from portfolioforge.engines.export import export_csv, flatten_projection_metrics
+
+        rows = flatten_projection_metrics(result)
+        export_csv(rows, Path(export_csv_path).resolve())
+        console.print(f"[green]Metrics exported to {export_csv_path}[/green]")
+
 
 @app.command()
 def compare(
     ticker: Annotated[
-        list[str],
+        list[str] | None,
         typer.Option(help="Ticker:weight pairs (e.g. AAPL:0.4 MSFT:0.6)"),
-    ],
-    capital: Annotated[float, typer.Option(help="Total capital to deploy in AUD")],
+    ] = None,
+    portfolio: Annotated[
+        str | None,
+        typer.Option("--portfolio", help="Load tickers/weights from a saved portfolio JSON file"),
+    ] = None,
+    capital: Annotated[float, typer.Option(help="Total capital to deploy in AUD")] = 0.0,
     dca_months: Annotated[
         int, typer.Option("--dca-months", help="DCA deployment period in months")
     ] = 12,
@@ -606,6 +887,14 @@ def compare(
         bool,
         typer.Option("--explain/--no-explain", help="Show plain-English metric explanations"),
     ] = True,
+    export_json_path: Annotated[
+        str | None,
+        typer.Option("--export-json", help="Export results to JSON file"),
+    ] = None,
+    export_csv_path: Annotated[
+        str | None,
+        typer.Option("--export-csv", help="Export metrics to CSV file"),
+    ] = None,
 ) -> None:
     """Compare DCA vs lump sum deployment strategies historically."""
     from portfolioforge.models.contribution import CompareConfig
@@ -616,7 +905,7 @@ def compare(
     from portfolioforge.services.contribution import run_compare
 
     period_years = _parse_period(period)
-    tickers, weights = _parse_ticker_weights(ticker)
+    tickers, weights = _resolve_tickers(ticker, portfolio)
 
     try:
         compare_config = CompareConfig(
@@ -641,13 +930,34 @@ def compare(
     if chart:
         render_compare_chart(result)
 
+    if export_json_path:
+        from pathlib import Path
+
+        from portfolioforge.engines.export import export_json
+
+        export_json(result, Path(export_json_path).resolve())
+        console.print(f"[green]Results exported to {export_json_path}[/green]")
+
+    if export_csv_path:
+        from pathlib import Path
+
+        from portfolioforge.engines.export import export_csv, flatten_compare_metrics
+
+        rows = flatten_compare_metrics(result)
+        export_csv(rows, Path(export_csv_path).resolve())
+        console.print(f"[green]Metrics exported to {export_csv_path}[/green]")
+
 
 @app.command(name="stress-test")
 def stress_test(
     ticker: Annotated[
-        list[str],
+        list[str] | None,
         typer.Option(help="Ticker:weight pairs (e.g. AAPL:0.60 MSFT:0.40)"),
-    ],
+    ] = None,
+    portfolio: Annotated[
+        str | None,
+        typer.Option("--portfolio", help="Load tickers/weights from a saved portfolio JSON file"),
+    ] = None,
     scenario: Annotated[
         list[str] | None,
         typer.Option(help="Scenarios: gfc, covid, rates"),
@@ -664,6 +974,14 @@ def stress_test(
         bool,
         typer.Option("--explain/--no-explain", help="Show plain-English metric explanations"),
     ] = True,
+    export_json_path: Annotated[
+        str | None,
+        typer.Option("--export-json", help="Export results to JSON file"),
+    ] = None,
+    export_csv_path: Annotated[
+        str | None,
+        typer.Option("--export-csv", help="Export metrics to CSV file"),
+    ] = None,
 ) -> None:
     """Stress test a portfolio against historical crises or custom shocks."""
     from portfolioforge.engines.stress import HISTORICAL_SCENARIOS
@@ -672,7 +990,7 @@ def stress_test(
     from portfolioforge.services.stress import run_stress_test
 
     period_years = _parse_period(period)
-    tickers, weights = _parse_ticker_weights(ticker)
+    tickers, weights = _resolve_tickers(ticker, portfolio)
 
     # Map scenario shorthand to full names
     scenario_map = {
@@ -749,13 +1067,34 @@ def stress_test(
 
     render_stress_results(result, console, explain=explain)
 
+    if export_json_path:
+        from pathlib import Path
+
+        from portfolioforge.engines.export import export_json
+
+        export_json(result, Path(export_json_path).resolve())
+        console.print(f"[green]Results exported to {export_json_path}[/green]")
+
+    if export_csv_path:
+        from pathlib import Path
+
+        from portfolioforge.engines.export import export_csv, flatten_stress_metrics
+
+        rows = flatten_stress_metrics(result)
+        export_csv(rows, Path(export_csv_path).resolve())
+        console.print(f"[green]Metrics exported to {export_csv_path}[/green]")
+
 
 @app.command()
 def rebalance(
     ticker: Annotated[
-        list[str],
+        list[str] | None,
         typer.Option(help="Ticker:weight pairs (e.g. AAPL:0.60 MSFT:0.40)"),
-    ],
+    ] = None,
+    portfolio: Annotated[
+        str | None,
+        typer.Option("--portfolio", help="Load tickers/weights from a saved portfolio JSON file"),
+    ] = None,
     period: Annotated[
         str,
         typer.Option(help="Lookback period (e.g. 10y, 5y)"),
@@ -772,6 +1111,14 @@ def rebalance(
         bool,
         typer.Option("--explain/--no-explain", help="Show plain-English metric explanations"),
     ] = True,
+    export_json_path: Annotated[
+        str | None,
+        typer.Option("--export-json", help="Export results to JSON file"),
+    ] = None,
+    export_csv_path: Annotated[
+        str | None,
+        typer.Option("--export-csv", help="Export metrics to CSV file"),
+    ] = None,
 ) -> None:
     """Analyse portfolio drift and compare rebalancing strategies."""
     from portfolioforge.models.rebalance import RebalanceConfig
@@ -779,7 +1126,7 @@ def rebalance(
     from portfolioforge.services.rebalance import run_rebalance_analysis
 
     period_years = _parse_period(period)
-    tickers, weights = _parse_ticker_weights(ticker)
+    tickers, weights = _resolve_tickers(ticker, portfolio)
 
     try:
         rebal_config = RebalanceConfig(
@@ -800,3 +1147,20 @@ def rebalance(
         raise typer.Exit(code=1) from None
 
     render_rebalance_results(result, console, explain=explain)
+
+    if export_json_path:
+        from pathlib import Path
+
+        from portfolioforge.engines.export import export_json
+
+        export_json(result, Path(export_json_path).resolve())
+        console.print(f"[green]Results exported to {export_json_path}[/green]")
+
+    if export_csv_path:
+        from pathlib import Path
+
+        from portfolioforge.engines.export import export_csv, flatten_rebalance_metrics
+
+        rows = flatten_rebalance_metrics(result)
+        export_csv(rows, Path(export_csv_path).resolve())
+        console.print(f"[green]Metrics exported to {export_csv_path}[/green]")

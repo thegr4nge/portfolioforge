@@ -52,6 +52,28 @@ class Portfolio(BaseModel):
         return self
 
 
+class PortfolioConfig(BaseModel):
+    """Saveable portfolio configuration for reuse across commands."""
+
+    name: str
+    tickers: list[str]
+    weights: list[float]
+    benchmarks: list[str] = []
+    period_years: int = 10
+    rebalance_freq: str = "never"
+
+    @model_validator(mode="after")
+    def _validate_config(self) -> "PortfolioConfig":
+        if len(self.tickers) != len(self.weights):
+            msg = "tickers and weights must have same length"
+            raise ValueError(msg)
+        total = sum(self.weights)
+        if abs(total - 1.0) > 0.01:
+            msg = f"Weights must sum to ~1.0, got {total:.4f}"
+            raise ValueError(msg)
+        return self
+
+
 class FetchResult(BaseModel):
     """Result of fetching price data for a single ticker."""
 

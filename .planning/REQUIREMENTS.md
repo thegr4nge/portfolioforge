@@ -145,10 +145,10 @@
 | UX-01 | Phase 1 | Complete |
 | UX-02 | Phase 2 | Complete |
 | UX-03 | Phase 2 | Complete |
-| UX-04 | Phase 8 | Pending |
+| UX-04 | Phase 8 | Complete |
 | UX-05 | Phase 5 | Complete |
-| UX-06 | Phase 8 | Pending |
-| UX-07 | Phase 8 | Pending |
+| UX-06 | Phase 8 | Complete |
+| UX-07 | Phase 8 | Complete |
 
 **Coverage:**
 - v1 requirements: 44 total

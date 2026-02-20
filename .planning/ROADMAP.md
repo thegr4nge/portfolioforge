@@ -19,7 +19,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 5: Monte Carlo & Projections** - Forward-looking probability-weighted simulations over user's time horizon
 - [x] **Phase 6: Contribution Modelling** - DCA, lump sum, and regular contribution strategies integrated with projections
 - [x] **Phase 7: Stress Testing & Rebalancing** - Historical crisis scenarios and rebalancing strategy analysis
-- [ ] **Phase 8: Explanations & Export** - Plain-English explanations, save/load portfolios, export results
+- [x] **Phase 8: Explanations & Export** - Plain-English explanations, save/load portfolios, export results
 
 ## Phase Details
 
@@ -156,8 +156,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 08-01-PLAN.md — Explanation engine with metric templates, output module integration, and --no-explain CLI flag
-- [ ] 08-02-PLAN.md — Portfolio save/load (JSON), analysis export (JSON/CSV), and CLI save/load/export commands
+- [x] 08-01-PLAN.md — Explanation engine with metric templates, output module integration, and --no-explain CLI flag
+- [x] 08-02-PLAN.md — Portfolio save/load (JSON), analysis export (JSON/CSV), and CLI save/load/export commands
 
 ## Progress
 
@@ -174,4 +174,4 @@ Note: Phase 7 depends on Phase 3 (not Phase 6), so Phases 5-6 and Phase 7 could 
 | 5. Monte Carlo & Projections | 3/3 | ✓ Complete | 2026-02-11 |
 | 6. Contribution Modelling | 3/3 | ✓ Complete | 2026-02-12 |
 | 7. Stress Testing & Rebalancing | 3/3 | ✓ Complete | 2026-02-17 |
-| 8. Explanations & Export | 0/2 | Not started | - |
+| 8. Explanations & Export | 2/2 | ✓ Complete | 2026-02-20 |

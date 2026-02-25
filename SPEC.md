@@ -1,5 +1,21 @@
 # Layer 1 — Data Infrastructure Spec
 
+## Product Vision
+A personal investment research and decision-support tool targeting Australian retail investors who can't access or afford traditional financial advice. End state: a user describes their situation and goals, the tool responds with evidence-backed, data-driven guidance — what to consider, when, why, and how much — with full transparency on assumptions and uncertainty.
+
+**Market context:** Australian financial advisor numbers have nearly halved since 2018. Median advice fees are $4,668/year. This tool targets the gap: people who need guidance but can't justify that cost.
+
+**Regulatory framing:** Research and decision-support, not licensed financial advice. The tool shows its working and leaves decisions with the user. This is intentional and legally meaningful.
+
+**Geographic roadmap:**
+- Layers 1–2: US equities only (Polygon.io free tier, deep history, best data quality)
+- Layer 3: Add ASX data — this is the primary target market and must be a first-class citizen, not a retrofit
+- Layer 4: Australian tax treatment (CGT discount, franking credits, super), AUD-denominated reporting throughout
+
+**Schema note:** The database schema in Layer 1 must support multi-market data from day one — `exchange` and `currency` fields are not optional. Adding ASX later must be an ingestion change, not a schema change.
+
+---
+
 ## Goal
 A local SQLite database of clean, adjusted market data that any backtest or analysis layer can query without touching the internet. All subsequent layers treat this as the source of truth.
 

@@ -92,46 +92,46 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DATA-01 | Phase 1 | Pending |
-| DATA-02 | Phase 1 | Pending |
-| DATA-03 | Phase 1 | Pending |
-| DATA-04 | Phase 1 | Pending |
-| DATA-05 | Phase 1 | Pending |
-| DATA-06 | Phase 1 | Pending |
-| DATA-07 | Phase 1 | Pending |
-| DATA-08 | Phase 1 | Pending |
-| DATA-09 | Phase 1 | Pending |
-| DATA-10 | Phase 1 | Pending |
-| BACK-01 | Phase 2 | Pending |
-| BACK-02 | Phase 2 | Pending |
-| BACK-03 | Phase 2 | Pending |
-| BACK-04 | Phase 2 | Pending |
-| BACK-05 | Phase 2 | Pending |
-| BACK-06 | Phase 2 | Pending |
-| BACK-07 | Phase 3 | Pending |
-| BACK-08 | Phase 3 | Pending |
-| BACK-09 | Phase 3 | Pending |
-| BACK-10 | Phase 3 | Pending |
-| BACK-11 | Phase 3 | Pending |
-| BACK-12 | Phase 3 | Pending |
-| ANAL-01 | Phase 4 | Pending |
-| ANAL-02 | Phase 4 | Pending |
-| ANAL-03 | Phase 4 | Pending |
-| ANAL-04 | Phase 4 | Pending |
-| ANAL-05 | Phase 4 | Pending |
-| ANAL-06 | Phase 4 | Pending |
-| ADVI-01 | Phase 5 | Pending |
-| ADVI-02 | Phase 5 | Pending |
-| ADVI-03 | Phase 5 | Pending |
-| ADVI-04 | Phase 5 | Pending |
-| ADVI-05 | Phase 5 | Pending |
-| ADVI-06 | Phase 5 | Pending |
+| DATA-01 | Phase 1 — Data Infrastructure | Pending |
+| DATA-02 | Phase 1 — Data Infrastructure | Pending |
+| DATA-03 | Phase 1 — Data Infrastructure | Pending |
+| DATA-04 | Phase 1 — Data Infrastructure | Pending |
+| DATA-05 | Phase 1 — Data Infrastructure | Pending |
+| DATA-06 | Phase 1 — Data Infrastructure | Pending |
+| DATA-07 | Phase 1 — Data Infrastructure | Pending |
+| DATA-08 | Phase 1 — Data Infrastructure | Pending |
+| DATA-09 | Phase 1 — Data Infrastructure | Pending |
+| DATA-10 | Phase 1 — Data Infrastructure | Pending |
+| BACK-01 | Phase 2 — Backtest Engine (Core) | Pending |
+| BACK-02 | Phase 2 — Backtest Engine (Core) | Pending |
+| BACK-03 | Phase 2 — Backtest Engine (Core) | Pending |
+| BACK-04 | Phase 2 — Backtest Engine (Core) | Pending |
+| BACK-05 | Phase 2 — Backtest Engine (Core) | Pending |
+| BACK-06 | Phase 2 — Backtest Engine (Core) | Pending |
+| BACK-07 | Phase 3 — Backtest Engine (Tax) | Pending |
+| BACK-08 | Phase 3 — Backtest Engine (Tax) | Pending |
+| BACK-09 | Phase 3 — Backtest Engine (Tax) | Pending |
+| BACK-10 | Phase 3 — Backtest Engine (Tax) | Pending |
+| BACK-11 | Phase 3 — Backtest Engine (Tax) | Pending |
+| BACK-12 | Phase 3 — Backtest Engine (Tax) | Pending |
+| ANAL-01 | Phase 4 — Analysis & Reporting | Pending |
+| ANAL-02 | Phase 4 — Analysis & Reporting | Pending |
+| ANAL-03 | Phase 4 — Analysis & Reporting | Pending |
+| ANAL-04 | Phase 4 — Analysis & Reporting | Pending |
+| ANAL-05 | Phase 4 — Analysis & Reporting | Pending |
+| ANAL-06 | Phase 4 — Analysis & Reporting | Pending |
+| ADVI-01 | Phase 5 — Advisory Engine | Pending |
+| ADVI-02 | Phase 5 — Advisory Engine | Pending |
+| ADVI-03 | Phase 5 — Advisory Engine | Pending |
+| ADVI-04 | Phase 5 — Advisory Engine | Pending |
+| ADVI-05 | Phase 5 — Advisory Engine | Pending |
+| ADVI-06 | Phase 5 — Advisory Engine | Pending |
 
 **Coverage:**
 - v1 requirements: 34 total
 - Mapped to phases: 34
-- Unmapped: 0 ✓
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-02-26*
-*Last updated: 2026-02-26 after initial definition*
+*Last updated: 2026-02-26 after roadmap creation — traceability confirmed against ROADMAP.md*

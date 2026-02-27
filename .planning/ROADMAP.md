@@ -33,7 +33,7 @@ A 4-layer financial platform built bottom-up: clean market data enables honest b
 **Plans:** 8 plans
 
 Plans:
-- [ ] 01-01-PLAN.md — Schema, migrations, and Pydantic data models
+- [x] 01-01-PLAN.md — Schema, migrations, and Pydantic data models (complete 2026-02-27)
 - [ ] 01-02-PLAN.md — DatabaseWriter with upsert semantics and QualityFlag enum
 - [ ] 01-03-PLAN.md — DataAdapter Protocol and PolygonAdapter (US equities)
 - [ ] 01-04-PLAN.md — YFinanceAdapter for ASX and AUD/USD FX rates
@@ -138,7 +138,7 @@ Plans:
 
 | Phase | Status | Plan | Started | Completed |
 |-------|--------|------|---------|-----------|
-| 1 - Data Infrastructure | Planned | 8 plans | — | — |
+| 1 - Data Infrastructure | In progress | 8 plans | 2026-02-27 | — |
 | 2 - Backtest Engine (Core) | Pending | — | — | — |
 | 3 - Backtest Engine (Tax) | Pending | — | — | — |
 | 4 - Analysis & Reporting | Pending | — | — | — |
@@ -190,4 +190,4 @@ Plans:
 ---
 
 *Roadmap created: 2026-02-26*
-*Last updated: 2026-02-27 after Phase 1 planning — 8 plans created*
+*Last updated: 2026-02-27 after plan 01-01 complete — schema, models, test suite*

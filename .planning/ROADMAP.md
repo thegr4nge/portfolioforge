@@ -30,6 +30,18 @@ A 4-layer financial platform built bottom-up: clean market data enables honest b
 
 **Requirements:** DATA-01, DATA-02, DATA-03, DATA-04, DATA-05, DATA-06, DATA-07, DATA-08, DATA-09, DATA-10
 
+**Plans:** 8 plans
+
+Plans:
+- [ ] 01-01-PLAN.md — Schema, migrations, and Pydantic data models
+- [ ] 01-02-PLAN.md — DatabaseWriter with upsert semantics and QualityFlag enum
+- [ ] 01-03-PLAN.md — DataAdapter Protocol and PolygonAdapter (US equities)
+- [ ] 01-04-PLAN.md — YFinanceAdapter for ASX and AUD/USD FX rates
+- [ ] 01-05-PLAN.md — CoverageTracker (gap detection) and AdjustmentCalculator (split adjustments)
+- [ ] 01-06-PLAN.md — IngestionOrchestrator (pipeline coordinator)
+- [ ] 01-07-PLAN.md — ValidationSuite (6-flag quality checks)
+- [ ] 01-08-PLAN.md — CLI (ingest, status, quality, gaps commands)
+
 ### Success Criteria
 
 1. Running the ingestion pipeline for a US ticker produces OHLCV records in SQLite with adjusted prices correctly reflecting any historical splits.
@@ -47,6 +59,8 @@ A 4-layer financial platform built bottom-up: clean market data enables honest b
 **Dependencies:** Phase 1 (requires validated price data in SQLite)
 
 **Requirements:** BACK-01, BACK-02, BACK-03, BACK-04, BACK-05, BACK-06
+
+**Plans:** 0 plans
 
 ### Success Criteria
 
@@ -66,6 +80,8 @@ A 4-layer financial platform built bottom-up: clean market data enables honest b
 
 **Requirements:** BACK-07, BACK-08, BACK-09, BACK-10, BACK-11, BACK-12
 
+**Plans:** 0 plans
+
 ### Success Criteria
 
 1. A backtest for a portfolio held longer than 12 months applies the 50% CGT discount to qualifying gains; a portfolio held under 12 months does not — the difference is visible in after-tax results.
@@ -83,6 +99,8 @@ A 4-layer financial platform built bottom-up: clean market data enables honest b
 **Dependencies:** Phase 3 (analysis builds on tax-correct backtest results)
 
 **Requirements:** ANAL-01, ANAL-02, ANAL-03, ANAL-04, ANAL-05, ANAL-06
+
+**Plans:** 0 plans
 
 ### Success Criteria
 
@@ -103,6 +121,8 @@ A 4-layer financial platform built bottom-up: clean market data enables honest b
 
 **Requirements:** ADVI-01, ADVI-02, ADVI-03, ADVI-04, ADVI-05, ADVI-06
 
+**Plans:** 0 plans
+
 ### Success Criteria
 
 1. A user can provide their savings amount, monthly surplus, goal (retirement / income / inflation protection), time horizon, and risk tolerance — and receive output without needing to know any financial terminology.
@@ -118,7 +138,7 @@ A 4-layer financial platform built bottom-up: clean market data enables honest b
 
 | Phase | Status | Plan | Started | Completed |
 |-------|--------|------|---------|-----------|
-| 1 - Data Infrastructure | Pending | — | — | — |
+| 1 - Data Infrastructure | Planned | 8 plans | — | — |
 | 2 - Backtest Engine (Core) | Pending | — | — | — |
 | 3 - Backtest Engine (Tax) | Pending | — | — | — |
 | 4 - Analysis & Reporting | Pending | — | — | — |
@@ -170,4 +190,4 @@ A 4-layer financial platform built bottom-up: clean market data enables honest b
 ---
 
 *Roadmap created: 2026-02-26*
-*Last updated: 2026-02-26 after initial creation*
+*Last updated: 2026-02-27 after Phase 1 planning — 8 plans created*

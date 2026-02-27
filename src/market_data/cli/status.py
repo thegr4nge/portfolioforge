@@ -8,7 +8,6 @@ Usage::
     market-data gaps AAPL
 """
 
-import os
 import sqlite3
 
 import typer
@@ -32,13 +31,7 @@ def _decode_flags(flag_int: int) -> str:
 
 
 def _open_db(db_path: str) -> sqlite3.Connection:
-    """Open the DB, printing a friendly error and exiting if it doesn't exist."""
-    if db_path != ":memory:" and not os.path.exists(db_path):
-        console.print(
-            f"[bold red]Error:[/bold red] Database not found: {db_path}",
-            highlight=False,
-        )
-        raise typer.Exit(1)
+    """Open the DB, creating it with migrations if it doesn't yet exist."""
     return get_connection(db_path)
 
 

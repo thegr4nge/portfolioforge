@@ -9,16 +9,16 @@
 
 ### Data Infrastructure (Layer 1)
 
-- [ ] **DATA-01**: System fetches and stores daily OHLCV data for US equities via Polygon.io free tier
-- [ ] **DATA-02**: System fetches and stores daily OHLCV data for ASX securities (yfinance for prototype)
-- [ ] **DATA-03**: System stores dividend history with ex-date, pay-date, amount, currency, and franking percentage
-- [ ] **DATA-04**: System stores split history and retroactively applies split adjustments to all historical OHLCV
-- [ ] **DATA-05**: System stores daily FX rates (AUD/USD minimum) for currency conversion
-- [ ] **DATA-06**: Ingestion pipeline supports incremental updates — re-running only fetches data not already stored
-- [ ] **DATA-07**: Data validation runs after every ingestion batch and flags gaps, OHLC integrity failures, and anomalous price jumps
-- [ ] **DATA-08**: CLI command `status` shows per-ticker data coverage, date ranges, and last-fetched timestamps
-- [ ] **DATA-09**: Schema supports multiple exchanges and currencies from day one (exchange and currency fields mandatory)
-- [ ] **DATA-10**: Ingestion log records every fetch: ticker, date range, records written, status, errors
+- [x] **DATA-01**: System fetches and stores daily OHLCV data for US equities via Polygon.io free tier
+- [x] **DATA-02**: System fetches and stores daily OHLCV data for ASX securities (yfinance for prototype)
+- [x] **DATA-03**: System stores dividend history with ex-date, pay-date, amount, currency, and franking percentage
+- [x] **DATA-04**: System stores split history and retroactively applies split adjustments to all historical OHLCV
+- [x] **DATA-05**: System stores daily FX rates (AUD/USD minimum) for currency conversion
+- [x] **DATA-06**: Ingestion pipeline supports incremental updates — re-running only fetches data not already stored
+- [x] **DATA-07**: Data validation runs after every ingestion batch and flags gaps, OHLC integrity failures, and anomalous price jumps
+- [x] **DATA-08**: CLI command `status` shows per-ticker data coverage, date ranges, and last-fetched timestamps
+- [x] **DATA-09**: Schema supports multiple exchanges and currencies from day one (exchange and currency fields mandatory)
+- [x] **DATA-10**: Ingestion log records every fetch: ticker, date range, records written, status, errors
 
 ### Backtesting Engine (Layer 2)
 
@@ -92,16 +92,16 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DATA-01 | Phase 1 — Data Infrastructure | Pending |
-| DATA-02 | Phase 1 — Data Infrastructure | Pending |
-| DATA-03 | Phase 1 — Data Infrastructure | Pending |
-| DATA-04 | Phase 1 — Data Infrastructure | Pending |
-| DATA-05 | Phase 1 — Data Infrastructure | Pending |
-| DATA-06 | Phase 1 — Data Infrastructure | Pending |
-| DATA-07 | Phase 1 — Data Infrastructure | Pending |
-| DATA-08 | Phase 1 — Data Infrastructure | Pending |
-| DATA-09 | Phase 1 — Data Infrastructure | Pending |
-| DATA-10 | Phase 1 — Data Infrastructure | Pending |
+| DATA-01 | Phase 1 — Data Infrastructure | Complete |
+| DATA-02 | Phase 1 — Data Infrastructure | Complete |
+| DATA-03 | Phase 1 — Data Infrastructure | Complete |
+| DATA-04 | Phase 1 — Data Infrastructure | Complete |
+| DATA-05 | Phase 1 — Data Infrastructure | Complete |
+| DATA-06 | Phase 1 — Data Infrastructure | Complete |
+| DATA-07 | Phase 1 — Data Infrastructure | Complete |
+| DATA-08 | Phase 1 — Data Infrastructure | Complete |
+| DATA-09 | Phase 1 — Data Infrastructure | Complete |
+| DATA-10 | Phase 1 — Data Infrastructure | Complete |
 | BACK-01 | Phase 2 — Backtest Engine (Core) | Pending |
 | BACK-02 | Phase 2 — Backtest Engine (Core) | Pending |
 | BACK-03 | Phase 2 — Backtest Engine (Core) | Pending |

@@ -14,7 +14,7 @@ A 4-layer financial platform built bottom-up: clean market data enables honest b
 
 | Phase | Name | Goal | Requirements | Depends On |
 |-------|------|------|--------------|------------|
-| 1 | Data Infrastructure | Users can ingest, validate, and inspect clean multi-market price data locally | DATA-01 to DATA-10 | — |
+| 1 | Data Infrastructure | Complete    | 2026-02-27 | — |
 | 2 | Backtest Engine (Core) | Users can run a realistic portfolio backtest with mandatory cost modeling | BACK-01 to BACK-06 | Phase 1 |
 | 3 | Backtest Engine (Tax) | Backtests produce AUD-denominated, CGT-correct results validated against ATO examples | BACK-07 to BACK-12 | Phase 2 |
 | 4 | Analysis & Reporting | Users can compare portfolios, run crash scenarios, and receive plain-language narrative output | ANAL-01 to ANAL-06 | Phase 3 |
@@ -30,7 +30,7 @@ A 4-layer financial platform built bottom-up: clean market data enables honest b
 
 **Requirements:** DATA-01, DATA-02, DATA-03, DATA-04, DATA-05, DATA-06, DATA-07, DATA-08, DATA-09, DATA-10
 
-**Plans:** 8 plans
+**Plans:** 8/8 plans complete
 
 Plans:
 - [x] 01-01-PLAN.md — Schema, migrations, and Pydantic data models (complete 2026-02-27)

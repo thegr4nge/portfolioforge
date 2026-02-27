@@ -41,6 +41,9 @@ src = ["src"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM"]
+ignore = [
+    "B008",  # typer requires typer.Option/Argument in function defaults by design
+]
 
 [tool.mypy]
 strict = true

@@ -8,8 +8,8 @@ Usage::
     market-data gaps AAPL
 """
 
-import sys
-from typing import Optional
+import os
+import sqlite3
 
 import typer
 from rich.console import Console
@@ -31,11 +31,8 @@ def _decode_flags(flag_int: int) -> str:
     return ", ".join(names) if names else ""
 
 
-def _open_db(db_path: str) -> "sqlite3.Connection":  # type: ignore[name-defined]
+def _open_db(db_path: str) -> sqlite3.Connection:
     """Open the DB, printing a friendly error and exiting if it doesn't exist."""
-    import os
-    import sqlite3
-
     if db_path != ":memory:" and not os.path.exists(db_path):
         console.print(
             f"[bold red]Error:[/bold red] Database not found: {db_path}",
@@ -48,7 +45,7 @@ def _open_db(db_path: str) -> "sqlite3.Connection":  # type: ignore[name-defined
 @status_app.callback(invoke_without_command=True)
 def status_default(
     ctx: typer.Context,
-    ticker: Optional[str] = typer.Argument(
+    ticker: str | None = typer.Argument(
         None, help="Ticker symbol for detailed view (e.g. AAPL)"
     ),
     db_path: str = typer.Option(_DEFAULT_DB, "--db", help="Path to the SQLite database"),
@@ -76,7 +73,7 @@ def status_default(
     conn.close()
 
 
-def _show_all_tickers(conn: "sqlite3.Connection") -> None:  # type: ignore[name-defined]
+def _show_all_tickers(conn: sqlite3.Connection) -> None:
     """Show one-row summary per ticker in the database."""
     rows = conn.execute(
         """
@@ -134,7 +131,7 @@ def _show_all_tickers(conn: "sqlite3.Connection") -> None:  # type: ignore[name-
     console.print(table)
 
 
-def _show_ticker_detail(conn: "sqlite3.Connection", ticker: str) -> None:  # type: ignore[name-defined]
+def _show_ticker_detail(conn: sqlite3.Connection, ticker: str) -> None:
     """Show detailed coverage and quality flag breakdown for a single ticker."""
     sec_row = conn.execute(
         "SELECT id, exchange, currency FROM securities WHERE ticker = ?", (ticker,)
@@ -285,7 +282,7 @@ def quality_command(
     table.add_column("Low", justify="right")
     table.add_column("Close", justify="right")
     table.add_column("Volume", justify="right")
-    table.add_column("Flags")
+    table.add_column("Flags", no_wrap=True)
 
     for row in rows:
         table.add_row(
@@ -316,6 +313,8 @@ def gaps_command(
     """
     from datetime import date
 
+    from market_data.pipeline.coverage import CoverageTracker
+
     ticker = ticker.upper()
     conn = _open_db(db_path)
 
@@ -344,26 +343,17 @@ def gaps_command(
     window_start = date.fromisoformat(earliest_row[0])
     window_end = date.today()
 
-    from market_data.pipeline.coverage import CoverageTracker
-
-    tracker = CoverageTracker(conn)
-    data_types = ["ohlcv", "dividends", "splits"]
-
     # Determine which sources are used per data_type
     source_rows = conn.execute(
         "SELECT DISTINCT data_type, source FROM ingestion_coverage WHERE security_id = ?",
         (security_id,),
     ).fetchall()
+    covered_sources: dict[str, str] = {r[0]: r[1] for r in source_rows}
 
-    conn.close()
+    tracker = CoverageTracker(conn)
+    data_types = ["ohlcv", "dividends", "splits"]
 
     gap_rows: list[tuple[str, str, str, int]] = []
-
-    # Open a fresh connection for tracker
-    conn2 = get_connection(db_path)
-    tracker2 = CoverageTracker(conn2)
-
-    covered_sources: dict[str, str] = {r[0]: r[1] for r in source_rows}
 
     for dt in data_types:
         source = covered_sources.get(dt)
@@ -373,12 +363,12 @@ def gaps_command(
             gap_rows.append((dt, window_start.isoformat(), window_end.isoformat(), days))
             continue
 
-        gaps = tracker2.get_gaps(security_id, dt, source, window_start, window_end)
+        gaps = tracker.get_gaps(security_id, dt, source, window_start, window_end)
         for gap in gaps:
             days = (gap.to_date - gap.from_date).days + 1
             gap_rows.append((dt, gap.from_date.isoformat(), gap.to_date.isoformat(), days))
 
-    conn2.close()
+    conn.close()
 
     if not gap_rows:
         console.print(f"[green]Coverage complete for {ticker}[/green]")

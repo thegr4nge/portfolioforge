@@ -4,37 +4,36 @@ Usage::
 
     market-data ingest AAPL
     market-data ingest AAPL --from 2020-01-01
+    market-data ingest --watchlist tickers.txt
     market-data ingest watchlist tickers.txt
-
-The default command (`market-data ingest TICKER`) is handled by the top-level
-ingest group callback so users do not need to type `ingest ticker AAPL`.
 """
 
 import asyncio
 import os
-import sys
 from datetime import date
 from pathlib import Path
-from typing import Optional
 
 import typer
 from loguru import logger
 from rich.console import Console
 
-from market_data.db.schema import get_connection
 from market_data.adapters.polygon import PolygonAdapter
 from market_data.adapters.yfinance import YFinanceAdapter
+from market_data.db.schema import get_connection
 from market_data.pipeline.ingestion import IngestionOrchestrator
 from market_data.quality.validator import ValidationSuite
 
-ingest_app = typer.Typer(help="Ingest market data from providers")
+ingest_app = typer.Typer(
+    help="Ingest market data from providers",
+    context_settings={"allow_interspersed_args": True},
+)
 console = Console()
 
 _DEFAULT_FROM_STR = "2015-01-01"
 _DEFAULT_DB = "data/market.db"
 
 
-def _parse_date(value: Optional[str], fallback: str) -> date:
+def _parse_date(value: str | None, fallback: str) -> date:
     """Parse ISO 8601 date string; use fallback if value is None."""
     s = value if value is not None else fallback
     try:
@@ -44,7 +43,7 @@ def _parse_date(value: Optional[str], fallback: str) -> date:
             f"[bold red]Error:[/bold red] Invalid date '{s}'. Use YYYY-MM-DD format.",
             highlight=False,
         )
-        raise typer.Exit(1)
+        raise typer.Exit(1) from None
 
 
 def _is_asx_ticker(ticker: str) -> bool:
@@ -124,23 +123,30 @@ def _run_single(
 
     except Exception as exc:
         logger.exception("ingest failed for {}", ticker)
-        console.print(
+        stderr_console = Console(stderr=True)
+        stderr_console.print(
             f"[bold red]Error:[/bold red] {exc}",
-            file=sys.stderr,
             highlight=False,
         )
         return 1
 
 
-@ingest_app.command("ticker", hidden=True)
-def ingest_ticker(
-    ticker: str = typer.Argument(..., help="Ticker symbol to ingest (e.g. AAPL, BHP.AX)"),
-    from_date_str: Optional[str] = typer.Option(
+@ingest_app.command()
+def ticker(
+    ticker_sym: str = typer.Argument(
+        ..., metavar="TICKER", help="Ticker symbol (e.g. AAPL, BHP.AX)"
+    ),
+    from_date_str: str | None = typer.Option(
         None,
         "--from",
         help="Start date (YYYY-MM-DD). Defaults to 2015-01-01.",
     ),
     db_path: str = typer.Option(_DEFAULT_DB, "--db", help="Path to the SQLite database"),
+    watchlist: Path | None = typer.Option(
+        None,
+        "--watchlist",
+        help="Path to watchlist file. If provided, TICKER is ignored.",
+    ),
 ) -> None:
     """Ingest market data for a single ticker.
 
@@ -150,51 +156,67 @@ def ingest_ticker(
         market-data ingest AAPL --from 2020-01-01
         market-data ingest BHP.AX
     """
+    if watchlist is not None:
+        _run_watchlist(watchlist, from_date_str, db_path)
+        return
+
     effective_from = _parse_date(from_date_str, _DEFAULT_FROM_STR)
-    code = _run_single(ticker, effective_from, db_path)
+    code = _run_single(ticker_sym, effective_from, db_path)
     raise typer.Exit(code)
 
 
 @ingest_app.callback(invoke_without_command=True)
 def ingest_default(
     ctx: typer.Context,
-    ticker: Optional[str] = typer.Argument(
-        None, help="Ticker symbol to ingest (e.g. AAPL, BHP.AX)"
+    ticker_sym: str | None = typer.Argument(
+        None, metavar="TICKER", help="Ticker symbol to ingest (e.g. AAPL, BHP.AX)"
     ),
-    from_date_str: Optional[str] = typer.Option(
+    from_date_str: str | None = typer.Option(
         None,
         "--from",
         help="Start date (YYYY-MM-DD). Defaults to 2015-01-01.",
+    ),
+    watchlist: Path | None = typer.Option(
+        None,
+        "--watchlist",
+        help="Ingest all tickers in this file (one per line).",
     ),
     db_path: str = typer.Option(_DEFAULT_DB, "--db", help="Path to the SQLite database"),
 ) -> None:
     """Ingest market data from providers.
 
-    Provide a TICKER to ingest a single security, or use the `watchlist`
-    subcommand to ingest multiple tickers from a file.
+    Provide a TICKER to ingest a single security, or use --watchlist FILE
+    to ingest multiple tickers from a file.
 
     Examples::
 
         market-data ingest AAPL
         market-data ingest AAPL --from 2020-01-01
+        market-data ingest --watchlist tickers.txt
         market-data ingest watchlist tickers.txt
     """
     if ctx.invoked_subcommand is not None:
         return
 
-    if ticker is None:
+    if watchlist is not None:
+        _run_watchlist(watchlist, from_date_str, db_path)
+        return
+
+    if ticker_sym is None:
         console.print(ctx.get_help())
         raise typer.Exit(0)
 
     effective_from = _parse_date(from_date_str, _DEFAULT_FROM_STR)
-    code = _run_single(ticker, effective_from, db_path)
+    code = _run_single(ticker_sym, effective_from, db_path)
     raise typer.Exit(code)
 
 
 @ingest_app.command("watchlist")
 def ingest_watchlist(
-    file: Path = typer.Argument(..., help="Path to watchlist file (one ticker per line)"),
-    from_date_str: Optional[str] = typer.Option(
+    file: Path = typer.Argument(
+        ..., help="Path to watchlist file (one ticker per line)"
+    ),
+    from_date_str: str | None = typer.Option(
         None,
         "--from",
         help="Start date (YYYY-MM-DD). Defaults to 2015-01-01.",
@@ -211,6 +233,15 @@ def ingest_watchlist(
         market-data ingest watchlist tickers.txt
         market-data ingest watchlist tickers.txt --from 2020-01-01
     """
+    _run_watchlist(file, from_date_str, db_path)
+
+
+def _run_watchlist(
+    file: Path,
+    from_date_str: str | None,
+    db_path: str,
+) -> None:
+    """Process a watchlist file, ingesting each ticker sequentially."""
     if not file.exists():
         console.print(
             f"[bold red]Error:[/bold red] Watchlist file not found: {file}",

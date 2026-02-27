@@ -12,7 +12,7 @@ Usage::
 import typer
 
 from market_data.cli.ingest import ingest_app
-from market_data.cli.status import status_app, quality_command, gaps_command
+from market_data.cli.status import gaps_command, quality_command, status_app
 
 app = typer.Typer(
     name="market-data",

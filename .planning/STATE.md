@@ -19,8 +19,8 @@
 | Overall Progress | 0/5 phases complete |
 
 ```
-Progress: [......    ] ~12% (6/8 plans in Phase 1 have SUMMARY files: 01,02,03,04,07 + adjuster/coverage from 05)
-Phase 1 [......] Phase 2 [ ] Phase 3 [ ] Phase 4 [ ] Phase 5 [ ]
+Progress: [.......   ] ~14% (7/8 plans in Phase 1 have SUMMARY files: 01,02,03,04,05,06,07)
+Phase 1 [.......] Phase 2 [ ] Phase 3 [ ] Phase 4 [ ] Phase 5 [ ]
 ```
 
 ---
@@ -42,9 +42,9 @@ Phase 1 [......] Phase 2 [ ] Phase 3 [ ] Phase 4 [ ] Phase 5 [ ]
 | Metric | Value |
 |--------|-------|
 | Phases complete | 0/5 |
-| Requirements delivered | 7/34 (DATA-09, DATA-07, DATA-10, DATA-02, DATA-03, DATA-05 + DATA-07 via validator) |
+| Requirements delivered | 9/34 (DATA-09, DATA-07, DATA-10, DATA-02, DATA-03, DATA-05 + DATA-07 via validator + DATA-06, DATA-10 via orchestrator) |
 | Plans created | 8 (01-01 through 01-08) |
-| Plans complete | 7 (01-01, 01-02, 01-03, 01-04, 01-05, 01-06, 01-07) |
+| Plans complete | 7 (01-01, 01-02, 01-03, 01-04, 01-05, 01-06, 01-07) [all have SUMMARY files] |
 
 ---
 
@@ -80,6 +80,9 @@ Phase 1 [......] Phase 2 [ ] Phase 3 [ ] Phase 4 [ ] Phase 5 [ ]
 | validate() only calls update_quality_flags() on flag change | Avoids unnecessary DB writes on repeated validate() calls — safe to call after every ingestion batch |
 | PRICE_SPIKE check pre-fetches split dates as a set | O(1) per-row lookup; correctly handles securities with multiple splits without per-row DB queries |
 | GAP_ADJACENT uses 5 calendar day threshold | Fri→Mon = 3 days (passes); multi-week absences (>5) are flagged; no trading calendar needed in Phase 1 |
+| Fail-soft per data-type gap in IngestionOrchestrator | Exceptions caught per gap, logged to ingestion_log, appended to result.errors; remaining gaps continue executing — partial failures don't abort the run |
+| security_id=0 placeholder in adapter records | Adapters return records with security_id=0 (model default); orchestrator patches via model_copy(update={"security_id": ...}) before writing — adapters stay decoupled from securities table |
+| Splits fetched last, adjustment runs once | ohlcv/dividends written first; splits collected then recalculate_for_split() called once per new split — avoids redundant recalculation if multiple split gaps fetched |
 
 ### Open Questions / Blockers
 
@@ -115,8 +118,8 @@ Phase 1 [......] Phase 2 [ ] Phase 3 [ ] Phase 4 [ ] Phase 5 [ ]
 
 **To resume:** Read this file, then `.planning/ROADMAP.md` for phase detail.
 
-**Last session:** 2026-02-27T03:53:51Z
-**Stopped at:** Completed 01-07-PLAN.md (ValidationSuite — 6-flag bitmask quality checks, 12 tests)
+**Last session:** 2026-02-27T04:33:11Z
+**Stopped at:** Completed 01-06-PLAN.md (IngestionOrchestrator — full pipeline coordinator, 7 integration tests)
 **Resume file:** None
 
 **Next action:** Execute plan 01-08 (CLI commands: ingest, status, quality, gaps).
@@ -127,4 +130,4 @@ Phase 1 [......] Phase 2 [ ] Phase 3 [ ] Phase 4 [ ] Phase 5 [ ]
 ---
 
 *State initialized: 2026-02-26*
-*Last updated: 2026-02-27 after completing plan 01-07*
+*Last updated: 2026-02-27 after completing plan 01-06 (IngestionOrchestrator)*

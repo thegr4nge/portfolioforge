@@ -70,6 +70,9 @@ Phase 1 [....] Phase 2 [ ] Phase 3 [ ] Phase 4 [ ] Phase 5 [ ]
 | franking_credit_pct=None hardcoded in YFinanceAdapter | yfinance cannot supply Australian franking credit data; hardcoded None + comment prevents silent 0.0 default |
 | mypy ignore_missing_imports override for yfinance | No stubs available; [[tool.mypy.overrides]] in pyproject.toml keeps strict mode on all other modules |
 | fetch_fx_rates() outside DataAdapter Protocol | FX is cross-market, adapter-specific; adding it to Protocol would force PolygonAdapter to implement it even if unsupported |
+| DataAdapter as runtime_checkable Protocol | Enables isinstance() checks AND mypy structural typing; YFinanceAdapter must expose async methods to satisfy same contract |
+| _rate_limit_secs as PolygonAdapter instance param | Production default 12s; tests use 0.0 — dependency injection prevents 84s test run without compromising real rate limiting |
+| dict[str, Any] for JSON responses (not dict[str, object]) | mypy strict rejects int()/float() on 'object'; Any is correct at untyped JSON boundaries, validated by Pydantic model construction |
 
 ### Open Questions / Blockers
 
@@ -103,11 +106,11 @@ Phase 1 [....] Phase 2 [ ] Phase 3 [ ] Phase 4 [ ] Phase 5 [ ]
 
 **To resume:** Read this file, then `.planning/ROADMAP.md` for phase detail.
 
-**Last session:** 2026-02-27T03:41:21Z
-**Stopped at:** Completed 01-04-PLAN.md (YFinanceAdapter for ASX equities, FX rates, 8-test suite)
+**Last session:** 2026-02-27T03:48:01Z
+**Stopped at:** Completed 01-03-PLAN.md (PolygonAdapter — async, rate-limited, paginated, 7-test suite)
 **Resume file:** None
 
-**Next action:** Execute plan 01-05 (CoverageTracker + gap detection).
+**Next action:** Execute plan 01-05 (CoverageTracker + gap detection) — 01-04 was completed in a prior session.
 
 **Phase 1 remaining scope:**
 - CoverageTracker + gap detection (01-05)
@@ -117,4 +120,4 @@ Phase 1 [....] Phase 2 [ ] Phase 3 [ ] Phase 4 [ ] Phase 5 [ ]
 ---
 
 *State initialized: 2026-02-26*
-*Last updated: 2026-02-27 after completing plan 01-04*
+*Last updated: 2026-02-27 after completing plan 01-03*

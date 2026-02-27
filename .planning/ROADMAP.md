@@ -138,7 +138,7 @@ Plans:
 
 | Phase | Status | Plan | Started | Completed |
 |-------|--------|------|---------|-----------|
-| 1 - Data Infrastructure | Complete (checkpoint pending) | 8 plans | 2026-02-27 | 2026-02-27 |
+| 1 - Data Infrastructure | Complete | 8 plans | 2026-02-27 | 2026-02-27 |
 | 2 - Backtest Engine (Core) | Pending | — | — | — |
 | 3 - Backtest Engine (Tax) | Pending | — | — | — |
 | 4 - Analysis & Reporting | Pending | — | — | — |
@@ -190,4 +190,4 @@ Plans:
 ---
 
 *Roadmap created: 2026-02-26*
-*Last updated: 2026-02-27 after plan 01-08 complete — CLI (ingest, status, quality, gaps with Rich tables, 77 tests total)*
+*Last updated: 2026-02-27 — Phase 1 complete (all 8 plans + human checkpoint approved); 77 tests, mypy strict, ruff clean*

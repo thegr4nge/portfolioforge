@@ -67,10 +67,10 @@ completed: 2026-02-27
 
 ## Performance
 
-- **Duration:** ~12 min
+- **Duration:** ~60 min (including human checkpoint verification and bug-fix round-trip)
 - **Started:** 2026-02-27T04:35:25Z
-- **Completed:** 2026-02-27T04:47:00Z
-- **Tasks:** 3 (Task 4 = checkpoint for human verification)
+- **Completed:** 2026-02-27T05:00:00Z
+- **Tasks:** 4 (3 auto + 1 checkpoint:human-verify — approved)
 - **Files modified:** 5
 
 ## Accomplishments
@@ -87,8 +87,9 @@ Each task was committed atomically:
 1. **Task 1: Implement CLI entry point and ingest command** - `7fa8a10` (feat)
 2. **Task 2: Implement status, quality, and gaps commands** - `7b10d76` (feat)
 3. **Task 3: CLI test suite and ruff/mypy fixes** - `eb74839` (feat)
+4. **Fix: status creates DB on first run instead of erroring** - `b821f66` (fix — human checkpoint verification revealed this bug)
 
-**Plan metadata:** (docs commit follows)
+**Plan metadata:** `6ec313d` (docs: complete CLI plan, pre-checkpoint)
 
 ## Files Created/Modified
 
@@ -159,12 +160,25 @@ Each task was committed atomically:
 
 ---
 
-**Total deviations:** 5 auto-fixed (all Rule 1 bugs)
-**Impact on plan:** All were typer/Rich compatibility issues, not logic errors. No scope creep. Plan functionality delivered exactly as specified.
+**6. [Rule 1 - Bug] status --db on nonexistent path errored instead of creating DB gracefully**
+
+- **Found during:** Task 4 (human checkpoint verification)
+- **Issue:** `python -m market_data status --db /tmp/test-market.db` raised an error when the path did not exist; the `_open_db()` helper called `os.path.exists()` and exited 1 instead of letting `get_connection()` create the file
+- **Fix:** Removed the `os.path.exists()` pre-check for the `status` command default flow; `get_connection()` creates the SQLite file on first open, giving the "No data ingested yet" empty state rather than an error
+- **Files modified:** `src/market_data/cli/status.py`
+- **Verification:** `market-data status --db /tmp/nonexistent.db` now exits 0 and prints "No data ingested yet"; confirmed by human during checkpoint
+- **Committed in:** `b821f66`
+
+---
+
+**Total deviations:** 6 auto-fixed (all Rule 1 bugs)
+**Impact on plan:** All were typer/Rich compatibility issues or a first-run UX bug. No scope creep. Plan functionality delivered exactly as specified.
 
 ## Issues Encountered
 
 **Pre-existing test failure:** `test_adjuster.py::test_recalculate_all_splits_resets_and_reapplies` continues to fail (pre-existing from plan 01-05 scope). This has no impact on CLI functionality — all 6 new CLI tests pass, and the 71 other tests continue to pass.
+
+**Human checkpoint (Task 4):** Paused for human verification after Tasks 1-3. User ran CLI commands and found the status-on-nonexistent-DB bug. Bug was fixed in `b821f66` and checkpoint was approved. All 77 tests pass post-fix.
 
 ## User Setup Required
 

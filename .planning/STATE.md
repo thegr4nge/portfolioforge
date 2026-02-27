@@ -14,8 +14,8 @@
 |-------|-------|
 | Milestone | v1 |
 | Current Phase | 1 — Data Infrastructure |
-| Current Plan | 08 (complete — awaiting human checkpoint verification) |
-| Phase Status | Complete (pending checkpoint approval) |
+| Current Plan | 08 (complete — checkpoint approved 2026-02-27) |
+| Phase Status | Complete |
 | Overall Progress | Phase 1 done / 5 phases total |
 
 ```
@@ -29,7 +29,7 @@ Phase 1 [████████] Phase 2 [ ] Phase 3 [ ] Phase 4 [ ] Phase 5 [
 
 | Phase | Name | Status | Completed |
 |-------|------|--------|-----------|
-| 1 | Data Infrastructure | Complete (checkpoint pending) | 2026-02-27 |
+| 1 | Data Infrastructure | Complete | 2026-02-27 |
 | 2 | Backtest Engine (Core) | Pending | — |
 | 3 | Backtest Engine (Tax) | Pending | — |
 | 4 | Analysis & Reporting | Pending | — |
@@ -41,7 +41,7 @@ Phase 1 [████████] Phase 2 [ ] Phase 3 [ ] Phase 4 [ ] Phase 5 [
 
 | Metric | Value |
 |--------|-------|
-| Phases complete | 1/5 (pending checkpoint) |
+| Phases complete | 1/5 |
 | Requirements delivered | 10/34 (+ DATA-08 via CLI) |
 | Plans created | 8 (01-01 through 01-08) |
 | Plans complete | 8 (all have SUMMARY files) |
@@ -115,7 +115,7 @@ Phase 1 [████████] Phase 2 [ ] Phase 3 [ ] Phase 4 [ ] Phase 5 [
 
 - [ ] Confirm ASX data provider before Phase 2 planning session
 - [ ] Check ATO website for publicly available CGT worked examples (needed for BACK-12 acceptance)
-- [ ] Verify CLI end-to-end with real POLYGON_API_KEY (Task 4 checkpoint in 01-08)
+- [x] Verify CLI end-to-end with real POLYGON_API_KEY (Task 4 checkpoint in 01-08 — approved 2026-02-27)
 
 ---
 
@@ -123,15 +123,15 @@ Phase 1 [████████] Phase 2 [ ] Phase 3 [ ] Phase 4 [ ] Phase 5 [
 
 **To resume:** Read this file, then `.planning/ROADMAP.md` for phase detail.
 
-**Last session:** 2026-02-27T04:47:00Z
-**Stopped at:** Completed 01-08-PLAN.md tasks 1-3; waiting at Task 4 checkpoint (human-verify)
+**Last session:** 2026-02-27T05:00:00Z
+**Stopped at:** Completed 01-08-PLAN.md all tasks including Task 4 checkpoint (approved); Phase 1 fully complete
 **Resume file:** None
 
-**Next action:** User approves Task 4 checkpoint, then begin Phase 2 planning.
+**Next action:** Begin Phase 2 planning (Backtest Engine Core). Resolve ASX provider decision first.
 
-**Phase 1 status:** All 8 plans complete. CLI is fully wired. Phase 2 can begin after checkpoint approval and ASX provider decision.
+**Phase 1 status:** All 8 plans complete. CLI fully wired and human-verified. Phase 2 can begin after ASX provider decision.
 
 ---
 
 *State initialized: 2026-02-26*
-*Last updated: 2026-02-27 after completing plan 01-08 tasks 1-3 (CLI implementation)*
+*Last updated: 2026-02-27 after human checkpoint approval of plan 01-08 — Phase 1 fully complete*

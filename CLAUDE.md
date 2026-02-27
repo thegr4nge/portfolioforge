@@ -28,6 +28,7 @@ Virtual env: `source ~/market-data/.venv/bin/activate`
 - User is the **problem solver**: implements, tests, and drives code forward
 - Claude reviews, critiques, and specs the next challenge
 - Don't write full implementations unless explicitly asked — prefer spec + interface + test skeleton
+- **After every execution**: one sentence summarising what was done, then one clear next problem scoped tightly enough to just start — not a menu of options
 
 ## Code Conventions
 - Follow global CLAUDE.md standards (type hints, minimal changes, TDD)

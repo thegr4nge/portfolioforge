@@ -14,13 +14,13 @@
 |-------|-------|
 | Milestone | v1 |
 | Current Phase | 1 — Data Infrastructure |
-| Current Plan | 01 (complete) |
+| Current Plan | 02 (complete) |
 | Phase Status | In progress |
 | Overall Progress | 0/5 phases complete |
 
 ```
-Progress: [.         ] ~2% (1/~6 plans in Phase 1 complete)
-Phase 1 [.] Phase 2 [ ] Phase 3 [ ] Phase 4 [ ] Phase 5 [ ]
+Progress: [..        ] ~4% (2/~6 plans in Phase 1 complete)
+Phase 1 [..] Phase 2 [ ] Phase 3 [ ] Phase 4 [ ] Phase 5 [ ]
 ```
 
 ---
@@ -42,9 +42,9 @@ Phase 1 [.] Phase 2 [ ] Phase 3 [ ] Phase 4 [ ] Phase 5 [ ]
 | Metric | Value |
 |--------|-------|
 | Phases complete | 0/5 |
-| Requirements delivered | 1/34 (DATA-09) |
-| Plans created | 1 |
-| Plans complete | 1 |
+| Requirements delivered | 3/34 (DATA-09, DATA-07, DATA-10) |
+| Plans created | 2 |
+| Plans complete | 2 |
 
 ---
 
@@ -63,6 +63,9 @@ Phase 1 [.] Phase 2 [ ] Phase 3 [ ] Phase 4 [ ] Phase 5 [ ]
 | IF NOT EXISTS DDL in migrations | Makes each migration idempotent at SQL level — safe to re-run without conditional Python logic |
 | Frozen Pydantic models for all DB row types | Immutability prevents silent mutation bugs as records pass through pipeline layers |
 | setuptools.build_meta backend (not backends.legacy:build) | backends.legacy:build requires newer setuptools subpackage not available in this venv |
+| quality_flags excluded from ON CONFLICT DO UPDATE in upsert_ohlcv | Validator owns this column — re-ingestion must never overwrite quality annotations set by the validator |
+| write_ingestion_log is plain INSERT (no upsert) | Every fetch attempt is a distinct audit event; upsert would collapse retries and destroy the audit trail |
+| Internal imports use market_data.* not src.market_data.* | Editable install adds src/ to sys.path; using src-prefixed paths causes mypy to detect the same module under two names |
 
 ### Open Questions / Blockers
 
@@ -79,6 +82,8 @@ Phase 1 [.] Phase 2 [ ] Phase 3 [ ] Phase 4 [ ] Phase 5 [ ]
 - Every output template must include AFSL disclaimer (ANAL-05) from Phase 4 onwards; advisory output (Phase 5) inherits this
 - Polygon.io free tier: 5 requests/minute — rate limiting mandatory in ingestion pipeline
 - Migration pattern established: enumerate MIGRATIONS list, executescript() each, set PRAGMA user_version immediately after — no transaction management needed since executescript() auto-commits
+- quality_flags column is write-once on INSERT (always 0), then only writable via update_quality_flags() — enforced by convention in the writer, not by DB constraint
+- Internal module imports in src/ must use the installed package name (market_data.*) to avoid mypy detecting double module names
 
 ### Todos
 
@@ -91,14 +96,13 @@ Phase 1 [.] Phase 2 [ ] Phase 3 [ ] Phase 4 [ ] Phase 5 [ ]
 
 **To resume:** Read this file, then `.planning/ROADMAP.md` for phase detail.
 
-**Last session:** 2026-02-27T03:31:46Z
-**Stopped at:** Completed 01-01-PLAN.md (project setup, SQLite schema, Pydantic models)
+**Last session:** 2026-02-27T03:38:03Z
+**Stopped at:** Completed 01-02-PLAN.md (DatabaseWriter, QualityFlag enum, 8 writer tests)
 **Resume file:** None
 
-**Next action:** Execute plan 01-02 (DatabaseWriter — upsert logic for all tables).
+**Next action:** Execute plan 01-03 (Polygon.io adapter with rate limiting).
 
 **Phase 1 remaining scope:**
-- DatabaseWriter with upsert logic (01-02)
 - Polygon.io adapter with rate limiting (01-03)
 - yfinance adapter for ASX prototype (01-04)
 - CoverageTracker + gap detection (01-05)
@@ -108,4 +112,4 @@ Phase 1 [.] Phase 2 [ ] Phase 3 [ ] Phase 4 [ ] Phase 5 [ ]
 ---
 
 *State initialized: 2026-02-26*
-*Last updated: 2026-02-27 after completing plan 01-01*
+*Last updated: 2026-02-27 after completing plan 01-02*

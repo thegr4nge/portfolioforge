@@ -4,7 +4,7 @@
 
 **Core Value:** Anyone — regardless of investment experience — can describe their financial situation and goals, and receive a plain-language recommendation on what to do with their money, backed by real historical data, honest cost assumptions, and transparent reasoning.
 
-**Current Focus:** Phase 1 — Data Infrastructure
+**Current Focus:** Phase 1 complete — next: Phase 2 (Backtest Engine Core)
 
 ---
 
@@ -14,13 +14,13 @@
 |-------|-------|
 | Milestone | v1 |
 | Current Phase | 1 — Data Infrastructure |
-| Current Plan | 07 (complete) |
-| Phase Status | In progress |
-| Overall Progress | 0/5 phases complete |
+| Current Plan | 08 (complete — awaiting human checkpoint verification) |
+| Phase Status | Complete (pending checkpoint approval) |
+| Overall Progress | Phase 1 done / 5 phases total |
 
 ```
-Progress: [.......   ] ~14% (7/8 plans in Phase 1 have SUMMARY files: 01,02,03,04,05,06,07)
-Phase 1 [.......] Phase 2 [ ] Phase 3 [ ] Phase 4 [ ] Phase 5 [ ]
+Progress: [████████  ] ~20% (8/8 plans in Phase 1 have SUMMARY files)
+Phase 1 [████████] Phase 2 [ ] Phase 3 [ ] Phase 4 [ ] Phase 5 [ ]
 ```
 
 ---
@@ -29,7 +29,7 @@ Phase 1 [.......] Phase 2 [ ] Phase 3 [ ] Phase 4 [ ] Phase 5 [ ]
 
 | Phase | Name | Status | Completed |
 |-------|------|--------|-----------|
-| 1 | Data Infrastructure | In progress | — |
+| 1 | Data Infrastructure | Complete (checkpoint pending) | 2026-02-27 |
 | 2 | Backtest Engine (Core) | Pending | — |
 | 3 | Backtest Engine (Tax) | Pending | — |
 | 4 | Analysis & Reporting | Pending | — |
@@ -41,10 +41,10 @@ Phase 1 [.......] Phase 2 [ ] Phase 3 [ ] Phase 4 [ ] Phase 5 [ ]
 
 | Metric | Value |
 |--------|-------|
-| Phases complete | 0/5 |
-| Requirements delivered | 9/34 (DATA-09, DATA-07, DATA-10, DATA-02, DATA-03, DATA-05 + DATA-07 via validator + DATA-06, DATA-10 via orchestrator) |
+| Phases complete | 1/5 (pending checkpoint) |
+| Requirements delivered | 10/34 (+ DATA-08 via CLI) |
 | Plans created | 8 (01-01 through 01-08) |
-| Plans complete | 7 (01-01, 01-02, 01-03, 01-04, 01-05, 01-06, 01-07) [all have SUMMARY files] |
+| Plans complete | 8 (all have SUMMARY files) |
 
 ---
 
@@ -83,12 +83,15 @@ Phase 1 [.......] Phase 2 [ ] Phase 3 [ ] Phase 4 [ ] Phase 5 [ ]
 | Fail-soft per data-type gap in IngestionOrchestrator | Exceptions caught per gap, logged to ingestion_log, appended to result.errors; remaining gaps continue executing — partial failures don't abort the run |
 | security_id=0 placeholder in adapter records | Adapters return records with security_id=0 (model default); orchestrator patches via model_copy(update={"security_id": ...}) before writing — adapters stay decoupled from securities table |
 | Splits fetched last, adjustment runs once | ohlcv/dividends written first; splits collected then recalculate_for_split() called once per new split — avoids redundant recalculation if multiple split gaps fetched |
+| allow_interspersed_args=True on ingest_app Typer | typer 0.24.1 bug: positional arg + option after it misinterpreted as subcommand; this context_settings fix makes `ingest AAPL --db path` work |
+| quality/gaps exposed as both top-level and status sub-group commands | Plan spec requires `market-data quality AAPL` (not `market-data status quality AAPL`); both forms supported |
+| B008 ruff rule ignored in pyproject.toml | typer design requires Option/Argument in function defaults — B008 is a false positive for CLI code |
 
 ### Open Questions / Blockers
 
 | Item | Impact | Resolution Path |
 |------|--------|-----------------|
-| ASX data provider decision | Phase 2 cannot begin without production ASX data | Evaluate EOD Historical Data before Phase 1 completes |
+| ASX data provider decision | Phase 2 cannot begin without production ASX data | Evaluate EOD Historical Data before Phase 2 planning session |
 | LLM provider for advisory narrative | Phase 5 planning | Defer — evaluate when Phase 4 is complete |
 
 ### Technical Notes
@@ -106,11 +109,13 @@ Phase 1 [.......] Phase 2 [ ] Phase 3 [ ] Phase 4 [ ] Phase 5 [ ]
 - _yf_ticker() monkeypatching seam: tests replace adapter._yf_ticker = fake_fn (not the module-level yf.Ticker) for targeted, safe mocking
 - ValidationSuite check pattern: each _check_*() method takes only primitives/dates — no conn access except for FX/ADJUSTED_ESTIMATE which need DB lookups
 - Backtest layer must filter quality_flags == 0 before trusting OHLCV rows; non-zero flags need explicit handling (skip, warn, or accept with caveat)
+- CLI entry point: `python -m market_data` or `market-data` (via project.scripts). POLYGON_API_KEY required for US equities; ASX (.AX) uses yfinance (no key needed)
 
 ### Todos
 
 - [ ] Confirm ASX data provider before Phase 2 planning session
 - [ ] Check ATO website for publicly available CGT worked examples (needed for BACK-12 acceptance)
+- [ ] Verify CLI end-to-end with real POLYGON_API_KEY (Task 4 checkpoint in 01-08)
 
 ---
 
@@ -118,16 +123,15 @@ Phase 1 [.......] Phase 2 [ ] Phase 3 [ ] Phase 4 [ ] Phase 5 [ ]
 
 **To resume:** Read this file, then `.planning/ROADMAP.md` for phase detail.
 
-**Last session:** 2026-02-27T04:33:11Z
-**Stopped at:** Completed 01-06-PLAN.md (IngestionOrchestrator — full pipeline coordinator, 7 integration tests)
+**Last session:** 2026-02-27T04:47:00Z
+**Stopped at:** Completed 01-08-PLAN.md tasks 1-3; waiting at Task 4 checkpoint (human-verify)
 **Resume file:** None
 
-**Next action:** Execute plan 01-08 (CLI commands: ingest, status, quality, gaps).
+**Next action:** User approves Task 4 checkpoint, then begin Phase 2 planning.
 
-**Phase 1 remaining scope:**
-- CLI commands: ingest, status, quality, gaps (01-08)
+**Phase 1 status:** All 8 plans complete. CLI is fully wired. Phase 2 can begin after checkpoint approval and ASX provider decision.
 
 ---
 
 *State initialized: 2026-02-26*
-*Last updated: 2026-02-27 after completing plan 01-06 (IngestionOrchestrator)*
+*Last updated: 2026-02-27 after completing plan 01-08 tasks 1-3 (CLI implementation)*

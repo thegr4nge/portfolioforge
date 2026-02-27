@@ -40,7 +40,7 @@ Plans:
 - [x] 01-05-PLAN.md — CoverageTracker (gap detection) and AdjustmentCalculator (split adjustments) (complete 2026-02-27)
 - [x] 01-06-PLAN.md — IngestionOrchestrator (pipeline coordinator) (complete 2026-02-27)
 - [x] 01-07-PLAN.md — ValidationSuite (6-flag quality checks) (complete 2026-02-27)
-- [ ] 01-08-PLAN.md — CLI (ingest, status, quality, gaps commands)
+- [x] 01-08-PLAN.md — CLI (ingest, status, quality, gaps commands) (complete 2026-02-27)
 
 ### Success Criteria
 
@@ -138,7 +138,7 @@ Plans:
 
 | Phase | Status | Plan | Started | Completed |
 |-------|--------|------|---------|-----------|
-| 1 - Data Infrastructure | In progress | 8 plans | 2026-02-27 | — |
+| 1 - Data Infrastructure | Complete (checkpoint pending) | 8 plans | 2026-02-27 | 2026-02-27 |
 | 2 - Backtest Engine (Core) | Pending | — | — | — |
 | 3 - Backtest Engine (Tax) | Pending | — | — | — |
 | 4 - Analysis & Reporting | Pending | — | — | — |
@@ -190,4 +190,4 @@ Plans:
 ---
 
 *Roadmap created: 2026-02-26*
-*Last updated: 2026-02-27 after plan 01-07 complete — ValidationSuite (6-flag bitmask quality checks, 12-test suite)*
+*Last updated: 2026-02-27 after plan 01-08 complete — CLI (ingest, status, quality, gaps with Rich tables, 77 tests total)*

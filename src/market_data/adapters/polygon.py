@@ -19,7 +19,7 @@ from typing import Any
 import httpx
 from loguru import logger
 
-from market_data.db.models import DividendRecord, OHLCVRecord, SplitRecord
+from market_data.db.models import DividendRecord, FXRateRecord, OHLCVRecord, SplitRecord
 
 BASE_URL = "https://api.polygon.io"
 _MIN_INTERVAL_SECS: float = 12.0  # 5 req/min = 1/12s (conservative)
@@ -240,3 +240,12 @@ class PolygonAdapter:
             ticker, from_date, to_date, len(records),
         )
         return records
+
+    async def fetch_fx_rates(
+        self, from_ccy: str, to_ccy: str, from_date: date, to_date: date
+    ) -> list[FXRateRecord]:
+        """Not supported on Polygon.io free tier — raises NotImplementedError."""
+        raise NotImplementedError(
+            "FX rate ingestion is not available via PolygonAdapter (free tier). "
+            "Use YFinanceAdapter for AUD/USD rates."
+        )

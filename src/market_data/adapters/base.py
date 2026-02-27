@@ -8,7 +8,7 @@ must expose async methods (using run_in_executor or similar).
 from datetime import date
 from typing import Protocol, runtime_checkable
 
-from market_data.db.models import DividendRecord, OHLCVRecord, SplitRecord
+from market_data.db.models import DividendRecord, FXRateRecord, OHLCVRecord, SplitRecord
 
 
 @runtime_checkable
@@ -37,4 +37,10 @@ class DataAdapter(Protocol):
         self, ticker: str, from_date: date, to_date: date
     ) -> list[SplitRecord]:
         """Fetch stock splits for ticker with ex_date in [from_date, to_date]."""
+        ...
+
+    async def fetch_fx_rates(
+        self, from_ccy: str, to_ccy: str, from_date: date, to_date: date
+    ) -> list[FXRateRecord]:
+        """Fetch daily FX rates for from_ccy/to_ccy in [from_date, to_date]."""
         ...

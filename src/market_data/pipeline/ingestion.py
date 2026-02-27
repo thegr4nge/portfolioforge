@@ -24,6 +24,7 @@ from loguru import logger
 from market_data.adapters.base import DataAdapter
 from market_data.db.models import (
     DividendRecord,
+    FXRateRecord,
     IngestionLogRecord,
     OHLCVRecord,
     SecurityRecord,
@@ -42,6 +43,7 @@ class IngestionResult:
     ohlcv_records: int = 0
     dividend_records: int = 0
     split_records: int = 0
+    fx_records: int = 0
     splits_detected: int = 0
     gaps_fetched: int = 0
     errors: list[str] = field(default_factory=list)
@@ -199,6 +201,25 @@ class IngestionOrchestrator:
             self._adjuster.recalculate_for_split(security_id, split)
 
         result.splits_detected = len(new_splits)
+
+        # --- FX rates (AUD/USD) for ASX tickers ---
+        if ticker.upper().endswith(".AX"):
+            try:
+                fx_records: list[FXRateRecord] = await adapter.fetch_fx_rates(
+                    "AUD", "USD", from_date, to_date
+                )
+                self._writer.upsert_fx_rates(fx_records)
+                self._log_fetch(ticker, "fx", from_date, to_date, len(fx_records), "ok")
+                result.fx_records = len(fx_records)
+                logger.info(
+                    "ingest_ticker: {} fx AUD/USD {} records [{}, {}]",
+                    ticker, len(fx_records), from_date, to_date,
+                )
+            except Exception as exc:
+                error_msg = str(exc)
+                self._log_fetch(ticker, "fx", from_date, to_date, 0, "error", error_msg)
+                result.errors.append(f"fx [{from_date}/{to_date}]: {error_msg}")
+                logger.warning("ingest_ticker: fx error for {} — {}", ticker, error_msg)
         logger.info(
             "ingest_ticker: {} complete — ohlcv={} dividends={} splits={} errors={}",
             ticker,

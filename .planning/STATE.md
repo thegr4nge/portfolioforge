@@ -73,6 +73,10 @@ Phase 1 [......] Phase 2 [ ] Phase 3 [ ] Phase 4 [ ] Phase 5 [ ]
 | DataAdapter as runtime_checkable Protocol | Enables isinstance() checks AND mypy structural typing; YFinanceAdapter must expose async methods to satisfy same contract |
 | _rate_limit_secs as PolygonAdapter instance param | Production default 12s; tests use 0.0 — dependency injection prevents 84s test run without compromising real rate limiting |
 | dict[str, Any] for JSON responses (not dict[str, object]) | mypy strict rejects int()/float() on 'object'; Any is correct at untyped JSON boundaries, validated by Pydantic model construction |
+| Gap detection queries ingestion_coverage, not ohlcv | Walking coverage records is O(log n); walking ohlcv rows for gaps would be O(n) on millions of rows |
+| Single SQL UPDATE per split in recalculate_for_split | No Python row iteration; database engine applies split adjustment to all pre-split rows in one round-trip |
+| Split factor = split_from / split_to | 4:1 forward split (split_from=1, split_to=4) → factor=0.25; 1:10 reverse → factor=10; correct for both directions |
+| recalculate_all_splits resets adj_factor=1.0 before replaying | Prevents compounding errors when correcting backfilled splits; clean recalculation from raw close prices |
 | validate() only calls update_quality_flags() on flag change | Avoids unnecessary DB writes on repeated validate() calls — safe to call after every ingestion batch |
 | PRICE_SPIKE check pre-fetches split dates as a set | O(1) per-row lookup; correctly handles securities with multiple splits without per-row DB queries |
 | GAP_ADJACENT uses 5 calendar day threshold | Fri→Mon = 3 days (passes); multi-week absences (>5) are flagged; no trading calendar needed in Phase 1 |
@@ -83,7 +87,6 @@ Phase 1 [......] Phase 2 [ ] Phase 3 [ ] Phase 4 [ ] Phase 5 [ ]
 |------|--------|-----------------|
 | ASX data provider decision | Phase 2 cannot begin without production ASX data | Evaluate EOD Historical Data before Phase 1 completes |
 | LLM provider for advisory narrative | Phase 5 planning | Defer — evaluate when Phase 4 is complete |
-| Pre-existing test failure: test_adjuster.py::test_recalculate_all_splits_resets_and_reapplies | Low — affects 01-05 scope only; all other tests pass | Needs investigation of recalculate_all_splits() cumulative factor logic |
 
 ### Technical Notes
 
@@ -105,7 +108,6 @@ Phase 1 [......] Phase 2 [ ] Phase 3 [ ] Phase 4 [ ] Phase 5 [ ]
 
 - [ ] Confirm ASX data provider before Phase 2 planning session
 - [ ] Check ATO website for publicly available CGT worked examples (needed for BACK-12 acceptance)
-- [ ] Investigate test_adjuster.py::test_recalculate_all_splits_resets_and_reapplies failure (pre-existing, plan 01-05 scope)
 
 ---
 

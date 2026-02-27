@@ -13,7 +13,8 @@ by the AdjustmentCalculator once splits are known.
 """
 
 import asyncio
-from datetime import date, timezone
+from datetime import UTC, date, datetime
+from typing import Any
 
 import httpx
 from loguru import logger
@@ -33,13 +34,15 @@ class PolygonAdapter:
             records = await adapter.fetch_ohlcv("AAPL", date(2024, 1, 1), date(2024, 3, 31))
     """
 
-    def __init__(self, api_key: str) -> None:
+    def __init__(self, api_key: str, _rate_limit_secs: float = _MIN_INTERVAL_SECS) -> None:
         self._api_key = api_key
         # Semaphore created per-instance (not module-level) — avoids RuntimeError
         # when instantiated outside a running event loop in Python 3.12+.
         self._semaphore = asyncio.Semaphore(1)
         self._client = httpx.AsyncClient(timeout=30.0)
         self.source_name = "polygon"
+        # Overridable in tests to avoid 12s sleep per mocked request.
+        self._rate_limit_secs = _rate_limit_secs
 
     async def __aenter__(self) -> "PolygonAdapter":
         return self
@@ -55,7 +58,7 @@ class PolygonAdapter:
     # Private helpers
     # ------------------------------------------------------------------
 
-    async def _get(self, url: str, params: dict[str, str]) -> dict[str, object]:
+    async def _get(self, url: str, params: dict[str, str]) -> dict[str, Any]:
         """Make a single GET request, enforcing the rate-limit interval.
 
         The sleep happens inside the semaphore context so that concurrent
@@ -65,15 +68,15 @@ class PolygonAdapter:
             logger.debug("GET {}", url)
             response = await self._client.get(url, params=params)
             response.raise_for_status()
-            data: dict[str, object] = response.json()
-            await asyncio.sleep(_MIN_INTERVAL_SECS)
+            data: dict[str, Any] = response.json()
+            await asyncio.sleep(self._rate_limit_secs)
             return data
 
     async def _get_all_pages(
         self, url: str, params: dict[str, str]
-    ) -> list[dict[str, object]]:
+    ) -> list[dict[str, Any]]:
         """Follow next_url pagination chain and return all result items."""
-        results: list[dict[str, object]] = []
+        results: list[dict[str, Any]] = []
         current_url: str = url
         current_params = params
 
@@ -124,8 +127,8 @@ class PolygonAdapter:
         records: list[OHLCVRecord] = []
         for r in raw:
             t_ms = r["t"]
-            bar_date = date.fromtimestamp(
-                int(t_ms) / 1000, tz=timezone.utc
+            bar_date = datetime.fromtimestamp(
+                int(t_ms) / 1000, tz=UTC
             ).date().isoformat()
             records.append(
                 OHLCVRecord(

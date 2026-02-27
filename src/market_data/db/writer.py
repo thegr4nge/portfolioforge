@@ -9,7 +9,7 @@ import sqlite3
 
 from loguru import logger
 
-from src.market_data.db.models import (
+from market_data.db.models import (
     CoverageRecord,
     DividendRecord,
     FXRateRecord,

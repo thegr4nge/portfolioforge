@@ -46,5 +46,9 @@ select = ["E", "F", "I", "UP", "B", "SIM"]
 strict = true
 python_version = "3.12"
 
+[[tool.mypy.overrides]]
+module = ["yfinance", "yfinance.*"]
+ignore_missing_imports = true
+
 [tool.setuptools.packages.find]
 where = ["src"]

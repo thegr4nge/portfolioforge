@@ -37,9 +37,9 @@ Plans:
 - [x] 01-02-PLAN.md — DatabaseWriter with upsert semantics and QualityFlag enum (complete 2026-02-27)
 - [x] 01-03-PLAN.md — DataAdapter Protocol and PolygonAdapter (US equities) (complete 2026-02-27)
 - [x] 01-04-PLAN.md — YFinanceAdapter for ASX and AUD/USD FX rates (complete 2026-02-27)
-- [ ] 01-05-PLAN.md — CoverageTracker (gap detection) and AdjustmentCalculator (split adjustments)
-- [ ] 01-06-PLAN.md — IngestionOrchestrator (pipeline coordinator)
-- [ ] 01-07-PLAN.md — ValidationSuite (6-flag quality checks)
+- [x] 01-05-PLAN.md — CoverageTracker (gap detection) and AdjustmentCalculator (split adjustments) (complete 2026-02-27)
+- [x] 01-06-PLAN.md — IngestionOrchestrator (pipeline coordinator) (complete 2026-02-27)
+- [x] 01-07-PLAN.md — ValidationSuite (6-flag quality checks) (complete 2026-02-27)
 - [ ] 01-08-PLAN.md — CLI (ingest, status, quality, gaps commands)
 
 ### Success Criteria
@@ -190,4 +190,4 @@ Plans:
 ---
 
 *Roadmap created: 2026-02-26*
-*Last updated: 2026-02-27 after plan 01-04 complete — YFinanceAdapter (ASX, FX), 8-test monkeypatched suite*
+*Last updated: 2026-02-27 after plan 01-07 complete — ValidationSuite (6-flag bitmask quality checks, 12-test suite)*

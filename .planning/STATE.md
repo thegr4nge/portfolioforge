@@ -14,13 +14,13 @@
 |-------|-------|
 | Milestone | v1 |
 | Current Phase | 1 — Data Infrastructure |
-| Current Plan | 04 (complete) |
+| Current Plan | 07 (complete) |
 | Phase Status | In progress |
 | Overall Progress | 0/5 phases complete |
 
 ```
-Progress: [....      ] ~8% (4/~6 plans in Phase 1 complete)
-Phase 1 [....] Phase 2 [ ] Phase 3 [ ] Phase 4 [ ] Phase 5 [ ]
+Progress: [......    ] ~12% (6/8 plans in Phase 1 have SUMMARY files: 01,02,03,04,07 + adjuster/coverage from 05)
+Phase 1 [......] Phase 2 [ ] Phase 3 [ ] Phase 4 [ ] Phase 5 [ ]
 ```
 
 ---
@@ -42,9 +42,9 @@ Phase 1 [....] Phase 2 [ ] Phase 3 [ ] Phase 4 [ ] Phase 5 [ ]
 | Metric | Value |
 |--------|-------|
 | Phases complete | 0/5 |
-| Requirements delivered | 6/34 (DATA-09, DATA-07, DATA-10, DATA-02, DATA-03, DATA-05) |
-| Plans created | 4 |
-| Plans complete | 4 |
+| Requirements delivered | 7/34 (DATA-09, DATA-07, DATA-10, DATA-02, DATA-03, DATA-05 + DATA-07 via validator) |
+| Plans created | 8 (01-01 through 01-08) |
+| Plans complete | 7 (01-01, 01-02, 01-03, 01-04, 01-05, 01-06, 01-07) |
 
 ---
 
@@ -73,6 +73,9 @@ Phase 1 [....] Phase 2 [ ] Phase 3 [ ] Phase 4 [ ] Phase 5 [ ]
 | DataAdapter as runtime_checkable Protocol | Enables isinstance() checks AND mypy structural typing; YFinanceAdapter must expose async methods to satisfy same contract |
 | _rate_limit_secs as PolygonAdapter instance param | Production default 12s; tests use 0.0 — dependency injection prevents 84s test run without compromising real rate limiting |
 | dict[str, Any] for JSON responses (not dict[str, object]) | mypy strict rejects int()/float() on 'object'; Any is correct at untyped JSON boundaries, validated by Pydantic model construction |
+| validate() only calls update_quality_flags() on flag change | Avoids unnecessary DB writes on repeated validate() calls — safe to call after every ingestion batch |
+| PRICE_SPIKE check pre-fetches split dates as a set | O(1) per-row lookup; correctly handles securities with multiple splits without per-row DB queries |
+| GAP_ADJACENT uses 5 calendar day threshold | Fri→Mon = 3 days (passes); multi-week absences (>5) are flagged; no trading calendar needed in Phase 1 |
 
 ### Open Questions / Blockers
 
@@ -80,6 +83,7 @@ Phase 1 [....] Phase 2 [ ] Phase 3 [ ] Phase 4 [ ] Phase 5 [ ]
 |------|--------|-----------------|
 | ASX data provider decision | Phase 2 cannot begin without production ASX data | Evaluate EOD Historical Data before Phase 1 completes |
 | LLM provider for advisory narrative | Phase 5 planning | Defer — evaluate when Phase 4 is complete |
+| Pre-existing test failure: test_adjuster.py::test_recalculate_all_splits_resets_and_reapplies | Low — affects 01-05 scope only; all other tests pass | Needs investigation of recalculate_all_splits() cumulative factor logic |
 
 ### Technical Notes
 
@@ -94,11 +98,14 @@ Phase 1 [....] Phase 2 [ ] Phase 3 [ ] Phase 4 [ ] Phase 5 [ ]
 - YFinanceAdapter.franking_credit_pct=None for all ASX records — yfinance cannot provide franking data; Phase 3 tax engine needs this from a paid provider
 - UTC normalization pattern: ts.tz_convert("UTC").date().isoformat() works for any pandas Timestamp regardless of source timezone (AEST, AEDT, etc.)
 - _yf_ticker() monkeypatching seam: tests replace adapter._yf_ticker = fake_fn (not the module-level yf.Ticker) for targeted, safe mocking
+- ValidationSuite check pattern: each _check_*() method takes only primitives/dates — no conn access except for FX/ADJUSTED_ESTIMATE which need DB lookups
+- Backtest layer must filter quality_flags == 0 before trusting OHLCV rows; non-zero flags need explicit handling (skip, warn, or accept with caveat)
 
 ### Todos
 
 - [ ] Confirm ASX data provider before Phase 2 planning session
 - [ ] Check ATO website for publicly available CGT worked examples (needed for BACK-12 acceptance)
+- [ ] Investigate test_adjuster.py::test_recalculate_all_splits_resets_and_reapplies failure (pre-existing, plan 01-05 scope)
 
 ---
 
@@ -106,18 +113,16 @@ Phase 1 [....] Phase 2 [ ] Phase 3 [ ] Phase 4 [ ] Phase 5 [ ]
 
 **To resume:** Read this file, then `.planning/ROADMAP.md` for phase detail.
 
-**Last session:** 2026-02-27T03:48:01Z
-**Stopped at:** Completed 01-03-PLAN.md (PolygonAdapter — async, rate-limited, paginated, 7-test suite)
+**Last session:** 2026-02-27T03:53:51Z
+**Stopped at:** Completed 01-07-PLAN.md (ValidationSuite — 6-flag bitmask quality checks, 12 tests)
 **Resume file:** None
 
-**Next action:** Execute plan 01-05 (CoverageTracker + gap detection) — 01-04 was completed in a prior session.
+**Next action:** Execute plan 01-08 (CLI commands: ingest, status, quality, gaps).
 
 **Phase 1 remaining scope:**
-- CoverageTracker + gap detection (01-05)
-- Validation suite + quality flags (01-06)
-- CLI commands: ingest, status, quality, gaps (01-07)
+- CLI commands: ingest, status, quality, gaps (01-08)
 
 ---
 
 *State initialized: 2026-02-26*
-*Last updated: 2026-02-27 after completing plan 01-03*
+*Last updated: 2026-02-27 after completing plan 01-07*

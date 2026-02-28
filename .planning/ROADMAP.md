@@ -63,8 +63,8 @@ Plans:
 **Plans:** 4 plans
 
 Plans:
-- [ ] 02-01-PLAN.md — Backtest data models (BacktestResult, Trade, BrokerageModel) with tests
-- [ ] 02-02-PLAN.md — Performance metrics TDD (total_return, CAGR, max_drawdown, Sharpe)
+- [x] 02-01-PLAN.md — Backtest data models (BacktestResult, Trade, BrokerageModel) with tests (complete 2026-03-01)
+- [x] 02-02-PLAN.md — Performance metrics TDD (total_return, CAGR, max_drawdown, Sharpe) (complete 2026-03-01)
 - [ ] 02-03-PLAN.md — Simulation engine (run_backtest, rebalance loop, integration tests)
 - [ ] 02-04-PLAN.md — Look-ahead enforcement tests + human checkpoint
 

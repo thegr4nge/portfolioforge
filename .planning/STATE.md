@@ -4,7 +4,7 @@
 
 **Core Value:** Anyone — regardless of investment experience — can describe their financial situation and goals, and receive a plain-language recommendation on what to do with their money, backed by real historical data, honest cost assumptions, and transparent reasoning.
 
-**Current Focus:** Phase 1 complete — next: Phase 2 (Backtest Engine Core)
+**Current Focus:** Phase 2 in progress (Backtest Engine Core) — plans 02-01 and 02-02 complete
 
 ---
 
@@ -13,14 +13,14 @@
 | Field | Value |
 |-------|-------|
 | Milestone | v1 |
-| Current Phase | 1 — Data Infrastructure |
-| Current Plan | 08 (complete — checkpoint approved 2026-02-27) |
-| Phase Status | Complete |
-| Overall Progress | Phase 1 done / 5 phases total |
+| Current Phase | 2 — Backtest Engine Core |
+| Current Plan | 02 (complete — 2026-03-01) |
+| Phase Status | In progress |
+| Overall Progress | 2/4 plans in Phase 2 done |
 
 ```
-Progress: [████████  ] ~20% (8/8 plans in Phase 1 have SUMMARY files)
-Phase 1 [████████] Phase 2 [ ] Phase 3 [ ] Phase 4 [ ] Phase 5 [ ]
+Progress: [████████░░] ~25% (Phase 1 complete 8/8; Phase 2 in progress 2/4)
+Phase 1 [████████] Phase 2 [██      ] Phase 3 [        ] Phase 4 [        ] Phase 5 [        ]
 ```
 
 ---
@@ -30,7 +30,7 @@ Phase 1 [████████] Phase 2 [ ] Phase 3 [ ] Phase 4 [ ] Phase 5 [
 | Phase | Name | Status | Completed |
 |-------|------|--------|-----------|
 | 1 | Data Infrastructure | Complete | 2026-02-27 |
-| 2 | Backtest Engine (Core) | Pending | — |
+| 2 | Backtest Engine (Core) | In progress | — |
 | 3 | Backtest Engine (Tax) | Pending | — |
 | 4 | Analysis & Reporting | Pending | — |
 | 5 | Advisory Engine | Pending | — |
@@ -42,9 +42,9 @@ Phase 1 [████████] Phase 2 [ ] Phase 3 [ ] Phase 4 [ ] Phase 5 [
 | Metric | Value |
 |--------|-------|
 | Phases complete | 1/5 |
-| Requirements delivered | 10/34 (+ DATA-08 via CLI) |
-| Plans created | 8 (01-01 through 01-08) |
-| Plans complete | 8 (all have SUMMARY files) |
+| Requirements delivered | 11/34 (+ DATA-08 via CLI) — BACK-04 delivered in 02-02 |
+| Plans created | 12 (01-01 through 01-08, 02-01 through 02-04) |
+| Plans complete | 10 (01-01 through 01-08, 02-01, 02-02) |
 
 ---
 
@@ -86,6 +86,9 @@ Phase 1 [████████] Phase 2 [ ] Phase 3 [ ] Phase 4 [ ] Phase 5 [
 | allow_interspersed_args=True on ingest_app Typer | typer 0.24.1 bug: positional arg + option after it misinterpreted as subcommand; this context_settings fix makes `ingest AAPL --db path` work |
 | quality/gaps exposed as both top-level and status sub-group commands | Plan spec requires `market-data quality AAPL` (not `market-data status quality AAPL`); both forms supported |
 | B008 ruff rule ignored in pyproject.toml | typer design requires Option/Argument in function defaults — B008 is a false positive for CLI code |
+| CALENDAR_DAYS_PER_YEAR = 365.25 as named constant in metrics.py | Avoids magic number in cagr(); symmetric with TRADING_DAYS_PER_YEAR = 252 for Sharpe |
+| daily_rf uses geometric compounding (1+r)^(1/252)-1, not simple r/252 | Mathematically correct for multi-day compounding; test explicitly verifies this vs simple division |
+| sharpe_ratio on flat curve returns 0.0 (not NaN/inf) | Guard clause on std_dev==0 prevents ZeroDivisionError; zero volatility means undefined Sharpe, conventionally reported as 0 |
 
 ### Open Questions / Blockers
 
@@ -110,6 +113,8 @@ Phase 1 [████████] Phase 2 [ ] Phase 3 [ ] Phase 4 [ ] Phase 5 [
 - ValidationSuite check pattern: each _check_*() method takes only primitives/dates — no conn access except for FX/ADJUSTED_ESTIMATE which need DB lookups
 - Backtest layer must filter quality_flags == 0 before trusting OHLCV rows; non-zero flags need explicit handling (skip, warn, or accept with caveat)
 - CLI entry point: `python -m market_data` or `market-data` (via project.scripts). POLYGON_API_KEY required for US equities; ASX (.AX) uses yfinance (no key needed)
+- metrics.py functions are pure (no IO, no DB) — safe to unit-test without fixtures; equity curve is always pd.Series with DatetimeIndex
+- Sharpe ratio uses daily_returns.std() with pandas default ddof=1 — industry standard; any future change must update tests to match
 
 ### Todos
 
@@ -123,15 +128,15 @@ Phase 1 [████████] Phase 2 [ ] Phase 3 [ ] Phase 4 [ ] Phase 5 [
 
 **To resume:** Read this file, then `.planning/ROADMAP.md` for phase detail.
 
-**Last session:** 2026-02-28T15:07:25.191Z
-**Stopped at:** Phase 2 context gathered
-**Resume file:** .planning/phases/02-backtest-engine-core/02-CONTEXT.md
+**Last session:** 2026-03-01
+**Stopped at:** Completed 02-02-PLAN.md (TDD metrics module)
+**Resume file:** .planning/phases/02-backtest-engine-core/02-03-PLAN.md
 
-**Next action:** Begin Phase 2 planning (Backtest Engine Core). Resolve ASX provider decision first.
+**Next action:** Execute Plan 02-03 (simulation engine — run_backtest() implementation).
 
-**Phase 1 status:** All 8 plans complete. CLI fully wired and human-verified. Phase 2 can begin after ASX provider decision.
+**Phase 2 status:** Plans 02-01 (models/brokerage) and 02-02 (metrics TDD) complete. Plans 02-03 (engine) and 02-04 (look-ahead test) remaining.
 
 ---
 
 *State initialized: 2026-02-26*
-*Last updated: 2026-02-27 after human checkpoint approval of plan 01-08 — Phase 1 fully complete*
+*Last updated: 2026-03-01 after completing plan 02-02 — metrics TDD module*

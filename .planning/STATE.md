@@ -4,7 +4,7 @@
 
 **Core Value:** Anyone — regardless of investment experience — can describe their financial situation and goals, and receive a plain-language recommendation on what to do with their money, backed by real historical data, honest cost assumptions, and transparent reasoning.
 
-**Current Focus:** Phase 2 in progress (Backtest Engine Core) — plan 02-01 complete
+**Current Focus:** Phase 2 in progress (Backtest Engine Core) — plan 02-03 complete
 
 ---
 
@@ -14,13 +14,13 @@
 |-------|-------|
 | Milestone | v1 |
 | Current Phase | 2 — Backtest Engine Core |
-| Current Plan | 01 (complete — 2026-03-01) |
+| Current Plan | 03 (complete — 2026-03-01) |
 | Phase Status | In progress |
-| Overall Progress | 1/4 plans in Phase 2 done |
+| Overall Progress | 3/4 plans in Phase 2 done |
 
 ```
-Progress: [████████░░] ~22% (Phase 1 complete 8/8; Phase 2 in progress 1/4)
-Phase 1 [████████] Phase 2 [█       ] Phase 3 [        ] Phase 4 [        ] Phase 5 [        ]
+Progress: [████████░░] ~34% (Phase 1 complete 8/8; Phase 2 in progress 3/4)
+Phase 1 [████████] Phase 2 [███     ] Phase 3 [        ] Phase 4 [        ] Phase 5 [        ]
 ```
 
 ---
@@ -42,9 +42,9 @@ Phase 1 [████████] Phase 2 [█       ] Phase 3 [        ] Phase
 | Metric | Value |
 |--------|-------|
 | Phases complete | 1/5 |
-| Requirements delivered | 10/34 (+ DATA-08 via CLI) — BACK-01, BACK-02 delivered in 02-01 |
+| Requirements delivered | 14/34 (+ DATA-08 via CLI) — BACK-01/02 in 02-01; BACK-04 in 02-02; BACK-03/05 in 02-03 |
 | Plans created | 12 (01-01 through 01-08, 02-01 through 02-04) |
-| Plans complete | 9 (01-01 through 01-08, 02-01) |
+| Plans complete | 11 (01-01 through 01-08, 02-01, 02-02, 02-03) |
 
 ---
 
@@ -90,6 +90,10 @@ Phase 1 [████████] Phase 2 [█       ] Phase 3 [        ] Phase
 | BacktestResult is a mutable dataclass (not frozen Pydantic) | Holds pd.Series fields which Pydantic cannot validate; dataclass chosen to avoid silent runtime errors |
 | BrokerageModel as single cost calculation chokepoint | Architecturally prevents zero-cost trades; engine must call BrokerageModel.cost() — no bypass path |
 | validate_portfolio is a module-level function in models.py | Kept co-located with types it validates; no class abstraction needed for a single-use validator |
+| list[str] for SQL params (not list[object]) in engine.py | sqlite3 params are strings at this callsite; list is invariant — list[str] assigned to list[object] fails mypy strict |
+| Unused type: ignore[type-arg] removed from pd.Series annotations | pandas pyproject.toml override suppresses type-arg errors; per-file ignores are redundant and flagged as unused-ignore |
+| Engine test helper uses explicit named params not **kwargs | Eliminates type: ignore noise from dict.pop() return type; keeps test signatures clear and mypy-clean |
+| Benchmark runs same _simulate() code path as portfolio | No shortcut; same brokerage applied, same rebalance dates — BACK-07/Pitfall 7 compliance |
 
 ### Open Questions / Blockers
 
@@ -112,10 +116,11 @@ Phase 1 [████████] Phase 2 [█       ] Phase 3 [        ] Phase
 - UTC normalization pattern: ts.tz_convert("UTC").date().isoformat() works for any pandas Timestamp regardless of source timezone (AEST, AEDT, etc.)
 - _yf_ticker() monkeypatching seam: tests replace adapter._yf_ticker = fake_fn (not the module-level yf.Ticker) for targeted, safe mocking
 - ValidationSuite check pattern: each _check_*() method takes only primitives/dates — no conn access except for FX/ADJUSTED_ESTIMATE which need DB lookups
-- Backtest layer must filter quality_flags == 0 before trusting OHLCV rows; non-zero flags need explicit handling (skip, warn, or accept with caveat)
+- Backtest layer filters quality_flags == 0 in SQL — implemented and verified in engine.py _load_prices()
 - CLI entry point: `python -m market_data` or `market-data` (via project.scripts). POLYGON_API_KEY required for US equities; ASX (.AX) uses yfinance (no key needed)
 - mypy per-module override (ignore_missing_imports) for pandas is correctly applied when checking the whole package (src/market_data/backtest/) but NOT when checking individual files directly — this is a mypy limitation, not a configuration error
 - BrokerageModel.cost() raises ValueError on trade_value <= 0; the engine must never pass a zero or negative value
+- Engine integration tests use unittest.mock.patch("market_data.backtest.engine.get_connection") to inject in-memory SQLite — avoids disk I/O and decouples tests from real DB path
 
 ### Todos
 
@@ -129,15 +134,15 @@ Phase 1 [████████] Phase 2 [█       ] Phase 3 [        ] Phase
 
 **To resume:** Read this file, then `.planning/ROADMAP.md` for phase detail.
 
-**Last session:** 2026-03-01T15:30:18Z
-**Stopped at:** Completed 02-01-PLAN.md (backtest models and brokerage)
-**Resume file:** .planning/phases/02-backtest-engine-core/02-02-PLAN.md
+**Last session:** 2026-03-01T16:30:00Z
+**Stopped at:** Completed 02-03-PLAN.md (backtest simulation engine and integration tests)
+**Resume file:** .planning/phases/02-backtest-engine-core/02-04-PLAN.md
 
-**Next action:** Execute Plan 02-02 (next plan in Phase 2 — data reader or metrics module).
+**Next action:** Execute Plan 02-04 (final Phase 2 plan — look-ahead bias test or CLI wrapper).
 
-**Phase 2 status:** Plan 02-01 (models/brokerage) complete. Plans 02-02, 02-03, 02-04 remaining.
+**Phase 2 status:** Plans 02-01, 02-02, 02-03 complete. Plan 02-04 remaining.
 
 ---
 
 *State initialized: 2026-02-26*
-*Last updated: 2026-03-01 after completing plan 02-01 — backtest module skeleton and data models*
+*Last updated: 2026-03-01 after completing plan 02-03 — backtest simulation engine*

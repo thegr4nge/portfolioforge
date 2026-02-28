@@ -65,7 +65,7 @@ Plans:
 Plans:
 - [x] 02-01-PLAN.md — Backtest data models (BacktestResult, Trade, BrokerageModel) with tests (complete 2026-03-01)
 - [x] 02-02-PLAN.md — Performance metrics TDD (total_return, CAGR, max_drawdown, Sharpe) (complete 2026-03-01)
-- [ ] 02-03-PLAN.md — Simulation engine (run_backtest, rebalance loop, integration tests)
+- [x] 02-03-PLAN.md — Simulation engine (run_backtest, rebalance loop, integration tests) (complete 2026-03-01)
 - [ ] 02-04-PLAN.md — Look-ahead enforcement tests + human checkpoint
 
 ### Success Criteria
@@ -145,7 +145,7 @@ Plans:
 | Phase | Status | Plan | Started | Completed |
 |-------|--------|------|---------|-----------|
 | 1 - Data Infrastructure | Complete | 8 plans | 2026-02-27 | 2026-02-27 |
-| 2 - Backtest Engine (Core) | Pending | — | — | — |
+| 2 - Backtest Engine (Core) | In progress (3/4 plans) | 4 plans | 2026-03-01 | — |
 | 3 - Backtest Engine (Tax) | Pending | — | — | — |
 | 4 - Analysis & Reporting | Pending | — | — | — |
 | 5 - Advisory Engine | Pending | — | — | — |
@@ -196,4 +196,4 @@ Plans:
 ---
 
 *Roadmap created: 2026-02-26*
-*Last updated: 2026-02-27 — Phase 1 complete (all 8 plans + human checkpoint approved); 77 tests, mypy strict, ruff clean*
+*Last updated: 2026-03-01 — Phase 2 plan 02-03 complete; run_backtest() implemented with 10 integration tests; 126 total tests, mypy strict, ruff clean*

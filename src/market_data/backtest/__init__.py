@@ -1,7 +1,7 @@
 """Public API for the backtest engine.
 
 Exports:
-    run_backtest   — stub until engine.py is implemented (Plan 02-03)
+    run_backtest   — simulation entry point (engine.py)
     BacktestResult — full result container
     Trade          — single executed trade
     PerformanceMetrics — scalar portfolio metrics
@@ -9,6 +9,7 @@ Exports:
     BenchmarkResult — benchmark metrics
 """
 
+from market_data.backtest.engine import run_backtest
 from market_data.backtest.models import (
     BacktestResult,
     BenchmarkResult,
@@ -16,18 +17,6 @@ from market_data.backtest.models import (
     PerformanceMetrics,
     Trade,
 )
-
-
-def run_backtest(*args: object, **kwargs: object) -> BacktestResult:
-    """Stub — implemented in engine.py (Plan 02-03).
-
-    Raises:
-        NotImplementedError: always, until Plan 02-03 is complete.
-    """
-    raise NotImplementedError(
-        "Implemented in engine.py \u2014 import from there"
-    )
-
 
 __all__ = [
     "run_backtest",

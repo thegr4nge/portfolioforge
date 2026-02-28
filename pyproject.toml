@@ -53,5 +53,9 @@ python_version = "3.12"
 module = ["yfinance", "yfinance.*"]
 ignore_missing_imports = true
 
+[[tool.mypy.overrides]]
+module = ["pandas", "pandas.*"]
+ignore_missing_imports = true
+
 [tool.setuptools.packages.find]
 where = ["src"]

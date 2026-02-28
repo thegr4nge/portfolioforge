@@ -60,7 +60,13 @@ Plans:
 
 **Requirements:** BACK-01, BACK-02, BACK-03, BACK-04, BACK-05, BACK-06
 
-**Plans:** 0 plans
+**Plans:** 4 plans
+
+Plans:
+- [ ] 02-01-PLAN.md — Backtest data models (BacktestResult, Trade, BrokerageModel) with tests
+- [ ] 02-02-PLAN.md — Performance metrics TDD (total_return, CAGR, max_drawdown, Sharpe)
+- [ ] 02-03-PLAN.md — Simulation engine (run_backtest, rebalance loop, integration tests)
+- [ ] 02-04-PLAN.md — Look-ahead enforcement tests + human checkpoint
 
 ### Success Criteria
 

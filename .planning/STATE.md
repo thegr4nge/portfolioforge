@@ -4,7 +4,7 @@
 
 **Core Value:** Anyone — regardless of investment experience — can describe their financial situation and goals, and receive a plain-language recommendation on what to do with their money, backed by real historical data, honest cost assumptions, and transparent reasoning.
 
-**Current Focus:** Phase 2 in progress (Backtest Engine Core) — plan 02-03 complete
+**Current Focus:** Phase 2 in progress (Backtest Engine Core) — plan 02-04 at checkpoint (human verification pending)
 
 ---
 
@@ -14,13 +14,13 @@
 |-------|-------|
 | Milestone | v1 |
 | Current Phase | 2 — Backtest Engine Core |
-| Current Plan | 03 (complete — 2026-03-01) |
-| Phase Status | In progress |
-| Overall Progress | 3/4 plans in Phase 2 done |
+| Current Plan | 04 (Task 1 complete, awaiting human checkpoint) |
+| Phase Status | In progress — checkpoint |
+| Overall Progress | 3.5/4 plans in Phase 2 done |
 
 ```
-Progress: [████████░░] ~34% (Phase 1 complete 8/8; Phase 2 in progress 3/4)
-Phase 1 [████████] Phase 2 [███     ] Phase 3 [        ] Phase 4 [        ] Phase 5 [        ]
+Progress: [████████░░] ~36% (Phase 1 complete 8/8; Phase 2 in progress 4/4 pending checkpoint)
+Phase 1 [████████] Phase 2 [████    ] Phase 3 [        ] Phase 4 [        ] Phase 5 [        ]
 ```
 
 ---
@@ -30,7 +30,7 @@ Phase 1 [████████] Phase 2 [███     ] Phase 3 [        ] P
 | Phase | Name | Status | Completed |
 |-------|------|--------|-----------|
 | 1 | Data Infrastructure | Complete | 2026-02-27 |
-| 2 | Backtest Engine (Core) | In progress | — |
+| 2 | Backtest Engine (Core) | In progress — checkpoint | — |
 | 3 | Backtest Engine (Tax) | Pending | — |
 | 4 | Analysis & Reporting | Pending | — |
 | 5 | Advisory Engine | Pending | — |
@@ -42,9 +42,9 @@ Phase 1 [████████] Phase 2 [███     ] Phase 3 [        ] P
 | Metric | Value |
 |--------|-------|
 | Phases complete | 1/5 |
-| Requirements delivered | 14/34 (+ DATA-08 via CLI) — BACK-01/02 in 02-01; BACK-04 in 02-02; BACK-03/05 in 02-03 |
+| Requirements delivered | 16/34 (+ DATA-08 via CLI) — BACK-01/02 in 02-01; BACK-04 in 02-02; BACK-03/05 in 02-03; BACK-06/05 in 02-04 |
 | Plans created | 12 (01-01 through 01-08, 02-01 through 02-04) |
-| Plans complete | 11 (01-01 through 01-08, 02-01, 02-02, 02-03) |
+| Plans complete | 11.5 (01-01 through 01-08, 02-01, 02-02, 02-03, 02-04 Task 1) |
 
 ---
 
@@ -94,6 +94,8 @@ Phase 1 [████████] Phase 2 [███     ] Phase 3 [        ] P
 | Unused type: ignore[type-arg] removed from pd.Series annotations | pandas pyproject.toml override suppresses type-arg errors; per-file ignores are redundant and flagged as unused-ignore |
 | Engine test helper uses explicit named params not **kwargs | Eliminates type: ignore noise from dict.pop() return type; keeps test signatures clear and mypy-clean |
 | Benchmark runs same _simulate() code path as portfolio | No shortcut; same brokerage applied, same rebalance dates — BACK-07/Pitfall 7 compliance |
+| Look-ahead test uses 10x price spike (100→1000) as diagnostic | Gap between correct (~9990) and look-ahead (~99990) equity values is two orders of magnitude — unambiguous detection |
+| Benchmark=portfolio ticker in look-ahead fixture | Avoids requiring a second security in the minimal 2-day fixture; structural tests don't depend on benchmark value |
 
 ### Open Questions / Blockers
 
@@ -101,12 +103,13 @@ Phase 1 [████████] Phase 2 [███     ] Phase 3 [        ] P
 |------|--------|-----------------|
 | ASX data provider decision | Phase 2 cannot begin without production ASX data | Evaluate EOD Historical Data before Phase 2 planning session |
 | LLM provider for advisory narrative | Phase 5 planning | Defer — evaluate when Phase 4 is complete |
+| cagr() overflow for <1-day time windows | RuntimeWarning on tiny test fixtures | Consider clamping years to minimum in cagr() in a future plan |
 
 ### Technical Notes
 
 - SQLite schema must include `exchange` and `currency` as mandatory fields from day one (DATA-09) — DELIVERED in 01-01
 - FX rates table (DATA-05) is needed by Phase 3 (AUD conversion) — must be solid before Phase 3 begins
-- Look-ahead bias enforcement (BACK-06) is architectural, not a test: StrategyRunner must structurally prevent future data access
+- Look-ahead bias enforcement (BACK-06) is architectural, not a test: StrategyRunner must structurally prevent future data access — PROVEN in 02-04 with structural test suite
 - Every output template must include AFSL disclaimer (ANAL-05) from Phase 4 onwards; advisory output (Phase 5) inherits this
 - Polygon.io free tier: 5 requests/minute — rate limiting mandatory in ingestion pipeline
 - Migration pattern established: enumerate MIGRATIONS list, executescript() each, set PRAGMA user_version immediately after — no transaction management needed since executescript() auto-commits
@@ -121,6 +124,7 @@ Phase 1 [████████] Phase 2 [███     ] Phase 3 [        ] P
 - mypy per-module override (ignore_missing_imports) for pandas is correctly applied when checking the whole package (src/market_data/backtest/) but NOT when checking individual files directly — this is a mypy limitation, not a configuration error
 - BrokerageModel.cost() raises ValueError on trade_value <= 0; the engine must never pass a zero or negative value
 - Engine integration tests use unittest.mock.patch("market_data.backtest.engine.get_connection") to inject in-memory SQLite — avoids disk I/O and decouples tests from real DB path
+- Look-ahead test pattern: 2-day fixture (VAS.AX: 100.0 → 1000.0), assert Day-1 equity < 11_000 — threshold separates legitimate (~9990) from look-ahead (~99990)
 
 ### Todos
 
@@ -134,15 +138,15 @@ Phase 1 [████████] Phase 2 [███     ] Phase 3 [        ] P
 
 **To resume:** Read this file, then `.planning/ROADMAP.md` for phase detail.
 
-**Last session:** 2026-03-01T16:30:00Z
-**Stopped at:** Completed 02-03-PLAN.md (backtest simulation engine and integration tests)
-**Resume file:** .planning/phases/02-backtest-engine-core/02-04-PLAN.md
+**Last session:** 2026-03-01T00:00:00Z
+**Stopped at:** 02-04-PLAN.md Task 1 complete — awaiting human checkpoint (Task 2) for Phase 2 acceptance
+**Resume file:** .planning/phases/02-backtest-engine-core/02-04-PLAN.md (Task 2 checkpoint)
 
-**Next action:** Execute Plan 02-04 (final Phase 2 plan — look-ahead bias test or CLI wrapper).
+**Next action:** After human approves checkpoint, mark Phase 2 complete and begin Phase 3 planning.
 
-**Phase 2 status:** Plans 02-01, 02-02, 02-03 complete. Plan 02-04 remaining.
+**Phase 2 status:** Plans 02-01, 02-02, 02-03, 02-04 Task 1 complete. Checkpoint pending.
 
 ---
 
 *State initialized: 2026-02-26*
-*Last updated: 2026-03-01 after completing plan 02-03 — backtest simulation engine*
+*Last updated: 2026-03-01 after 02-04 Task 1 — look-ahead bias tests committed*

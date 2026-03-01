@@ -157,9 +157,9 @@ Phase 1 [████████] Phase 2 [████████] Phase 3 [�
 
 **To resume:** Read this file, then `.planning/ROADMAP.md` for phase detail.
 
-**Last session:** 2026-03-01T05:22:00Z
-**Stopped at:** Completed 03-05-PLAN.md — run_backtest_tax() + ATO worked example tests (BACK-12)
-**Resume file:** None
+**Last session:** 2026-03-01T23:54:30.870Z
+**Stopped at:** Phase 4 context gathered
+**Resume file:** .planning/phases/04-analysis-reporting/04-CONTEXT.md
 
 **Next action:** Begin Phase 4 (Analysis & Reporting). First plan: portfolio analysis summary report with after-tax metrics, franking credit breakdown, and AFSL disclaimer.
 

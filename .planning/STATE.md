@@ -95,6 +95,9 @@ Phase 1 [████████] Phase 2 [████████] Phase 3 [�
 | TaxSummary.lots is list[DisposedLot] | "Lot" in CONTEXT.md is informal; DisposedLot is the canonical disposed-parcel record with all CGT fields |
 | _AUD_USD_SQL constant in tax/fx.py documents FX direction | from_ccy='AUD', to_ccy='USD' — makes the conversion direction (usd / rate) obvious without reading the data ingestion code |
 | Unused type: ignore[type-arg] removed from pd.Series annotations | pandas pyproject.toml override suppresses type-arg errors; per-file ignores are redundant and flagged as unused-ignore |
+| list[OpenLot] not deque in CostBasisLedger | Partial lot mutation requires queue[0] = new_lot (in-place assignment); deque doesn't support item assignment |
+| CostBasisLedger.sell() returns DisposedLot with sentinel proceeds/gain fields | Ledger has no price data; CGT processor fills in proceeds_aud, gain_aud, discount_applied after sale price is known |
+| _FLOAT_TOLERANCE = 0.001 in ledger | Residual < 0.001 treated as zero; prevents false ValueError from floating-point arithmetic accumulation across many partial sells |
 | qualifies_for_discount uses date.replace() not timedelta(365) | Leap years: Feb 29 acquisition → anniversary is Mar 1 in non-leap year; timedelta(365) gives wrong result |
 | Feb 29 anniversary computed as date(year+1, 3, 1) directly | More explicit than delta arithmetic; same result, cleaner code |
 | build_tax_year_results() omits dividend_events parameter | TaxedDividend type not yet defined; franking.py (03-04) will update franking_credits_claimed/dividend_income on TaxYearResult |

@@ -89,7 +89,7 @@ Plans:
 **Plans:** 5 plans
 
 Plans:
-- [ ] 03-01-PLAN.md — engine.py refactor + tax submodule scaffold (models.py, fx.py)
+- [x] 03-01-PLAN.md — engine.py refactor + tax submodule scaffold (models.py, fx.py) (complete 2026-03-01)
 - [ ] 03-02-PLAN.md — CostBasisLedger TDD (FIFO cost basis tracking)
 - [ ] 03-03-PLAN.md — CGT processor TDD (discount eligibility, tax year bucketing, loss netting)
 - [ ] 03-04-PLAN.md — Franking credit engine TDD (45-day rule, lookup table)

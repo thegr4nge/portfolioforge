@@ -4,7 +4,7 @@
 
 **Core Value:** Anyone — regardless of investment experience — can describe their financial situation and goals, and receive a plain-language recommendation on what to do with their money, backed by real historical data, honest cost assumptions, and transparent reasoning.
 
-**Current Focus:** Phase 2 COMPLETE — all 4 plans done, human checkpoint approved. Phase 3 (Backtest Engine Tax) is next.
+**Current Focus:** Phase 3 (Backtest Engine Tax) — Plan 01 complete. Engine refactor + tax scaffold done.
 
 ---
 
@@ -13,14 +13,14 @@
 | Field | Value |
 |-------|-------|
 | Milestone | v1 |
-| Current Phase | 2 — Backtest Engine Core (COMPLETE) |
-| Current Plan | 04 (complete — human checkpoint approved) |
-| Phase Status | Complete |
-| Overall Progress | 12/12 plans in Phases 1–2 done |
+| Current Phase | 3 — Backtest Engine (Tax) — In progress |
+| Current Plan | 01 (complete) |
+| Phase Status | In progress |
+| Overall Progress | 13/17 plans done (Phase 1: 8/8; Phase 2: 4/4; Phase 3: 1/5)
 
 ```
-Progress: [████████████████░░░░░░░░░░░░░░░░░░░░░░░░] ~40% (Phase 1: 8/8; Phase 2: 4/4 complete)
-Phase 1 [████████] Phase 2 [████████] Phase 3 [        ] Phase 4 [        ] Phase 5 [        ]
+Progress: [█████████████████░░░░░░░░░░░░░░░░░░░░░░░] ~43% (Phase 1: 8/8; Phase 2: 4/4; Phase 3: 1/5)
+Phase 1 [████████] Phase 2 [████████] Phase 3 [██      ] Phase 4 [        ] Phase 5 [        ]
 ```
 
 ---
@@ -31,7 +31,7 @@ Phase 1 [████████] Phase 2 [████████] Phase 3 [ 
 |-------|------|--------|-----------|
 | 1 | Data Infrastructure | Complete | 2026-02-27 |
 | 2 | Backtest Engine (Core) | Complete | 2026-03-01 |
-| 3 | Backtest Engine (Tax) | Pending | — |
+| 3 | Backtest Engine (Tax) | In progress (1/5 plans) | — |
 | 4 | Analysis & Reporting | Pending | — |
 | 5 | Advisory Engine | Pending | — |
 
@@ -91,6 +91,9 @@ Phase 1 [████████] Phase 2 [████████] Phase 3 [ 
 | BrokerageModel as single cost calculation chokepoint | Architecturally prevents zero-cost trades; engine must call BrokerageModel.cost() — no bypass path |
 | validate_portfolio is a module-level function in models.py | Kept co-located with types it validates; no class abstraction needed for a single-use validator |
 | list[str] for SQL params (not list[object]) in engine.py | sqlite3 params are strings at this callsite; list is invariant — list[str] assigned to list[object] fails mypy strict |
+| _load_prices stays in engine.py after refactor | Not in the extraction list; it's private to run_backtest's DB access layer — moving it would split DB access across two files for no benefit |
+| TaxSummary.lots is list[DisposedLot] | "Lot" in CONTEXT.md is informal; DisposedLot is the canonical disposed-parcel record with all CGT fields |
+| _AUD_USD_SQL constant in tax/fx.py documents FX direction | from_ccy='AUD', to_ccy='USD' — makes the conversion direction (usd / rate) obvious without reading the data ingestion code |
 | Unused type: ignore[type-arg] removed from pd.Series annotations | pandas pyproject.toml override suppresses type-arg errors; per-file ignores are redundant and flagged as unused-ignore |
 | Engine test helper uses explicit named params not **kwargs | Eliminates type: ignore noise from dict.pop() return type; keeps test signatures clear and mypy-clean |
 | Benchmark runs same _simulate() code path as portfolio | No shortcut; same brokerage applied, same rebalance dates — BACK-07/Pitfall 7 compliance |
@@ -138,13 +141,13 @@ Phase 1 [████████] Phase 2 [████████] Phase 3 [ 
 
 **To resume:** Read this file, then `.planning/ROADMAP.md` for phase detail.
 
-**Last session:** 2026-03-01T02:53:28.140Z
-**Stopped at:** Phase 3 context gathered
-**Resume file:** .planning/phases/03-backtest-engine-tax/03-CONTEXT.md
+**Last session:** 2026-03-01T03:28:00Z
+**Stopped at:** Completed 03-01-PLAN.md — engine refactor + tax scaffold
+**Resume file:** None
 
-**Next action:** Begin Phase 3 (Backtest Engine Tax) planning. Resolve ASX data provider before planning session.
+**Next action:** Execute Plan 03-02 (FIFO cost basis ledger — CostBasisLedger class with buy/sell methods).
 
-**Phase 2 status:** COMPLETE — Plans 02-01, 02-02, 02-03, 02-04 all done. Human checkpoint approved 2026-03-01. All 130 tests passing.
+**Phase 3 status:** Plan 03-01 complete. _rebalance_helpers.py + tax/ submodule (models + fx) all in place. 130 tests passing.
 
 ---
 

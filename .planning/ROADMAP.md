@@ -14,8 +14,8 @@ A 4-layer financial platform built bottom-up: clean market data enables honest b
 
 | Phase | Name | Goal | Requirements | Depends On |
 |-------|------|------|--------------|------------|
-| 1 | Data Infrastructure | Complete    | 2026-02-27 | — |
-| 2 | Backtest Engine (Core) | Users can run a realistic portfolio backtest with mandatory cost modeling | BACK-01 to BACK-06 | Phase 1 |
+| 1 | Data Infrastructure | Complete 2026-02-27 | DATA-01 to DATA-10 | — |
+| 2 | Backtest Engine (Core) | Complete 2026-03-01 | BACK-01 to BACK-06 | Phase 1 |
 | 3 | Backtest Engine (Tax) | Backtests produce AUD-denominated, CGT-correct results validated against ATO examples | BACK-07 to BACK-12 | Phase 2 |
 | 4 | Analysis & Reporting | Users can compare portfolios, run crash scenarios, and receive plain-language narrative output | ANAL-01 to ANAL-06 | Phase 3 |
 | 5 | Advisory Engine | Users can describe their financial situation and receive a ranked, rules-based, plain-language recommendation | ADVI-01 to ADVI-06 | Phase 4 |
@@ -52,7 +52,7 @@ Plans:
 
 ---
 
-## Phase 2: Backtest Engine (Core)
+## Phase 2: Backtest Engine (Core) — COMPLETE 2026-03-01
 
 **Goal:** Users can run a realistic portfolio backtest with mandatory cost modeling and get interpretable performance metrics.
 
@@ -60,13 +60,13 @@ Plans:
 
 **Requirements:** BACK-01, BACK-02, BACK-03, BACK-04, BACK-05, BACK-06
 
-**Plans:** 4 plans
+**Plans:** 4/4 plans complete
 
 Plans:
 - [x] 02-01-PLAN.md — Backtest data models (BacktestResult, Trade, BrokerageModel) with tests (complete 2026-03-01)
 - [x] 02-02-PLAN.md — Performance metrics TDD (total_return, CAGR, max_drawdown, Sharpe) (complete 2026-03-01)
 - [x] 02-03-PLAN.md — Simulation engine (run_backtest, rebalance loop, integration tests) (complete 2026-03-01)
-- [ ] 02-04-PLAN.md — Look-ahead enforcement tests + human checkpoint (Task 1 complete, awaiting checkpoint)
+- [x] 02-04-PLAN.md — Look-ahead enforcement tests + human checkpoint (complete 2026-03-01)
 
 ### Success Criteria
 
@@ -145,7 +145,7 @@ Plans:
 | Phase | Status | Plan | Started | Completed |
 |-------|--------|------|---------|-----------|
 | 1 - Data Infrastructure | Complete | 8 plans | 2026-02-27 | 2026-02-27 |
-| 2 - Backtest Engine (Core) | In progress (3/4 plans) | 4 plans | 2026-03-01 | — |
+| 2 - Backtest Engine (Core) | Complete | 4 plans | 2026-03-01 | 2026-03-01 |
 | 3 - Backtest Engine (Tax) | Pending | — | — | — |
 | 4 - Analysis & Reporting | Pending | — | — | — |
 | 5 - Advisory Engine | Pending | — | — | — |
@@ -196,4 +196,4 @@ Plans:
 ---
 
 *Roadmap created: 2026-02-26*
-*Last updated: 2026-03-01 — Phase 2 plan 02-03 complete; run_backtest() implemented with 10 integration tests; 126 total tests, mypy strict, ruff clean*
+*Last updated: 2026-03-01 — Phase 2 COMPLETE; 02-04 look-ahead enforcement tests + human checkpoint approved; 130 total tests, mypy strict, ruff clean*

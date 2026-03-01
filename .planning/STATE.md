@@ -4,7 +4,7 @@
 
 **Core Value:** Anyone — regardless of investment experience — can describe their financial situation and goals, and receive a plain-language recommendation on what to do with their money, backed by real historical data, honest cost assumptions, and transparent reasoning.
 
-**Current Focus:** Phase 2 in progress (Backtest Engine Core) — plan 02-04 at checkpoint (human verification pending)
+**Current Focus:** Phase 2 COMPLETE — all 4 plans done, human checkpoint approved. Phase 3 (Backtest Engine Tax) is next.
 
 ---
 
@@ -13,14 +13,14 @@
 | Field | Value |
 |-------|-------|
 | Milestone | v1 |
-| Current Phase | 2 — Backtest Engine Core |
-| Current Plan | 04 (Task 1 complete, awaiting human checkpoint) |
-| Phase Status | In progress — checkpoint |
-| Overall Progress | 3.5/4 plans in Phase 2 done |
+| Current Phase | 2 — Backtest Engine Core (COMPLETE) |
+| Current Plan | 04 (complete — human checkpoint approved) |
+| Phase Status | Complete |
+| Overall Progress | 12/12 plans in Phases 1–2 done |
 
 ```
-Progress: [████████░░] ~36% (Phase 1 complete 8/8; Phase 2 in progress 4/4 pending checkpoint)
-Phase 1 [████████] Phase 2 [████    ] Phase 3 [        ] Phase 4 [        ] Phase 5 [        ]
+Progress: [████████████████░░░░░░░░░░░░░░░░░░░░░░░░] ~40% (Phase 1: 8/8; Phase 2: 4/4 complete)
+Phase 1 [████████] Phase 2 [████████] Phase 3 [        ] Phase 4 [        ] Phase 5 [        ]
 ```
 
 ---
@@ -30,7 +30,7 @@ Phase 1 [████████] Phase 2 [████    ] Phase 3 [        ]
 | Phase | Name | Status | Completed |
 |-------|------|--------|-----------|
 | 1 | Data Infrastructure | Complete | 2026-02-27 |
-| 2 | Backtest Engine (Core) | In progress — checkpoint | — |
+| 2 | Backtest Engine (Core) | Complete | 2026-03-01 |
 | 3 | Backtest Engine (Tax) | Pending | — |
 | 4 | Analysis & Reporting | Pending | — |
 | 5 | Advisory Engine | Pending | — |
@@ -41,10 +41,10 @@ Phase 1 [████████] Phase 2 [████    ] Phase 3 [        ]
 
 | Metric | Value |
 |--------|-------|
-| Phases complete | 1/5 |
-| Requirements delivered | 16/34 (+ DATA-08 via CLI) — BACK-01/02 in 02-01; BACK-04 in 02-02; BACK-03/05 in 02-03; BACK-06/05 in 02-04 |
+| Phases complete | 2/5 |
+| Requirements delivered | 16/34 (+ DATA-08 via CLI) — BACK-01/02 in 02-01; BACK-04 in 02-02; BACK-03/05 in 02-03; BACK-06 in 02-04 |
 | Plans created | 12 (01-01 through 01-08, 02-01 through 02-04) |
-| Plans complete | 11.5 (01-01 through 01-08, 02-01, 02-02, 02-03, 02-04 Task 1) |
+| Plans complete | 12 (01-01 through 01-08, 02-01, 02-02, 02-03, 02-04 — all complete) |
 
 ---
 
@@ -138,13 +138,13 @@ Phase 1 [████████] Phase 2 [████    ] Phase 3 [        ]
 
 **To resume:** Read this file, then `.planning/ROADMAP.md` for phase detail.
 
-**Last session:** 2026-03-01T00:00:00Z
-**Stopped at:** 02-04-PLAN.md Task 1 complete — awaiting human checkpoint (Task 2) for Phase 2 acceptance
-**Resume file:** .planning/phases/02-backtest-engine-core/02-04-PLAN.md (Task 2 checkpoint)
+**Last session:** 2026-03-01
+**Stopped at:** 02-04-PLAN.md complete — Phase 2 human checkpoint approved, SUMMARY.md and STATE.md updated
+**Resume file:** None — Phase 2 complete, ready to begin Phase 3 planning
 
-**Next action:** After human approves checkpoint, mark Phase 2 complete and begin Phase 3 planning.
+**Next action:** Begin Phase 3 (Backtest Engine Tax) planning. Resolve ASX data provider before planning session.
 
-**Phase 2 status:** Plans 02-01, 02-02, 02-03, 02-04 Task 1 complete. Checkpoint pending.
+**Phase 2 status:** COMPLETE — Plans 02-01, 02-02, 02-03, 02-04 all done. Human checkpoint approved 2026-03-01. All 130 tests passing.
 
 ---
 

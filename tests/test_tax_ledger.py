@@ -14,7 +14,6 @@ import pytest
 from market_data.backtest.tax.ledger import CostBasisLedger
 from market_data.backtest.tax.models import DisposedLot, OpenLot
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------

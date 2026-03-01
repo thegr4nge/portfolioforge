@@ -3,11 +3,9 @@
 from __future__ import annotations
 
 import math
-import sqlite3
 from datetime import date
 
 import pandas as pd
-from loguru import logger
 
 from market_data.backtest.brokerage import BrokerageModel
 from market_data.backtest.metrics import cagr, max_drawdown, sharpe_ratio, total_return

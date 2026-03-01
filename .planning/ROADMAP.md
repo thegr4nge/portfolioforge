@@ -90,8 +90,8 @@ Plans:
 
 Plans:
 - [x] 03-01-PLAN.md — engine.py refactor + tax submodule scaffold (models.py, fx.py) (complete 2026-03-01)
-- [ ] 03-02-PLAN.md — CostBasisLedger TDD (FIFO cost basis tracking)
-- [ ] 03-03-PLAN.md — CGT processor TDD (discount eligibility, tax year bucketing, loss netting)
+- [x] 03-02-PLAN.md — CostBasisLedger TDD (FIFO cost basis tracking) (complete 2026-03-01)
+- [x] 03-03-PLAN.md — CGT processor TDD (discount eligibility, tax year bucketing, loss netting) (complete 2026-03-01)
 - [ ] 03-04-PLAN.md — Franking credit engine TDD (45-day rule, lookup table)
 - [ ] 03-05-PLAN.md — run_backtest_tax() integration + ATO validation (BACK-12)
 
@@ -153,7 +153,7 @@ Plans:
 |-------|--------|------|---------|-----------|
 | 1 - Data Infrastructure | Complete | 8 plans | 2026-02-27 | 2026-02-27 |
 | 2 - Backtest Engine (Core) | Complete | 4 plans | 2026-03-01 | 2026-03-01 |
-| 3 - Backtest Engine (Tax) | Pending | — | — | — |
+| 3 - Backtest Engine (Tax) | In progress (3/5 plans) | 5 plans | 2026-03-01 | — |
 | 4 - Analysis & Reporting | Pending | — | — | — |
 | 5 - Advisory Engine | Pending | — | — | — |
 
@@ -203,4 +203,4 @@ Plans:
 ---
 
 *Roadmap created: 2026-02-26*
-*Last updated: 2026-03-01 — Phase 2 COMPLETE; 02-04 look-ahead enforcement tests + human checkpoint approved; 130 total tests, mypy strict, ruff clean*
+*Last updated: 2026-03-01 — 03-03 complete; CGT processor with ATO Examples 12+16 validated; 171 total tests, mypy strict, ruff clean*

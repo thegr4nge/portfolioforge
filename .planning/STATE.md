@@ -4,7 +4,7 @@
 
 **Core Value:** Anyone — regardless of investment experience — can describe their financial situation and goals, and receive a plain-language recommendation on what to do with their money, backed by real historical data, honest cost assumptions, and transparent reasoning.
 
-**Current Focus:** Phase 3 (Backtest Engine Tax) — Plan 01 complete. Engine refactor + tax scaffold done.
+**Current Focus:** Phase 3 (Backtest Engine Tax) — Plan 03 complete. CGT processor (discount eligibility, tax year bucketing, loss netting) done.
 
 ---
 
@@ -14,13 +14,13 @@
 |-------|-------|
 | Milestone | v1 |
 | Current Phase | 3 — Backtest Engine (Tax) — In progress |
-| Current Plan | 01 (complete) |
+| Current Plan | 03 (complete) |
 | Phase Status | In progress |
-| Overall Progress | 13/17 plans done (Phase 1: 8/8; Phase 2: 4/4; Phase 3: 1/5)
+| Overall Progress | 15/17 plans done (Phase 1: 8/8; Phase 2: 4/4; Phase 3: 3/5)
 
 ```
-Progress: [█████████████████░░░░░░░░░░░░░░░░░░░░░░░] ~43% (Phase 1: 8/8; Phase 2: 4/4; Phase 3: 1/5)
-Phase 1 [████████] Phase 2 [████████] Phase 3 [██      ] Phase 4 [        ] Phase 5 [        ]
+Progress: [████████████████████░░░░░░░░░░░░░░░░░░░░] ~53% (Phase 1: 8/8; Phase 2: 4/4; Phase 3: 3/5)
+Phase 1 [████████] Phase 2 [████████] Phase 3 [██████  ] Phase 4 [        ] Phase 5 [        ]
 ```
 
 ---
@@ -31,7 +31,7 @@ Phase 1 [████████] Phase 2 [████████] Phase 3 [�
 |-------|------|--------|-----------|
 | 1 | Data Infrastructure | Complete | 2026-02-27 |
 | 2 | Backtest Engine (Core) | Complete | 2026-03-01 |
-| 3 | Backtest Engine (Tax) | In progress (1/5 plans) | — |
+| 3 | Backtest Engine (Tax) | In progress (3/5 plans) | — |
 | 4 | Analysis & Reporting | Pending | — |
 | 5 | Advisory Engine | Pending | — |
 
@@ -95,6 +95,10 @@ Phase 1 [████████] Phase 2 [████████] Phase 3 [�
 | TaxSummary.lots is list[DisposedLot] | "Lot" in CONTEXT.md is informal; DisposedLot is the canonical disposed-parcel record with all CGT fields |
 | _AUD_USD_SQL constant in tax/fx.py documents FX direction | from_ccy='AUD', to_ccy='USD' — makes the conversion direction (usd / rate) obvious without reading the data ingestion code |
 | Unused type: ignore[type-arg] removed from pd.Series annotations | pandas pyproject.toml override suppresses type-arg errors; per-file ignores are redundant and flagged as unused-ignore |
+| qualifies_for_discount uses date.replace() not timedelta(365) | Leap years: Feb 29 acquisition → anniversary is Mar 1 in non-leap year; timedelta(365) gives wrong result |
+| Feb 29 anniversary computed as date(year+1, 3, 1) directly | More explicit than delta arithmetic; same result, cleaner code |
+| build_tax_year_results() omits dividend_events parameter | TaxedDividend type not yet defined; franking.py (03-04) will update franking_credits_claimed/dividend_income on TaxYearResult |
+| ATO loss-ordering: net losses against non-discountable gains first | ATO rule — discounting before netting overstates the tax offset; Pitfall 1 in RESEARCH.md |
 | Engine test helper uses explicit named params not **kwargs | Eliminates type: ignore noise from dict.pop() return type; keeps test signatures clear and mypy-clean |
 | Benchmark runs same _simulate() code path as portfolio | No shortcut; same brokerage applied, same rebalance dates — BACK-07/Pitfall 7 compliance |
 | Look-ahead test uses 10x price spike (100→1000) as diagnostic | Gap between correct (~9990) and look-ahead (~99990) equity values is two orders of magnitude — unambiguous detection |
@@ -141,13 +145,13 @@ Phase 1 [████████] Phase 2 [████████] Phase 3 [�
 
 **To resume:** Read this file, then `.planning/ROADMAP.md` for phase detail.
 
-**Last session:** 2026-03-01T03:28:00Z
-**Stopped at:** Completed 03-01-PLAN.md — engine refactor + tax scaffold
+**Last session:** 2026-03-01T04:56:00Z
+**Stopped at:** Completed 03-03-PLAN.md — CGT processor (qualifies_for_discount, tax year bucketing, build_tax_year_results)
 **Resume file:** None
 
-**Next action:** Execute Plan 03-02 (FIFO cost basis ledger — CostBasisLedger class with buy/sell methods).
+**Next action:** Execute Plan 03-04 (franking credit engine — compute_franking_credit, satisfies_45_day_rule, FRANKING_LOOKUP) or Plan 03-05 (run_backtest_tax integration).
 
-**Phase 3 status:** Plan 03-01 complete. _rebalance_helpers.py + tax/ submodule (models + fx) all in place. 130 tests passing.
+**Phase 3 status:** Plans 03-01, 03-02, 03-03 complete. tax/cgt.py + tax/ledger.py + tax/models.py + tax/fx.py all in place. 171 tests passing.
 
 ---
 

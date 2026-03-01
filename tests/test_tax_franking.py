@@ -23,7 +23,6 @@ from market_data.backtest.tax.franking import (
     should_apply_45_day_rule,
 )
 
-
 # ---------------------------------------------------------------------------
 # compute_franking_credit() tests
 # ---------------------------------------------------------------------------
@@ -98,110 +97,19 @@ def test_held_only_10_days_after_exdate_fails() -> None:
 
 
 def test_long_holding_but_sold_just_after_exdate_fails() -> None:
-    """CRITICAL per-event test: 200+ day holding fails if sold soon after ex-dividend.
+    """CRITICAL per-event test: 500+ day holding fails if sold before ex-date window.
 
-    acquired_date = 2023-01-01, hold_end = 2023-06-05, ex_div_date = 2023-05-25.
+    acquired_date = 2022-01-01, hold_end = 2023-05-22, ex_div_date = 2023-05-25.
+    Total holding: 500+ days. But sold 3 days BEFORE ex-dividend date.
 
     Window: May 25 - 45 = Apr 10; May 25 + 45 = Jul 09.
     hold_start in window = max(Jan 02, Apr 10) = Apr 10.
-    hold_end in window = min(Jun 05, Jul 09) = Jun 05.
-    Days held = (Jun 05 - Apr 10).days = 56 >= 45 → True.
-
-    Wait: re-check. Actually Apr 10 to Jun 05:
-    Apr: 30-10 = 20 days remain; May: 31 days; Jun 1-5: 5 days → 20+31+5=56 days.
-    That passes. Let's use hold_end closer to ex_date to make it fail:
-
-    Actually as per PLAN test case 7: hold_end = 2023-06-05, ex_div_date = 2023-05-25.
-    Window start = May 25 - 45 = April 10. Hold_start in window = max(Jan 02, Apr 10) = Apr 10.
-    Hold_end in window = min(Jun 05, Jul 09) = Jun 05.
-    Days = (Jun 05 - Apr 10).days = 56. That passes.
-
-    The PLAN says hold_end = Jun 5, window end = Jul 9, days in window from
-    "May 26 to June 5 = 10 < 45 → False". This implies the window starts at ex_div_date+1,
-    not ex_div_date - 45. Let's re-read PLAN:
-
-    PLAN test 7: "acquired_date=date(2023, 1, 1) (held 200+ days total),
-    hold_end=date(2023, 6, 5), ex_div_date=date(2023, 5, 25).
-    Window end: July 9. Hold_end=June 5. Days in window from May 26 to June 5 = 10 < 45 → False."
-
-    This calculation is: window_start = ex_div_date + 1 day = May 26?
-    No — the PLAN comment is describing days AFTER ex-dividend date specifically.
-    But Pattern 5 in RESEARCH.md defines window_start = ex_div_date - 45 days.
-
-    The PLAN's "days in window from May 26 to June 5 = 10" appears to be a mistake in
-    the comment — let me use the correct formula from RESEARCH.md:
-    window_start = ex_div_date - 45 days (Apr 10), window_end = ex_div_date + 45 days (Jul 9).
-
-    With the formula from RESEARCH.md, this test case would PASS (56 days ≥ 45).
-
-    To make this test fail with hold_end=2023-06-05, we need ex_div_date to be more recent.
-    Let's use ex_div_date=2023-06-01 (close to hold_end):
-    window_start = Jun 01 - 45 = Apr 17. window_end = Jun 01 + 45 = Jul 16.
-    hold_start in window = max(Jan 02, Apr 17) = Apr 17.
-    hold_end in window = min(Jun 05, Jul 16) = Jun 05.
-    Days = (Jun 05 - Apr 17).days = 49 days. Still passes.
-
-    For this test to fail with acquired_date=Jan 1 but sold 10 days after ex_div:
-    We need hold_end = ex_div_date + 10.
-    Example: ex_div_date = 2023-05-25, hold_end = 2023-06-04.
-    window_start = Apr 10. hold_start in window = max(Jan 02, Apr 10) = Apr 10.
-    hold_end in window = min(Jun 04, Jul 09) = Jun 04.
-    Days = (Jun 04 - Apr 10).days = 55. Still passes.
-
-    The only way a long holder fails is if they sold very close after ex_div, within the window:
-    If hold_end = ex_div_date + 5 = 2023-05-30:
-    hold_start in window = max(Jan 02, Apr 10) = Apr 10.
-    hold_end in window = min(May 30, Jul 09) = May 30.
-    Days = (May 30 - Apr 10).days = 50. Still passes.
-
-    Actually the PLAN scenario seems impossible with the RESEARCH.md formula.
-    The PLAN comment says "Days in window from May 26 to June 5 = 10" — this suggests
-    the hold_start in window = May 26 (= ex_div_date + 1). This would happen if
-    acquired_date was on ex_div_date itself (May 25) → hold_start in window = max(May 26, Apr 10) = May 26.
-
-    Let me match the PLAN exactly: the point is "long total holding, short around ex-date".
-    acquired_date = Jan 1, but ex_div_date = May 25, hold_end = Jun 05.
-    If window_start calculation uses ex_div_date - 45 = Apr 10:
-    hold_start in window = max(Jan 02, Apr 10) = Apr 10.
-    hold_end = min(Jun 05, Jul 09) = Jun 05.
-    Days = 56 >= 45 → passes. The PLAN comment is wrong for this test case.
-
-    PLAN test 7 as written cannot fail with 200+ total days and the standard formula.
-    I'll implement the test that matches the PLAN's INTENT: a case where
-    total holding is long but the window intersection is < 45.
-    Use: acquired_date = 2023-05-20, hold_end = 2023-05-30, ex_div_date = 2023-05-15.
-    window_start = Apr 30, window_end = Jun 29.
-    hold_start = max(May 21, Apr 30) = May 21.
-    hold_end = min(May 30, Jun 29) = May 30.
-    Days = (May 30 - May 21).days = 9 < 45 → False. ✓
-
-    This fulfills the PLAN's intent (recently-acquired then quickly sold fails).
-    For maximum clarity, I use a scenario that unambiguously demonstrates per-event checking:
-    Stock held for 200 days BEFORE ex-date but sold 10 days AFTER ex-date.
-    acquired_date = 2022-10-01, hold_end = 2023-06-04, ex_div_date = 2023-05-25.
-    window_start = Apr 10. hold_start = max(Oct 02, Apr 10) = Apr 10.
-    hold_end = min(Jun 04, Jul 09) = Jun 04.
-    Days = (Jun 04 - Apr 10).days = 55 >= 45 → passes. Still passes.
-
-    The key insight: if you held 200+ days, you WILL have been in the window for 45 days
-    UNLESS the window itself only started recently (ex_div is very recent).
-    True failure case: acquired long ago, ex_div very recent, sold soon after ex_div.
-    acquired_date = 2022-01-01, ex_div_date = 2023-05-25, hold_end = 2023-05-30.
-    window_start = Apr 10. hold_start = max(Jan 02, Apr 10) = Apr 10.
-    hold_end = min(May 30, Jul 09) = May 30.
-    Days = (May 30 - Apr 10).days = 50 >= 45. Still passes (barely).
-
-    Try: hold_end = 2023-05-22 (3 days before ex_div):
     hold_end in window = min(May 22, Jul 09) = May 22.
-    hold_start in window = max(Jan 02, Apr 10) = Apr 10.
-    Days = (May 22 - Apr 10).days = 42 < 45 → False! ✓
+    Days = (May 22 - Apr 10).days = 42 < 45 → False.
 
-    So: acquired 2022-01-01, hold_end 2023-05-22, ex_div 2023-05-25.
-    Total holding: ~500 days. But sold 3 days BEFORE ex-date.
-    Days in window: 42 < 45 → fails 45-day rule. This is the per-event test.
+    This demonstrates the 45-day rule is per-event: a long overall holding
+    still fails if the intersection with this specific ex-date's window is < 45.
     """
-    # Long overall holding (500+ days) but sold 3 days before ex-dividend date.
-    # Days in qualifying window = 42 < 45 → per-event check fails.
     result = satisfies_45_day_rule(
         acquired_date=date(2022, 1, 1),
         current_hold_end=date(2023, 5, 22),
@@ -214,12 +122,10 @@ def test_exactly_45_days_in_window_passes() -> None:
     """Exactly 45 days in the qualifying window satisfies the rule (boundary is >=).
 
     ex_div_date = 2023-06-01. window_start = Apr 17. window_end = Jul 16.
-    We want hold_start in window = Apr 17 and exactly 45 days.
-    hold_end in window = Apr 17 + 45 = Jun 01.
-    So: acquired_date = Apr 16 (so hold_start+1 = Apr 17), hold_end = Jun 01.
+    acquired_date = Apr 16 → hold_start+1 = Apr 17.
+    hold_end = Jun 01 → min(Jun 01, Jul 16) = Jun 01.
     hold_start in window = max(Apr 17, Apr 17) = Apr 17.
-    hold_end in window = min(Jun 01, Jul 16) = Jun 01.
-    Days = (Jun 01 - Apr 17).days = 45 → passes.
+    Days = (Jun 01 - Apr 17).days = 45 → passes (>= boundary).
     """
     result = satisfies_45_day_rule(
         acquired_date=date(2023, 4, 16),

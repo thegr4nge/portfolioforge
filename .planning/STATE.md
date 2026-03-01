@@ -4,7 +4,7 @@
 
 **Core Value:** Anyone — regardless of investment experience — can describe their financial situation and goals, and receive a plain-language recommendation on what to do with their money, backed by real historical data, honest cost assumptions, and transparent reasoning.
 
-**Current Focus:** Phase 3 (Backtest Engine Tax) — Plan 03 complete. CGT processor (discount eligibility, tax year bucketing, loss netting) done.
+**Current Focus:** Phase 3 (Backtest Engine Tax) — Plan 04 complete. Franking credit engine (formula, 45-day rule, FRANKING_LOOKUP, $5k threshold) done.
 
 ---
 
@@ -14,13 +14,13 @@
 |-------|-------|
 | Milestone | v1 |
 | Current Phase | 3 — Backtest Engine (Tax) — In progress |
-| Current Plan | 03 (complete) |
+| Current Plan | 04 (complete) |
 | Phase Status | In progress |
-| Overall Progress | 15/17 plans done (Phase 1: 8/8; Phase 2: 4/4; Phase 3: 3/5)
+| Overall Progress | 16/17 plans done (Phase 1: 8/8; Phase 2: 4/4; Phase 3: 4/5)
 
 ```
-Progress: [████████████████████░░░░░░░░░░░░░░░░░░░░] ~53% (Phase 1: 8/8; Phase 2: 4/4; Phase 3: 3/5)
-Phase 1 [████████] Phase 2 [████████] Phase 3 [██████  ] Phase 4 [        ] Phase 5 [        ]
+Progress: [█████████████████████░░░░░░░░░░░░░░░░░░░] ~56% (Phase 1: 8/8; Phase 2: 4/4; Phase 3: 4/5)
+Phase 1 [████████] Phase 2 [████████] Phase 3 [████████] Phase 4 [        ] Phase 5 [        ]
 ```
 
 ---
@@ -31,7 +31,7 @@ Phase 1 [████████] Phase 2 [████████] Phase 3 [�
 |-------|------|--------|-----------|
 | 1 | Data Infrastructure | Complete | 2026-02-27 |
 | 2 | Backtest Engine (Core) | Complete | 2026-03-01 |
-| 3 | Backtest Engine (Tax) | In progress (3/5 plans) | — |
+| 3 | Backtest Engine (Tax) | In progress (4/5 plans) | — |
 | 4 | Analysis & Reporting | Pending | — |
 | 5 | Advisory Engine | Pending | — |
 
@@ -42,9 +42,9 @@ Phase 1 [████████] Phase 2 [████████] Phase 3 [�
 | Metric | Value |
 |--------|-------|
 | Phases complete | 2/5 |
-| Requirements delivered | 16/34 (+ DATA-08 via CLI) — BACK-01/02 in 02-01; BACK-04 in 02-02; BACK-03/05 in 02-03; BACK-06 in 02-04 |
-| Plans created | 12 (01-01 through 01-08, 02-01 through 02-04) |
-| Plans complete | 12 (01-01 through 01-08, 02-01, 02-02, 02-03, 02-04 — all complete) |
+| Requirements delivered | 17/34 (+ DATA-08 via CLI) — BACK-01/02 in 02-01; BACK-04 in 02-02; BACK-03/05 in 02-03; BACK-06 in 02-04; BACK-08 in 03-02; BACK-07/10 in 03-03; BACK-09 in 03-04 |
+| Plans created | 17 (01-01 through 01-08, 02-01 through 02-04, 03-01 through 03-05) |
+| Plans complete | 16 (01-01 through 01-08, 02-01–04, 03-01–04 — all complete) |
 
 ---
 
@@ -106,6 +106,9 @@ Phase 1 [████████] Phase 2 [████████] Phase 3 [�
 | Benchmark runs same _simulate() code path as portfolio | No shortcut; same brokerage applied, same rebalance dates — BACK-07/Pitfall 7 compliance |
 | Look-ahead test uses 10x price spike (100→1000) as diagnostic | Gap between correct (~9990) and look-ahead (~99990) equity values is two orders of magnitude — unambiguous detection |
 | Benchmark=portfolio ticker in look-ahead fixture | Avoids requiring a second security in the minimal 2-day fixture; structural tests don't depend on benchmark value |
+| FRANKING_LOOKUP keys without .AX suffix; resolve_franking_pct strips suffix | Cleaner keys; consistent lookup regardless of how callers format tickers; override dict matched with suffix as-is |
+| should_apply_45_day_rule >= $5,000 boundary is inclusive | ATO intent: threshold is "less than $5,000 waives rule"; exactly $5,000 applies the rule |
+| 45-day rule is per-event, not total holding period | ATO rule checked per ex-dividend date window; PLAN test case 7 arithmetic corrected during execution |
 
 ### Open Questions / Blockers
 
@@ -135,6 +138,8 @@ Phase 1 [████████] Phase 2 [████████] Phase 3 [�
 - BrokerageModel.cost() raises ValueError on trade_value <= 0; the engine must never pass a zero or negative value
 - Engine integration tests use unittest.mock.patch("market_data.backtest.engine.get_connection") to inject in-memory SQLite — avoids disk I/O and decouples tests from real DB path
 - Look-ahead test pattern: 2-day fixture (VAS.AX: 100.0 → 1000.0), assert Day-1 equity < 11_000 — threshold separates legitimate (~9990) from look-ahead (~99990)
+- franking.py satisfies_45_day_rule: quantity param accepted for API consistency but not used (rule is per-parcel; caller handles iteration)
+- PLAN 03-04 test case 7 arithmetic was incorrect in the plan document — corrected during execution (see 03-04-SUMMARY.md Issues Encountered)
 
 ### Todos
 
@@ -148,15 +153,15 @@ Phase 1 [████████] Phase 2 [████████] Phase 3 [�
 
 **To resume:** Read this file, then `.planning/ROADMAP.md` for phase detail.
 
-**Last session:** 2026-03-01T04:56:00Z
-**Stopped at:** Completed 03-03-PLAN.md — CGT processor (qualifies_for_discount, tax year bucketing, build_tax_year_results)
+**Last session:** 2026-03-01T04:57:54Z
+**Stopped at:** Completed 03-04-PLAN.md — franking credit engine + 45-day rule
 **Resume file:** None
 
-**Next action:** Execute Plan 03-04 (franking credit engine — compute_franking_credit, satisfies_45_day_rule, FRANKING_LOOKUP) or Plan 03-05 (run_backtest_tax integration).
+**Next action:** Execute Plan 03-05 (run_backtest_tax — wires FIFO ledger + CGT processor + franking engine into single tax-aware backtest function).
 
-**Phase 3 status:** Plans 03-01, 03-02, 03-03 complete. tax/cgt.py + tax/ledger.py + tax/models.py + tax/fx.py all in place. 171 tests passing.
+**Phase 3 status:** Plans 03-01 through 03-04 complete. tax/franking.py + tax/cgt.py + tax/ledger.py + tax/models.py + tax/fx.py all in place. 171 tests passing.
 
 ---
 
 *State initialized: 2026-02-26*
-*Last updated: 2026-03-01 after 02-04 Task 1 — look-ahead bias tests committed*
+*Last updated: 2026-03-01 after 03-04 — franking credit engine complete*

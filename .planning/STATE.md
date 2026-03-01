@@ -138,9 +138,9 @@ Phase 1 [████████] Phase 2 [████████] Phase 3 [ 
 
 **To resume:** Read this file, then `.planning/ROADMAP.md` for phase detail.
 
-**Last session:** 2026-03-01
-**Stopped at:** 02-04-PLAN.md complete — Phase 2 human checkpoint approved, SUMMARY.md and STATE.md updated
-**Resume file:** None — Phase 2 complete, ready to begin Phase 3 planning
+**Last session:** 2026-03-01T02:53:28.140Z
+**Stopped at:** Phase 3 context gathered
+**Resume file:** .planning/phases/03-backtest-engine-tax/03-CONTEXT.md
 
 **Next action:** Begin Phase 3 (Backtest Engine Tax) planning. Resolve ASX data provider before planning session.
 

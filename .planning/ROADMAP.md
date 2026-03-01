@@ -86,7 +86,14 @@ Plans:
 
 **Requirements:** BACK-07, BACK-08, BACK-09, BACK-10, BACK-11, BACK-12
 
-**Plans:** 0 plans
+**Plans:** 5 plans
+
+Plans:
+- [ ] 03-01-PLAN.md — engine.py refactor + tax submodule scaffold (models.py, fx.py)
+- [ ] 03-02-PLAN.md — CostBasisLedger TDD (FIFO cost basis tracking)
+- [ ] 03-03-PLAN.md — CGT processor TDD (discount eligibility, tax year bucketing, loss netting)
+- [ ] 03-04-PLAN.md — Franking credit engine TDD (45-day rule, lookup table)
+- [ ] 03-05-PLAN.md — run_backtest_tax() integration + ATO validation (BACK-12)
 
 ### Success Criteria
 

@@ -16,7 +16,7 @@ A 4-layer financial platform built bottom-up: clean market data enables honest b
 |-------|------|------|--------------|------------|
 | 1 | Data Infrastructure | Complete 2026-02-27 | DATA-01 to DATA-10 | — |
 | 2 | Backtest Engine (Core) | Complete 2026-03-01 | BACK-01 to BACK-06 | Phase 1 |
-| 3 | Backtest Engine (Tax) | Backtests produce AUD-denominated, CGT-correct results validated against ATO examples | BACK-07 to BACK-12 | Phase 2 |
+| 3 | Backtest Engine (Tax) | Complete 2026-03-01 | BACK-07 to BACK-12 | Phase 2 |
 | 4 | Analysis & Reporting | Users can compare portfolios, run crash scenarios, and receive plain-language narrative output | ANAL-01 to ANAL-06 | Phase 3 |
 | 5 | Advisory Engine | Users can describe their financial situation and receive a ranked, rules-based, plain-language recommendation | ADVI-01 to ADVI-06 | Phase 4 |
 
@@ -93,7 +93,7 @@ Plans:
 - [x] 03-02-PLAN.md — CostBasisLedger TDD (FIFO cost basis tracking) (complete 2026-03-01)
 - [x] 03-03-PLAN.md — CGT processor TDD (discount eligibility, tax year bucketing, loss netting) (complete 2026-03-01)
 - [x] 03-04-PLAN.md — Franking credit engine TDD (45-day rule, lookup table) (complete 2026-03-01)
-- [ ] 03-05-PLAN.md — run_backtest_tax() integration + ATO validation (BACK-12)
+- [x] 03-05-PLAN.md — run_backtest_tax() integration + ATO validation (BACK-12) (complete 2026-03-01)
 
 ### Success Criteria
 

@@ -19,7 +19,6 @@ from market_data.backtest.tax.cgt import (
 )
 from market_data.backtest.tax.models import DisposedLot, TaxYearResult
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------

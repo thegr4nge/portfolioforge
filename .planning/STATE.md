@@ -4,7 +4,7 @@
 
 **Core Value:** Anyone — regardless of investment experience — can describe their financial situation and goals, and receive a plain-language recommendation on what to do with their money, backed by real historical data, honest cost assumptions, and transparent reasoning.
 
-**Current Focus:** Phase 4 (Analysis & Reporting) — In Progress. Plan 01 complete: analysis submodule foundation with scenario analysis, drawdown/recovery computation, and plain-language narrative generators.
+**Current Focus:** Phase 4 (Analysis & Reporting) — In Progress. Plan 02 complete: plotext ASCII charts (equity curve + drawdown) and SQL-backed sector/geographic exposure aggregation.
 
 ---
 
@@ -14,13 +14,13 @@
 |-------|-------|
 | Milestone | v1 |
 | Current Phase | 4 — Analysis & Reporting — In Progress |
-| Current Plan | 01 (complete) |
+| Current Plan | 02 (complete) |
 | Phase Status | In progress |
-| Overall Progress | 18/21+ plans done (Phase 1: 8/8; Phase 2: 4/4; Phase 3: 5/5; Phase 4: 1/?)
+| Overall Progress | 19/21+ plans done (Phase 1: 8/8; Phase 2: 4/4; Phase 3: 5/5; Phase 4: 2/?)
 
 ```
-Progress: [██████████████████████████░░░░░░░░░░░░░░] ~62% (Phase 1: 8/8; Phase 2: 4/4; Phase 3: 5/5; Phase 4: 1/?)
-Phase 1 [████████] Phase 2 [████████] Phase 3 [█████████] Phase 4 [█       ] Phase 5 [        ]
+Progress: [████████████████████████████░░░░░░░░░░░░] ~65% (Phase 1: 8/8; Phase 2: 4/4; Phase 3: 5/5; Phase 4: 2/?)
+Phase 1 [████████] Phase 2 [████████] Phase 3 [█████████] Phase 4 [██      ] Phase 5 [        ]
 ```
 
 ---
@@ -42,9 +42,9 @@ Phase 1 [████████] Phase 2 [████████] Phase 3 [�
 | Metric | Value |
 |--------|-------|
 | Phases complete | 2/5 |
-| Requirements delivered | 21/34 (+ DATA-08 via CLI) — BACK-01/02 in 02-01; BACK-04 in 02-02; BACK-03/05 in 02-03; BACK-06 in 02-04; BACK-08 in 03-02; BACK-07/10 in 03-03; BACK-09 in 03-04; BACK-11/12 in 03-05; ANAL-01/03 in 04-01 |
-| Plans created | 18 (01-01 through 01-08, 02-01 through 02-04, 03-01 through 03-05, 04-01) |
-| Plans complete | 18 (01-01 through 01-08, 02-01–04, 03-01–05, 04-01 — all complete) |
+| Requirements delivered | 23/34 (+ DATA-08 via CLI) — BACK-01/02 in 02-01; BACK-04 in 02-02; BACK-03/05 in 02-03; BACK-06 in 02-04; BACK-08 in 03-02; BACK-07/10 in 03-03; BACK-09 in 03-04; BACK-11/12 in 03-05; ANAL-01/03 in 04-01; ANAL-04/06 in 04-02 |
+| Plans created | 19 (01-01 through 01-08, 02-01 through 02-04, 03-01 through 03-05, 04-01 through 04-02) |
+| Plans complete | 19 (01-01 through 01-08, 02-01–04, 03-01–05, 04-01–02 — all complete) |
 
 ---
 
@@ -162,15 +162,15 @@ Phase 1 [████████] Phase 2 [████████] Phase 3 [�
 **To resume:** Read this file, then `.planning/ROADMAP.md` for phase detail.
 
 **Last session:** 2026-03-02
-**Stopped at:** Completed 04-01-PLAN.md — analysis submodule foundation complete
+**Stopped at:** Completed 04-02-PLAN.md — ASCII charts and sector/geo breakdown complete
 **Resume file:** None
 
-**Next action:** Plan 04-02 — charts.py using plotext (now installed) to render equity curve and drawdown charts against ScenarioResult.
+**Next action:** Plan 04-03 — Report renderer using rich terminal output, side-by-side comparison (ANAL-02), mandatory AFSL disclaimer (ANAL-05).
 
 **Phase 3 status:** COMPLETE. All 5 plans done. tax/engine.py + tax/franking.py + tax/cgt.py + tax/ledger.py + tax/models.py + tax/fx.py all in place. 178 tests passing.
-**Phase 4 status:** In progress. 04-01 complete. analysis/scenario.py, narrative.py, models.py delivered. 196 tests passing.
+**Phase 4 status:** In progress. 04-02 complete. analysis/charts.py (plotext equity + drawdown charts) and analysis/breakdown.py (sector/geo exposure) delivered. 209 tests passing.
 
 ---
 
 *State initialized: 2026-02-26*
-*Last updated: 2026-03-01 after 03-05 — Phase 3 complete, run_backtest_tax() validated*
+*Last updated: 2026-03-02 after 04-02 — charts.py and breakdown.py complete, 209 tests passing*

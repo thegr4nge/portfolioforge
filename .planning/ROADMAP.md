@@ -117,7 +117,7 @@ Plans:
 
 Plans:
 - [x] 04-01-PLAN.md — Analysis submodule foundation: models, scenario logic (ANAL-01), narrative generators (ANAL-03) (complete 2026-03-02)
-- [ ] 04-02-PLAN.md — ASCII charting with plotext (ANAL-04) and sector/geo breakdown (ANAL-06)
+- [x] 04-02-PLAN.md — ASCII charting with plotext (ANAL-04) and sector/geo breakdown (ANAL-06) (complete 2026-03-02)
 - [ ] 04-03-PLAN.md — Report renderer: rich terminal output, side-by-side comparison (ANAL-02), mandatory disclaimer (ANAL-05)
 - [ ] 04-04-PLAN.md — CLI analyse command group wiring all requirements to market-data CLI + human verification checkpoint
 
@@ -209,4 +209,4 @@ Plans:
 ---
 
 *Roadmap created: 2026-02-26*
-*Last updated: 2026-03-02 — 04-01 complete; analysis submodule foundation with plotext, CRASH_PRESETS, scenario analysis, drawdown/recovery computation, narrative generators; 196 total tests (+18 new), mypy strict, ruff clean*
+*Last updated: 2026-03-02 — 04-02 complete; plotext ASCII charts (render_equity_chart, render_drawdown_chart) and SQL-backed sector/geo exposure aggregation; 209 total tests (+13 new), mypy strict, ruff clean*

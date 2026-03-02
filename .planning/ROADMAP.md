@@ -116,7 +116,7 @@ Plans:
 **Plans:** 4 plans
 
 Plans:
-- [ ] 04-01-PLAN.md — Analysis submodule foundation: models, scenario logic (ANAL-01), narrative generators (ANAL-03)
+- [x] 04-01-PLAN.md — Analysis submodule foundation: models, scenario logic (ANAL-01), narrative generators (ANAL-03) (complete 2026-03-02)
 - [ ] 04-02-PLAN.md — ASCII charting with plotext (ANAL-04) and sector/geo breakdown (ANAL-06)
 - [ ] 04-03-PLAN.md — Report renderer: rich terminal output, side-by-side comparison (ANAL-02), mandatory disclaimer (ANAL-05)
 - [ ] 04-04-PLAN.md — CLI analyse command group wiring all requirements to market-data CLI + human verification checkpoint
@@ -160,7 +160,7 @@ Plans:
 | 1 - Data Infrastructure | Complete | 8 plans | 2026-02-27 | 2026-02-27 |
 | 2 - Backtest Engine (Core) | Complete | 4 plans | 2026-03-01 | 2026-03-01 |
 | 3 - Backtest Engine (Tax) | Complete | 5 plans | 2026-03-01 | 2026-03-01 |
-| 4 - Analysis & Reporting | Pending | — | — | — |
+| 4 - Analysis & Reporting | In Progress | 4 plans | 2026-03-02 | — |
 | 5 - Advisory Engine | Pending | — | — | — |
 
 ---
@@ -209,4 +209,4 @@ Plans:
 ---
 
 *Roadmap created: 2026-02-26*
-*Last updated: 2026-03-01 — 03-04 complete; franking credit engine with 45-day rule, 29-ticker FRANKING_LOOKUP, $5k threshold; 171 total tests (+18 new = 189), mypy strict, ruff clean*
+*Last updated: 2026-03-02 — 04-01 complete; analysis submodule foundation with plotext, CRASH_PRESETS, scenario analysis, drawdown/recovery computation, narrative generators; 196 total tests (+18 new), mypy strict, ruff clean*

@@ -4,7 +4,7 @@
 
 **Core Value:** Anyone — regardless of investment experience — can describe their financial situation and goals, and receive a plain-language recommendation on what to do with their money, backed by real historical data, honest cost assumptions, and transparent reasoning.
 
-**Current Focus:** Phase 3 (Backtest Engine Tax) — COMPLETE. run_backtest_tax() wired and validated against 3 ATO worked examples. All BACK-07 through BACK-12 delivered.
+**Current Focus:** Phase 4 (Analysis & Reporting) — In Progress. Plan 01 complete: analysis submodule foundation with scenario analysis, drawdown/recovery computation, and plain-language narrative generators.
 
 ---
 
@@ -13,14 +13,14 @@
 | Field | Value |
 |-------|-------|
 | Milestone | v1 |
-| Current Phase | 3 — Backtest Engine (Tax) — Complete |
-| Current Plan | 05 (complete) |
-| Phase Status | Complete |
-| Overall Progress | 17/17 plans done (Phase 1: 8/8; Phase 2: 4/4; Phase 3: 5/5)
+| Current Phase | 4 — Analysis & Reporting — In Progress |
+| Current Plan | 01 (complete) |
+| Phase Status | In progress |
+| Overall Progress | 18/21+ plans done (Phase 1: 8/8; Phase 2: 4/4; Phase 3: 5/5; Phase 4: 1/?)
 
 ```
-Progress: [████████████████████████░░░░░░░░░░░░░░░░] ~60% (Phase 1: 8/8; Phase 2: 4/4; Phase 3: 5/5)
-Phase 1 [████████] Phase 2 [████████] Phase 3 [█████████] Phase 4 [        ] Phase 5 [        ]
+Progress: [██████████████████████████░░░░░░░░░░░░░░] ~62% (Phase 1: 8/8; Phase 2: 4/4; Phase 3: 5/5; Phase 4: 1/?)
+Phase 1 [████████] Phase 2 [████████] Phase 3 [█████████] Phase 4 [█       ] Phase 5 [        ]
 ```
 
 ---
@@ -32,7 +32,7 @@ Phase 1 [████████] Phase 2 [████████] Phase 3 [�
 | 1 | Data Infrastructure | Complete | 2026-02-27 |
 | 2 | Backtest Engine (Core) | Complete | 2026-03-01 |
 | 3 | Backtest Engine (Tax) | Complete | 2026-03-01 |
-| 4 | Analysis & Reporting | Pending | — |
+| 4 | Analysis & Reporting | In Progress | — |
 | 5 | Advisory Engine | Pending | — |
 
 ---
@@ -42,9 +42,9 @@ Phase 1 [████████] Phase 2 [████████] Phase 3 [�
 | Metric | Value |
 |--------|-------|
 | Phases complete | 2/5 |
-| Requirements delivered | 19/34 (+ DATA-08 via CLI) — BACK-01/02 in 02-01; BACK-04 in 02-02; BACK-03/05 in 02-03; BACK-06 in 02-04; BACK-08 in 03-02; BACK-07/10 in 03-03; BACK-09 in 03-04; BACK-11/12 in 03-05 |
-| Plans created | 17 (01-01 through 01-08, 02-01 through 02-04, 03-01 through 03-05) |
-| Plans complete | 17 (01-01 through 01-08, 02-01–04, 03-01–05 — all complete) |
+| Requirements delivered | 21/34 (+ DATA-08 via CLI) — BACK-01/02 in 02-01; BACK-04 in 02-02; BACK-03/05 in 02-03; BACK-06 in 02-04; BACK-08 in 03-02; BACK-07/10 in 03-03; BACK-09 in 03-04; BACK-11/12 in 03-05; ANAL-01/03 in 04-01 |
+| Plans created | 18 (01-01 through 01-08, 02-01 through 02-04, 03-01 through 03-05, 04-01) |
+| Plans complete | 18 (01-01 through 01-08, 02-01–04, 03-01–05, 04-01 — all complete) |
 
 ---
 
@@ -113,6 +113,10 @@ Phase 1 [████████] Phase 2 [████████] Phase 3 [�
 | open_lots_by_ticker dict tracks BUY lots for 45-day rule | Avoids CostBasisLedger._lots private field access; built as trades are replayed |
 | Proportional brokerage allocation across multi-lot SELLs | When one SELL touches multiple parcels, brokerage split by quantity proportion — only consistent ATO approach |
 | Fixture B uses FY2024 for both sells (not cross-year carry-forward) | build_tax_year_results() is per-year; cross-year loss carry-forward is a Phase 4 enhancement |
+| pd.Timestamp() for DatetimeIndex slice bounds in scenario.py | mypy strict rejects string slice indices on pd.Series (Slice index must be an integer); pd.Timestamp() conversion is the correct fix |
+| CRASH_PRESETS dict keys are CLI-friendly lowercase-hyphen strings | Matches CONTEXT.md: `--scenario 2020-covid` not `--scenario "2020 COVID Crash"` |
+| _AUS_INFLATION_BASELINE_PCT = 2.5 named constant | RBA long-run target; narrative comparisons require a named constant (no magic numbers per coding standards) |
+| plotext>=5.3 with mypy ignore_missing_imports override | Same pattern as yfinance and pandas; plotext has no type stubs available |
 
 ### Open Questions / Blockers
 
@@ -157,13 +161,14 @@ Phase 1 [████████] Phase 2 [████████] Phase 3 [�
 
 **To resume:** Read this file, then `.planning/ROADMAP.md` for phase detail.
 
-**Last session:** 2026-03-01T23:54:30.870Z
-**Stopped at:** Phase 4 context gathered
-**Resume file:** .planning/phases/04-analysis-reporting/04-CONTEXT.md
+**Last session:** 2026-03-02
+**Stopped at:** Completed 04-01-PLAN.md — analysis submodule foundation complete
+**Resume file:** None
 
-**Next action:** Begin Phase 4 (Analysis & Reporting). First plan: portfolio analysis summary report with after-tax metrics, franking credit breakdown, and AFSL disclaimer.
+**Next action:** Plan 04-02 — charts.py using plotext (now installed) to render equity curve and drawdown charts against ScenarioResult.
 
 **Phase 3 status:** COMPLETE. All 5 plans done. tax/engine.py + tax/franking.py + tax/cgt.py + tax/ledger.py + tax/models.py + tax/fx.py all in place. 178 tests passing.
+**Phase 4 status:** In progress. 04-01 complete. analysis/scenario.py, narrative.py, models.py delivered. 196 tests passing.
 
 ---
 

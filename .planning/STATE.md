@@ -14,13 +14,13 @@
 |-------|-------|
 | Milestone | v1 |
 | Current Phase | 4 — Analysis & Reporting — In Progress |
-| Current Plan | 02 (complete) |
+| Current Plan | 04 (paused at human-verify checkpoint) |
 | Phase Status | In progress |
-| Overall Progress | 19/21+ plans done (Phase 1: 8/8; Phase 2: 4/4; Phase 3: 5/5; Phase 4: 2/?)
+| Overall Progress | 22/23+ plans done (Phase 1: 8/8; Phase 2: 4/4; Phase 3: 5/5; Phase 4: 04 paused at checkpoint)
 
 ```
-Progress: [████████████████████████████░░░░░░░░░░░░] ~65% (Phase 1: 8/8; Phase 2: 4/4; Phase 3: 5/5; Phase 4: 2/?)
-Phase 1 [████████] Phase 2 [████████] Phase 3 [█████████] Phase 4 [██      ] Phase 5 [        ]
+Progress: [█████████████████████████████████░░░░░░░] ~80% (Phase 1: 8/8; Phase 2: 4/4; Phase 3: 5/5; Phase 4: 4/4 pending approval)
+Phase 1 [████████] Phase 2 [████████] Phase 3 [█████████] Phase 4 [███░    ] Phase 5 [        ]
 ```
 
 ---
@@ -42,9 +42,9 @@ Phase 1 [████████] Phase 2 [████████] Phase 3 [�
 | Metric | Value |
 |--------|-------|
 | Phases complete | 2/5 |
-| Requirements delivered | 23/34 (+ DATA-08 via CLI) — BACK-01/02 in 02-01; BACK-04 in 02-02; BACK-03/05 in 02-03; BACK-06 in 02-04; BACK-08 in 03-02; BACK-07/10 in 03-03; BACK-09 in 03-04; BACK-11/12 in 03-05; ANAL-01/03 in 04-01; ANAL-04/06 in 04-02 |
-| Plans created | 19 (01-01 through 01-08, 02-01 through 02-04, 03-01 through 03-05, 04-01 through 04-02) |
-| Plans complete | 19 (01-01 through 01-08, 02-01–04, 03-01–05, 04-01–02 — all complete) |
+| Requirements delivered | 29/34 (+ DATA-08 via CLI) — BACK-01/02 in 02-01; BACK-04 in 02-02; BACK-03/05 in 02-03; BACK-06 in 02-04; BACK-08 in 03-02; BACK-07/10 in 03-03; BACK-09 in 03-04; BACK-11/12 in 03-05; ANAL-01/03 in 04-01; ANAL-04/06 in 04-02; ANAL-02/05 in 04-03; ANAL-01–06 (CLI) in 04-04 |
+| Plans created | 23 (01-01 through 01-08, 02-01 through 02-04, 03-01 through 03-05, 04-01 through 04-04) |
+| Plans complete | 22 (01-01 through 01-08, 02-01–04, 03-01–05, 04-01–03 complete; 04-04 paused at human-verify checkpoint) |
 
 ---
 
@@ -117,6 +117,8 @@ Phase 1 [████████] Phase 2 [████████] Phase 3 [�
 | CRASH_PRESETS dict keys are CLI-friendly lowercase-hyphen strings | Matches CONTEXT.md: `--scenario 2020-covid` not `--scenario "2020 COVID Crash"` |
 | _AUS_INFLATION_BASELINE_PCT = 2.5 named constant | RBA long-run target; narrative comparisons require a named constant (no magic numbers per coding standards) |
 | plotext>=5.3 with mypy ignore_missing_imports override | Same pattern as yfinance and pandas; plotext has no type stubs available |
+| run_backtest() params: start/end/benchmark/rebalance/db_path (not start_date/etc.) | Actual engine signature differs from plan template; corrected in 04-04 cli/analyse.py |
+| CLI render needs separate get_connection() after run_backtest() | run_backtest() opens its own connection internally; renderer requires conn for sector/geo lookups |
 
 ### Open Questions / Blockers
 
@@ -162,13 +164,13 @@ Phase 1 [████████] Phase 2 [████████] Phase 3 [�
 **To resume:** Read this file, then `.planning/ROADMAP.md` for phase detail.
 
 **Last session:** 2026-03-02
-**Stopped at:** Completed 04-02-PLAN.md — ASCII charts and sector/geo breakdown complete
+**Stopped at:** 04-04-PLAN.md Task 1 complete — analyse CLI wired. Paused at Task 2 human-verify checkpoint.
 **Resume file:** None
 
-**Next action:** Plan 04-03 — Report renderer using rich terminal output, side-by-side comparison (ANAL-02), mandatory AFSL disclaimer (ANAL-05).
+**Next action:** User verifies `market-data analyse` commands work end-to-end. After approval, run roadmap update-plan-progress.
 
 **Phase 3 status:** COMPLETE. All 5 plans done. tax/engine.py + tax/franking.py + tax/cgt.py + tax/ledger.py + tax/models.py + tax/fx.py all in place. 178 tests passing.
-**Phase 4 status:** In progress. 04-02 complete. analysis/charts.py (plotext equity + drawdown charts) and analysis/breakdown.py (sector/geo exposure) delivered. 209 tests passing.
+**Phase 4 status:** In progress. 04-04 Task 1 complete. cli/analyse.py with report/compare subcommands delivered. 217 tests passing. Awaiting human verification (Task 2 checkpoint).
 
 ---
 

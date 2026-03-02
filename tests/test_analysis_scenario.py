@@ -84,8 +84,9 @@ def test_recovery_days_zero_if_no_drawdown() -> None:
 
 
 def test_recovery_days_correct() -> None:
-    # Peak at 0, trough at 1, recovered at 2
+    # Peak at Jan 1, trough at Jan 2, recovered at Jan 3.
+    # Jan 3 - Jan 2 = 1 calendar day.
     idx = pd.date_range("2020-01-01", periods=3, freq="D")
     curve = pd.Series([100.0, 80.0, 100.0], index=idx)
     days = compute_recovery_days(curve)
-    assert days == 2  # 2 days from trough (Jan 2) to recovery (Jan 3)
+    assert days == 1  # 1 day from trough (Jan 2) to recovery (Jan 3)

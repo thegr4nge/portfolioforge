@@ -38,6 +38,7 @@ key-decisions:
   - "run_backtest() parameter mismatch: plan code used start_date/end_date/benchmark_ticker/rebalance_frequency/conn but actual engine uses start/end/benchmark/rebalance/db_path. Corrected to actual signature."
   - "get_connection() called separately for renderer: run_backtest() opens its own DB connection internally; render_report/render_comparison/report_to_json require a conn for sector/geo lookups — two separate get_connection() calls is the correct pattern."
   - "raise typer.Exit(code=1) from exc pattern: ruff B904 requires chained raises in except blocks even for non-exception Exit types."
+  - "rebalance default corrected from 'annual' to 'annually': typer Option default must match the string value accepted by the engine (run_backtest uses 'annually' not 'annual')."
 
 patterns-established:
   - "CLI error pattern: Console(stderr=True).print('[red]...[/red]') then raise typer.Exit(code=1) from exc"
@@ -46,20 +47,20 @@ patterns-established:
 requirements-completed: [ANAL-01, ANAL-02, ANAL-03, ANAL-04, ANAL-05, ANAL-06]
 
 # Metrics
-duration: 8min
+duration: 10min
 completed: 2026-03-02
 ---
 
 # Phase 4 Plan 04: CLI Integration Summary
 
-**`market-data analyse` command group with `report` and `compare` subcommands wiring all six ANAL requirements to the terminal — scenario presets, verbose/JSON/comparison modes, AFSL disclaimer in every output**
+**`market-data analyse` command group with `report` and `compare` subcommands wiring all six ANAL requirements to the terminal — scenario presets, verbose/JSON/comparison modes, AFSL disclaimer in every output. All six Phase 4 success criteria confirmed passing via human verification.**
 
 ## Performance
 
-- **Duration:** ~8 min
+- **Duration:** ~10 min
 - **Started:** 2026-03-02T06:24:23Z
 - **Completed:** 2026-03-02
-- **Tasks:** 1/2 complete (Task 2 is human-verify checkpoint — pending user approval)
+- **Tasks:** 2/2 complete
 - **Files modified:** 2 (1 created, 1 updated)
 
 ## Accomplishments
@@ -68,15 +69,17 @@ completed: 2026-03-02
 - `report` command resolves date range from `--scenario` (named preset) or `--from`/`--to` (explicit dates); unknown `--scenario` prints clear error listing valid presets and exits non-zero — no traceback
 - `compare` command runs two backtests and calls `render_comparison()` for side-by-side rich Columns output
 - Updated `__main__.py` to register `analyse_app` under `'analyse'`; mypy strict 0 errors, ruff 0 errors, 217 tests passing
+- Human verification confirmed all six ROADMAP Phase 4 success criteria: SC1 (scenario scoping), SC2 (side-by-side comparison), SC3 (plain-language narrative), SC4 (ASCII chart), SC5 (disclaimer in JSON), SC6 (sector/geo breakdown)
 
 ## Task Commits
 
 Each task was committed atomically:
 
 1. **Task 1: Implement cli/analyse.py and wire to __main__.py** - `5a2fa7d` (feat)
-2. **Task 2: Human verification checkpoint** - pending user approval
+2. **Task 1 fix: Correct rebalance default from 'annual' to 'annually'** - `3efa996` (fix)
+3. **Task 2: Human verification checkpoint** - approved — no additional code commit required
 
-**Plan metadata:** _(docs commit follows human verification)_
+**Plan metadata:** _(docs commit follows this summary)_
 
 ## Files Created/Modified
 
@@ -88,6 +91,7 @@ Each task was committed atomically:
 - **run_backtest() parameter names corrected:** The plan's code used `start_date`, `end_date`, `benchmark_ticker`, `rebalance_frequency`, and `conn` — but the actual engine signature uses `start`, `end`, `benchmark`, `rebalance`, and `db_path`. Corrected during Task 1 execution.
 - **Separate get_connection() for renderer:** `run_backtest()` opens its own DB connection internally; the renderer functions require a `sqlite3.Connection` for sector/geo lookups. The CLI calls `get_connection(opts.db_path)` separately after `run_backtest()` returns.
 - **B904 chained raises:** ruff requires `raise X from err` in all except blocks — applied throughout both `_parse_portfolio()`, `_parse_date()`, and the backtest exception handlers.
+- **rebalance default 'annually' not 'annual':** The `run_backtest()` engine accepts `'annually'` (not `'annual'`). The plan template used `'annual'`; corrected post-checkpoint in commit `3efa996`.
 
 ## Deviations from Plan
 
@@ -111,10 +115,19 @@ Each task was committed atomically:
 - **Verification:** ruff 0 errors after fix.
 - **Committed in:** `5a2fa7d` (Task 1 commit)
 
+**3. [Rule 1 - Bug] rebalance default 'annual' should be 'annually'**
+
+- **Found during:** Post-checkpoint (applied outside Task 1 checkpoint scope during human verification)
+- **Issue:** `typer.Option("annual", ...)` used in both `report` and `compare` commands. The `run_backtest()` engine expects `'annually'` (the string accepted in the rebalance frequency parser). Using `'annual'` would silently default to 'never' rebalance behaviour.
+- **Fix:** Changed default from `"annual"` to `"annually"` in both commands.
+- **Files modified:** `src/market_data/cli/analyse.py`
+- **Verification:** Human verification confirmed correct rebalance behaviour.
+- **Committed in:** `3efa996` (separate fix commit)
+
 ---
 
-**Total deviations:** 2 auto-fixed (both Rule 1 — correctness bugs in plan code)
-**Impact on plan:** Necessary corrections. The CLI would have crashed at runtime without fix 1. Fix 2 required for ruff compliance.
+**Total deviations:** 3 auto-fixed (all Rule 1 — correctness bugs in plan code)
+**Impact on plan:** All necessary corrections. Fixes 1 and 2 required for runtime correctness and ruff compliance. Fix 3 required for correct default rebalance behaviour.
 
 ## Issues Encountered
 
@@ -127,8 +140,9 @@ None — no external service configuration required.
 ## Next Phase Readiness
 
 - All six ANAL requirements wired to CLI: ANAL-01 (scenario), ANAL-02 (comparison), ANAL-03 (narrative), ANAL-04 (chart), ANAL-05 (disclaimer), ANAL-06 (breakdown)
-- `market-data analyse report` and `market-data analyse compare` ready for human verification
-- Phase 5 (Advisory Engine) can begin after human checkpoint approval
+- Phase 4 (Analysis & Reporting) is COMPLETE — all 4 plans done, all 6 ANAL requirements delivered
+- Phase 5 (Advisory Engine) can begin — Phase 4 provides the full analysis layer as its foundation
+- No blockers for Phase 5 planning
 
 ---
 *Phase: 04-analysis-reporting*

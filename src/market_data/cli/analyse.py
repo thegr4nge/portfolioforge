@@ -102,8 +102,8 @@ def report_command(
     benchmark: str = typer.Option(_DEFAULT_BENCHMARK, "--benchmark", help="Benchmark ticker"),
     capital: float = typer.Option(10_000.0, "--capital", help="Initial capital (AUD)"),
     rebalance: str = typer.Option(
-        "annual", "--rebalance",
-        help="Rebalance frequency: monthly/quarterly/annual/never",
+        "annually", "--rebalance",
+        help="Rebalance frequency: monthly/quarterly/annually/never",
     ),
 ) -> None:
     """Run a backtest and render a portfolio analysis report."""
@@ -165,8 +165,8 @@ def compare_command(
     benchmark: str = typer.Option(_DEFAULT_BENCHMARK, "--benchmark", help="Benchmark ticker"),
     capital: float = typer.Option(10_000.0, "--capital", help="Initial capital (AUD)"),
     rebalance: str = typer.Option(
-        "annual", "--rebalance",
-        help="Rebalance frequency: monthly/quarterly/annual/never",
+        "annually", "--rebalance",
+        help="Rebalance frequency: monthly/quarterly/annually/never",
     ),
 ) -> None:
     """Compare two portfolios side-by-side over the same date range."""

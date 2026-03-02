@@ -17,7 +17,7 @@ A 4-layer financial platform built bottom-up: clean market data enables honest b
 | 1 | Data Infrastructure | Complete 2026-02-27 | DATA-01 to DATA-10 | — |
 | 2 | Backtest Engine (Core) | Complete 2026-03-01 | BACK-01 to BACK-06 | Phase 1 |
 | 3 | Backtest Engine (Tax) | Complete 2026-03-01 | BACK-07 to BACK-12 | Phase 2 |
-| 4 | Analysis & Reporting | Users can compare portfolios, run crash scenarios, and receive plain-language narrative output | ANAL-01 to ANAL-06 | Phase 3 |
+| 4 | Analysis & Reporting | Complete    | 2026-03-02 | Phase 3 |
 | 5 | Advisory Engine | Users can describe their financial situation and receive a ranked, rules-based, plain-language recommendation | ADVI-01 to ADVI-06 | Phase 4 |
 
 ---

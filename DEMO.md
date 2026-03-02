@@ -133,15 +133,24 @@ $ market-data analyse --json report "VAS.AX:0.6,VGS.AX:0.4" \
 
 ```json
 {
-  "metrics": { "total_return": 0.137, "cagr": 0.044, "max_drawdown": -0.281, "sharpe": 0.37 },
-  "benchmark": { "ticker": "STW.AX", "total_return": 0.043, "cagr": 0.014 },
+  "metrics": {
+    "total_return": 0.137, "cagr": 0.044,
+    "max_drawdown": -0.178, "sharpe_ratio": 0.41
+  },
+  "benchmark": {
+    "ticker": "STW.AX", "total_return": 0.043,
+    "cagr": 0.014, "max_drawdown": -0.171, "sharpe_ratio": 0.17
+  },
   "coverage": [
     { "ticker": "VAS.AX", "from": "2022-01-03", "to": "2024-12-30", "records": 757 },
     { "ticker": "VGS.AX", "from": "2022-01-03", "to": "2024-12-30", "records": 756 }
   ],
   "equity_curve": { "2022-01-03": 9980.0, "...": "..." },
-  "sector_exposure": { "Unknown": 1.0 },
-  "geo_exposure": { "Other": 1.0 },
+  "sector_exposure": {
+    "Australian Equities ETF": 0.6,
+    "International Equities ETF": 0.4
+  },
+  "geo_exposure": { "AU": 1.0 },
   "disclaimer": "This is not financial advice. Past performance is not a reliable indicator of future results."
 }
 ```
@@ -194,7 +203,8 @@ Phase 5  Advisory Engine         [In development] Rules-based recommendations fo
 
 ## Known limitations
 
-- **Sector/geographic metadata:** Currently shows "Unknown" for ASX tickers — yfinance does not reliably populate sector data for `.AX` symbols. This is a data enrichment gap, not an architectural one. US tickers via Polygon.io populate correctly.
+- **Sector/geographic metadata:** yfinance does not reliably populate sector data for `.AX` symbols — ASX ETFs and many individual stocks require manual or third-party enrichment. US tickers via Polygon.io populate correctly. The sector labels in this demo (`Australian Equities ETF`, `International Equities ETF`) are manually set.
+- **Geographic exposure reflects exchange of listing, not underlying holdings.** VGS.AX holds global developed-market stocks but lists on ASX, so it maps to `AU`. Accurate look-through geography requires fund holdings data (Phase 5 scope).
 - **US equities:** Require a Polygon.io API key (free tier available). ASX tickers work out of the box via yfinance.
 - **Single-user, local:** SQLite only. No multi-user, no cloud sync, no hosted API — intentional for Phase 1–4.
 

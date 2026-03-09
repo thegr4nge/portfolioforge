@@ -6,7 +6,6 @@ import json
 from datetime import date
 
 import pandas as pd
-import pytest
 from rich.console import Console
 
 from market_data.analysis.models import AnalysisReport
@@ -17,6 +16,11 @@ from market_data.backtest.models import (
     BenchmarkResult,
     DataCoverage,
     PerformanceMetrics,
+)
+from market_data.backtest.tax.models import (
+    TaxAwareResult,
+    TaxSummary,
+    TaxYearResult,
 )
 from market_data.db.schema import get_connection
 
@@ -163,6 +167,26 @@ def test_json_equity_curve_keys_are_date_strings() -> None:
 # --- render_comparison tests ---
 
 
+def _make_tax_aware(br: BacktestResult, cgt_payable: float = 360.0) -> TaxAwareResult:
+    yr = TaxYearResult(
+        ending_year=2023,
+        cgt_events=1,
+        cgt_payable=cgt_payable,
+        franking_credits_claimed=120.0,
+        dividend_income=400.0,
+        after_tax_return=0.08,
+        carried_forward_loss=0.0,
+    )
+    tax = TaxSummary(
+        years=[yr],
+        total_tax_paid=cgt_payable,
+        after_tax_cagr=0.09,
+        lots=[],
+        marginal_tax_rate=0.325,
+    )
+    return TaxAwareResult(backtest=br, tax=tax)
+
+
 def test_render_comparison_contains_disclaimer() -> None:
     br = _make_backtest()
     report_a = AnalysisReport(result=br)
@@ -172,3 +196,50 @@ def test_render_comparison_contains_disclaimer() -> None:
     render_comparison(report_a, report_b, conn, console=c)
     output = buf.getvalue()
     assert "not financial advice" in output.lower()
+
+
+def test_render_comparison_tax_table_shown_for_tax_results() -> None:
+    """Tax comparison table appears when both reports are TaxAwareResult."""
+    br = _make_backtest()
+    tax_a = _make_tax_aware(br, cgt_payable=400.0)
+    tax_b = _make_tax_aware(br, cgt_payable=200.0)
+    report_a = AnalysisReport(result=tax_a)
+    report_b = AnalysisReport(result=tax_b)
+    conn = _make_conn()
+    c, buf = _capture_console()
+    render_comparison(report_a, report_b, conn, console=c)
+    output = buf.getvalue()
+    assert "Tax Comparison" in output
+    assert "After-tax CAGR" in output
+    assert "Total tax paid" in output
+    assert "Franking credits" in output
+
+
+def test_render_comparison_no_tax_table_for_plain_results() -> None:
+    """Tax comparison table is absent when results are plain BacktestResult."""
+    br = _make_backtest()
+    report_a = AnalysisReport(result=br)
+    report_b = AnalysisReport(result=br)
+    conn = _make_conn()
+    c, buf = _capture_console()
+    render_comparison(report_a, report_b, conn, console=c)
+    output = buf.getvalue()
+    assert "Tax Comparison" not in output
+
+
+def test_render_comparison_disclaimer_present_with_tax_table() -> None:
+    """Disclaimer is always the final element even when tax table is shown."""
+    br = _make_backtest()
+    tax_a = _make_tax_aware(br)
+    tax_b = _make_tax_aware(br)
+    report_a = AnalysisReport(result=tax_a)
+    report_b = AnalysisReport(result=tax_b)
+    conn = _make_conn()
+    c, buf = _capture_console()
+    render_comparison(report_a, report_b, conn, console=c)
+    output = buf.getvalue()
+    assert "not financial advice" in output.lower()
+    # Disclaimer must come after tax table
+    tax_pos = output.find("Tax Comparison")
+    disc_pos = output.lower().find("not financial advice")
+    assert disc_pos > tax_pos

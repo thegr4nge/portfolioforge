@@ -107,6 +107,22 @@ MIGRATIONS: list[str] = [
         UNIQUE(security_id, data_type, source, from_date, to_date)
     );
     """,
+    # Migration 1 → version 2: broker trade ingestion table
+    """
+    CREATE TABLE IF NOT EXISTS trades (
+        id            INTEGER PRIMARY KEY,
+        trade_date    TEXT    NOT NULL,
+        ticker        TEXT    NOT NULL,
+        action        TEXT    NOT NULL,
+        quantity      REAL    NOT NULL,
+        price_aud     REAL    NOT NULL,
+        brokerage_aud REAL    NOT NULL DEFAULT 0.0,
+        notes         TEXT    NOT NULL DEFAULT '',
+        source        TEXT    NOT NULL,
+        imported_at   TEXT    NOT NULL DEFAULT (datetime('now')),
+        UNIQUE(trade_date, ticker, action, quantity)
+    );
+    """,
 ]
 
 CURRENT_SCHEMA_VERSION: int = len(MIGRATIONS)

@@ -132,11 +132,107 @@ Plans:
 
 ---
 
-## Phase 5: Advisory Engine
+## Phase 5A: Compliance & Audit Trail
+
+**Goal:** Every CGT calculation in every output is traceable to the specific ATO rule that produced it. The Word export reads like a legal workpaper, not a chart. Accountants can hand it directly to an SMSF auditor.
+
+**Strategic context:** This is a marketing reframe as much as a feature — the engine already does the right thing, it just doesn't explain itself. Phase 5A surfaces that reasoning. Low build effort, maximum credibility lift for the B2B segment.
+
+**Dependencies:** Phase 4 complete (Word export exists; audit trail extends it)
+
+**Requirements:** PROF-01, PROF-02, PROF-03
+
+**Plans:** 0 plans
+
+### Requirements
+
+| ID | Description |
+|----|-------------|
+| PROF-01 | Each CGT event in the Word export includes an inline annotation: rule applied (e.g. "FIFO parcel match — lot acquired 2022-01-15", "50% discount applied — held 14 months", "45-day rule waived — total credits $320 < $5,000 threshold") |
+| PROF-02 | A "Calculation Methodology" table in the Word export lists every rule active for this backtest: FIFO elected, CGT discount threshold, franking credit method, carry-forward balance brought forward |
+| PROF-03 | MARKETING.md and CLI help text updated to lead with compliance framing: "ATO-validated CGT workpapers" not "backtesting tool" |
+
+### Success Criteria
+
+1. An SMSF auditor receiving the Word export can trace every dollar of CGT payable to a specific ATO rule without referring to the tool's documentation.
+2. The "Calculation Methodology" section explicitly states which elections were made (FIFO, 50% discount, Australian tax year definition) and their ATO references.
+3. Any carry-forward loss from a prior year is shown with the year of origin, amount, and the current year absorption.
+
+---
+
+## Phase 5B: Broker Transaction CSV Ingestion
+
+**Goal:** A user can drag a broker CSV export into the CLI and receive a tax-ready CGT summary. No manual portfolio entry required.
+
+**Strategic context:** The biggest barrier to production use is that real portfolios have transaction histories across years and multiple brokers. Typed `VAS.AX:0.4` specs are fine for demos but impractical for client work. This phase removes that barrier.
+
+**Dependencies:** Phase 5A (audit trail must exist before real data flows through it)
+
+**Requirements:** PROF-04, PROF-05, PROF-06, PROF-07
+
+**Plans:** 0 plans
+
+### Requirements
+
+| ID | Description |
+|----|-------------|
+| PROF-04 | A `TradeRecord` schema that normalises broker CSV rows to a canonical format: date, ticker, action (BUY/SELL), quantity, price_aud, brokerage_aud, notes |
+| PROF-05 | CSV parsers for at minimum: CommSec (Australia's largest retail broker), Stake, SelfWealth. Each parser maps broker-specific column names and date formats to `TradeRecord` |
+| PROF-06 | `market-data ingest-trades broker.csv --broker commsec` command — validates, normalises, and feeds the existing tax engine |
+| PROF-07 | Validation layer: duplicate trade detection, suspicious price outlier warnings, missing brokerage flag, currency mismatch detection |
+
+### Key Design Decision
+
+`TradeRecord` is a **separate entity** from the existing `Trade` model. Broker data is messy and unvalidated. The translation layer between `TradeRecord` → `Trade` is where validation and normalisation happen. The tax engine only ever sees clean, validated `Trade` objects — the contract with the Phase 3 engine is preserved unchanged.
+
+### Success Criteria
+
+1. A CommSec CSV with 3 years of transaction history produces the same CGT output as manually entering the same trades — verified against a known-correct manual calculation.
+2. A duplicate trade (same date, ticker, quantity) raises a clear validation error, not silent data corruption.
+3. Brokerage is applied per trade from the broker CSV when present; falls back to `BrokerageModel` formula when absent.
+4. The command rejects mixed AUD/USD portfolios with a clear error; currency is detected per-trade from the CSV.
+
+---
+
+## Phase 5C: Existing Portfolio Cost Basis (Opening Balances)
+
+**Goal:** A user with an existing portfolio — shares purchased before the tool existed — can declare their opening cost basis and run a forward-looking tax analysis from that point.
+
+**Strategic context:** This is the hardest problem in the product. Without it, the tool only works for portfolios where every purchase is tracked from day one. With it, it works for every real client portfolio. Do not start until 5B is shipping and at least one B2B customer has confirmed the need.
+
+**Dependencies:** Phase 5B (transaction ingestion must exist; opening balances are the edge case)
+
+**Requirements:** PROF-08, PROF-09, PROF-10
+
+**Plans:** 0 plans
+
+### Requirements
+
+| ID | Description |
+|----|-------------|
+| PROF-08 | An `OpeningBalance` CSV format: ticker, quantity, cost_basis_aud, acquired_date, notes — allows users to declare existing parcels |
+| PROF-09 | `market-data declare-holdings holdings.csv` command — imports opening balances into the cost basis ledger with a mandatory confirmation step |
+| PROF-10 | Audit trail explicitly marks opening-balance-derived lots: "Opening balance declared by user — not verified against broker records" |
+
+### Critical Constraint
+
+Getting opening cost basis wrong produces incorrect CGT, which is **legally worse than not having the tool at all**. The confirmation step (PROF-09) must be explicit and non-skippable. The audit trail annotation (PROF-10) must appear in all outputs for any parcel sourced from opening balances.
+
+### Success Criteria
+
+1. A user can import opening balances, run new trades through the ingestion layer, and receive a CGT calculation that correctly blends both sources.
+2. Every disposed lot sourced from an opening balance parcel is clearly annotated in the audit trail.
+3. The tool refuses to run without the confirmation step completed — no silent acceptance of unverified cost basis.
+
+---
+
+## Phase 6: Advisory Engine (Post-Revenue, Separate Planning Session)
 
 **Goal:** A complete beginner can describe their financial situation and receive a ranked, rules-based, plain-language recommendation on what to do with their money.
 
-**Dependencies:** Phase 4 (advisory engine uses analysis layer to evaluate and rank strategies)
+**Strategic context:** Do not begin this phase until Phase 5A–5B are shipping and at least one paying B2B customer is confirmed. Consumer advisory features require web UI, AFSL legal review, and a distribution channel — none of which exist yet. Phase 6 requires its own dedicated planning session.
+
+**Dependencies:** Phase 5B + first paying customer confirmed
 
 **Requirements:** ADVI-01, ADVI-02, ADVI-03, ADVI-04, ADVI-05, ADVI-06
 
@@ -147,9 +243,9 @@ Plans:
 1. A user can provide their savings amount, monthly surplus, goal (retirement / income / inflation protection), time horizon, and risk tolerance — and receive output without needing to know any financial terminology.
 2. The system returns a ranked list of portfolio strategies with historical performance matching the described profile, ordered by suitability.
 3. The recommendation includes a plain-language action plan: what to buy, in what proportions, how often to rebalance, and what return range to expect.
-4. The recommendation explicitly states what the tool does not know, where historical data may not apply, and what risks the user should consider — without burying this in fine print.
-5. The strategy selection logic is rules-based and inspectable: any recommendation can be traced back to the rules that produced it; no black-box decisions. LLM is used only to format the narrative, not to select strategies.
-6. The system produces meaningfully different recommendations for a FIRE-seeking 30-year-old versus an income-focused retiree — goal type drives output, not just language.
+4. The recommendation explicitly states what the tool does not know, where historical data may not apply, and what risks the user should consider.
+5. The strategy selection logic is rules-based and inspectable: any recommendation can be traced back to the rules that produced it. LLM is used only for narrative, not for decisions.
+6. The system produces meaningfully different recommendations for a FIRE-seeking 30-year-old versus an income-focused retiree.
 
 ---
 
@@ -161,7 +257,11 @@ Plans:
 | 2 - Backtest Engine (Core) | Complete | 4 plans | 2026-03-01 | 2026-03-01 |
 | 3 - Backtest Engine (Tax) | Complete | 5 plans | 2026-03-01 | 2026-03-01 |
 | 4 - Analysis & Reporting | Complete | 4 plans | 2026-03-02 | 2026-03-02 |
-| 5 - Advisory Engine | Pending | — | — | — |
+| 4.x - Post-Phase-4 Priorities | Complete | — | 2026-03-05 | 2026-03-05 |
+| 5A - Compliance & Audit Trail | Complete | 1 plan | 2026-03-08 | 2026-03-08 |
+| 5B - Broker CSV Ingestion | Pending | — | — | — |
+| 5C - Existing Portfolio Cost Basis | Pending | — | — | — |
+| 6 - Advisory Engine | Pending (post-revenue) | — | — | — |
 
 ---
 

@@ -71,6 +71,11 @@ class TaxYearResult:
 
     ending_year identifies the year: FY2025 = ending_year 2025
     (runs from 1 Jul 2024 to 30 Jun 2025).
+
+    carried_forward_loss is the net capital loss (AUD) carried to the next
+    tax year after this year's gains are fully absorbed. Zero when all losses
+    are offset within the year. Under Australian tax law, capital losses carry
+    forward indefinitely with no expiry.
     """
 
     ending_year: int
@@ -79,6 +84,7 @@ class TaxYearResult:
     franking_credits_claimed: float
     dividend_income: float
     after_tax_return: float
+    carried_forward_loss: float = 0.0
 
 
 @dataclass
@@ -86,12 +92,15 @@ class TaxSummary:
     """Aggregate tax output across all Australian financial years in the backtest.
 
     lots holds all disposed lots for ATO cross-checking and Phase 4 analysis.
+    marginal_tax_rate is stored so audit builders can re-derive intermediates
+    without needing a separate parameter at the call site.
     """
 
     years: list[TaxYearResult]
     total_tax_paid: float
     after_tax_cagr: float
     lots: list[DisposedLot]
+    marginal_tax_rate: float = 0.325
 
 
 @dataclass
@@ -127,7 +136,6 @@ class TaxAwareResult:
         tax_table.add_column("CGT Payable (AUD)", justify="right")
         tax_table.add_column("Franking Credits", justify="right")
         tax_table.add_column("Dividend Income", justify="right")
-        tax_table.add_column("After-Tax Return", justify="right")
 
         for yr in self.tax.years:
             tax_table.add_row(
@@ -136,7 +144,6 @@ class TaxAwareResult:
                 f"${yr.cgt_payable:,.2f}",
                 f"${yr.franking_credits_claimed:,.2f}",
                 f"${yr.dividend_income:,.2f}",
-                f"{yr.after_tax_return:.2%}",
             )
 
         yield tax_table

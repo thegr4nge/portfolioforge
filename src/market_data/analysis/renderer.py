@@ -111,6 +111,7 @@ def render_report(
     conn: sqlite3.Connection,
     *,
     verbose: bool = False,
+    risk_free_rate: float = 0.0,
     console: Console | None = None,
 ) -> None:
     """Render a single portfolio analysis report to the terminal.
@@ -130,6 +131,12 @@ def render_report(
     # Narrative sentences
     for sentence in _narrative_block(br):
         c.print(f"  {sentence}")
+
+    if risk_free_rate == 0.0:
+        c.print(
+            "  [dim](Sharpe calculated with 0% risk-free rate"
+            " — use --risk-free-rate 0.043 for RBA cash rate comparison)[/dim]"
+        )
     c.print()
 
     # Equity + drawdown charts
@@ -159,6 +166,45 @@ def render_report(
     c.print(f"[dim italic]{DISCLAIMER}[/dim italic]")
 
 
+def _render_tax_comparison_table(
+    result_a: TaxAwareResult,
+    result_b: TaxAwareResult,
+    label_a: str,
+    label_b: str,
+) -> Table:
+    """Side-by-side tax metrics for two TaxAwareResult objects."""
+    br_a = result_a.backtest
+    br_b = result_b.backtest
+    tax_a = result_a.tax
+    tax_b = result_b.tax
+
+    total_franking_a = sum(yr.franking_credits_claimed for yr in tax_a.years)
+    total_franking_b = sum(yr.franking_credits_claimed for yr in tax_b.years)
+
+    table = Table(
+        title="Tax Comparison",
+        show_header=True,
+        header_style="bold",
+        box=None,
+    )
+    table.add_column("Metric", style="dim", min_width=24)
+    table.add_column(label_a, justify="right")
+    table.add_column(label_b, justify="right")
+
+    rows = [
+        ("Pre-tax CAGR", f"{br_a.metrics.cagr:.2%}", f"{br_b.metrics.cagr:.2%}"),
+        ("After-tax CAGR", f"{tax_a.after_tax_cagr:.2%}", f"{tax_b.after_tax_cagr:.2%}"),
+        ("Total tax paid (AUD)", f"${tax_a.total_tax_paid:,.2f}", f"${tax_b.total_tax_paid:,.2f}"),
+        ("Franking credits (AUD)", f"${total_franking_a:,.2f}", f"${total_franking_b:,.2f}"),
+        ("CGT events", str(sum(yr.cgt_events for yr in tax_a.years)),
+         str(sum(yr.cgt_events for yr in tax_b.years))),
+    ]
+    for metric, val_a, val_b in rows:
+        table.add_row(metric, val_a, val_b)
+
+    return table
+
+
 def render_comparison(
     report_a: AnalysisReport,
     report_b: AnalysisReport,
@@ -170,6 +216,10 @@ def render_comparison(
     console: Console | None = None,
 ) -> None:
     """Render two portfolios side-by-side using rich Columns.
+
+    When both reports contain TaxAwareResult, a tax comparison table is
+    rendered below the side-by-side panels showing pre- and after-tax CAGR,
+    total tax paid, and franking credits for both portfolios.
 
     Args:
         report_a: First portfolio analysis report.
@@ -201,6 +251,11 @@ def render_comparison(
     left = Panel(_panel_content(br_a), title=label_a, border_style="green")
     right = Panel(_panel_content(br_b), title=label_b, border_style="blue")
     c.print(Columns([left, right], equal=True, expand=True))
+
+    # Tax comparison table — shown when both reports have tax data
+    if isinstance(report_a.result, TaxAwareResult) and isinstance(report_b.result, TaxAwareResult):
+        c.print()
+        c.print(_render_tax_comparison_table(report_a.result, report_b.result, label_a, label_b))
 
     # Disclaimer — ALWAYS last, ALWAYS present (even in comparison mode)
     c.print(Rule(style="dim"))
@@ -267,6 +322,11 @@ def report_to_json(
 
     # Include tax summary if available
     if isinstance(report.result, TaxAwareResult):
+        from market_data.backtest.tax.audit import (
+            build_cgt_event_rows,
+            build_cgt_year_rows,
+        )
+
         tax = report.result.tax
         result["tax"] = {
             "total_tax_paid": tax.total_tax_paid,
@@ -277,9 +337,54 @@ def report_to_json(
                     "cgt_payable": yr.cgt_payable,
                     "franking_credits_claimed": yr.franking_credits_claimed,
                     "dividend_income": yr.dividend_income,
-                    "after_tax_return": yr.after_tax_return,
                 }
                 for yr in tax.years
+            ],
+        }
+        event_rows = build_cgt_event_rows(tax.lots)
+        year_rows = build_cgt_year_rows(tax.lots, tax.years, tax.marginal_tax_rate)
+        result["cgt_audit"] = {
+            "events": [
+                {
+                    "event_id": r.event_id,
+                    "tax_year": r.tax_year,
+                    "tax_year_label": r.tax_year_label,
+                    "ticker": r.ticker,
+                    "acquired_date": str(r.acquired_date),
+                    "disposed_date": str(r.disposed_date),
+                    "quantity": r.quantity,
+                    "cost_basis_aud": r.cost_basis_aud,
+                    "proceeds_aud": r.proceeds_aud,
+                    "gain_aud": r.gain_aud,
+                    "discount_eligible": r.discount_eligible,
+                    "discount_reason": r.discount_reason,
+                    "gain_type": r.gain_type,
+                }
+                for r in event_rows
+            ],
+            "years": [
+                {
+                    "tax_year": r.tax_year,
+                    "tax_year_label": r.tax_year_label,
+                    "cgt_events": r.cgt_events,
+                    "sum_discountable_gains": r.sum_discountable_gains,
+                    "sum_non_discountable_gains": r.sum_non_discountable_gains,
+                    "total_losses": r.total_losses,
+                    "carry_in": r.carry_in,
+                    "effective_losses": r.effective_losses,
+                    "net_non_discountable": r.net_non_discountable,
+                    "remaining_losses_after_nd": r.remaining_losses_after_nd,
+                    "net_discountable": r.net_discountable,
+                    "carry_forward_out": r.carry_forward_out,
+                    "after_discount": r.after_discount,
+                    "net_cgt": r.net_cgt,
+                    "marginal_tax_rate": r.marginal_tax_rate,
+                    "cgt_payable": r.cgt_payable,
+                    "net_capital_gain_aud": r.net_capital_gain_aud,
+                    "franking_credits_claimed": r.franking_credits_claimed,
+                    "dividend_income": r.dividend_income,
+                }
+                for r in year_rows
             ],
         }
 

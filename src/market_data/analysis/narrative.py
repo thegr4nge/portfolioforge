@@ -72,8 +72,10 @@ def narrative_sharpe(sharpe: float) -> str:
     """
     if sharpe >= 1.5:
         quality = "strong"
-    elif sharpe >= 0.8:
+    elif sharpe >= 1.0:
         quality = "decent"
+    elif sharpe >= 0.5:
+        quality = "moderate"
     elif sharpe >= 0.0:
         quality = "weak"
     else:

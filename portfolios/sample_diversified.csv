@@ -1,0 +1,5 @@
+ticker,weight,label
+VAS.AX,0.40,Vanguard Australian Shares
+VGS.AX,0.30,Vanguard International Shares
+STW.AX,0.20,SPDR ASX 200
+VHY.AX,0.10,Vanguard High Yield

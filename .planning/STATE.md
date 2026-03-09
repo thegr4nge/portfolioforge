@@ -4,7 +4,7 @@
 
 **Core Value:** Anyone — regardless of investment experience — can describe their financial situation and goals, and receive a plain-language recommendation on what to do with their money, backed by real historical data, honest cost assumptions, and transparent reasoning.
 
-**Current Focus:** Phase 4 (Analysis & Reporting) — COMPLETE. Phase 5 (Advisory Engine) — Pending planning.
+**Current Focus:** Phases 1–4 + post-Phase-4 priorities COMPLETE. Phase 5A (Compliance & Audit Trail) — next to plan and build.
 
 ---
 
@@ -33,7 +33,11 @@ Phase 1 [████████] Phase 2 [████████] Phase 3 [�
 | 2 | Backtest Engine (Core) | Complete | 2026-03-01 |
 | 3 | Backtest Engine (Tax) | Complete | 2026-03-01 |
 | 4 | Analysis & Reporting | Complete | 2026-03-02 |
-| 5 | Advisory Engine | Pending | — |
+| 4.x | Post-Phase-4 Priorities (carry-forward, Word export, CSV import, tax compare, Sharpe, benchmark fix) | Complete | 2026-03-05 |
+| 5A | Compliance & Audit Trail | Complete | 2026-03-08 |
+| 5B | Broker CSV Ingestion | Pending | — |
+| 5C | Existing Portfolio Cost Basis | Pending | — |
+| 6 | Advisory Engine (post-revenue) | Pending | — |
 
 ---
 
@@ -165,13 +169,28 @@ Phase 1 [████████] Phase 2 [████████] Phase 3 [�
 
 **To resume:** Read this file, then `.planning/ROADMAP.md` for phase detail.
 
-**Last session:** 2026-03-02
-**Stopped at:** 04-04-PLAN.md complete — Phase 4 Analysis & Reporting fully delivered
+**Last session:** 2026-03-06
+**Stopped at:** Phase 5A–5C + Phase 6 planned and committed to ROADMAP.md. MARKETING.md created. Strategic direction locked.
 **Resume file:** None
 
-**Next action:** Plan Phase 5 (Advisory Engine). Start with a planning session to define ADVI-01 through ADVI-06 implementation approach, LLM provider selection, and rules-based recommendation architecture.
+**Next action:** Evaluate Phase 5B (Broker CSV Ingestion). Requirements: PROF-04 to PROF-07. Broker parsers for CommSec, Stake, SelfWealth; TradeRecord schema; `market-data ingest-trades` CLI command; validation layer.
 
-**Phase 4 status:** COMPLETE. All 4 plans done. cli/analyse.py with report/compare subcommands delivered and human-verified. All 6 ANAL requirements (ANAL-01 through ANAL-06) accessible via CLI. 217 tests passing. Phase 4 success criteria all confirmed passing.
+**Post-Phase-4 deliveries (2026-03-05):**
+- Cross-year capital loss carry-forward (build_tax_year_results, 3 new tests)
+- Word export (`--export report.docx`, python-docx, 6 tests)
+- CSV portfolio import (`--portfolio file.csv`, 23 tests)
+- Tax-aware comparison (run_backtest_tax in compare command, tax table in render_comparison, 4 tests)
+- Sharpe risk-free rate (`--risk-free-rate`, RBA_CASH_RATE_APPROX constant)
+- Default benchmark changed SPY → STW.AX
+- MARKETING.md created with B2B positioning, demo script, pricing hypotheses, competitive landscape
+- 252 tests passing. mypy strict: clean. ruff: clean.
+
+**Strategic direction decided (2026-03-06):**
+- Phase 5 split into 5A (audit trail), 5B (broker CSV ingestion), 5C (existing cost basis)
+- Lead with compliance positioning, not backtesting
+- TradeRecord kept separate from Trade — broker data never touches tax engine directly
+- Phase 6 (Advisory Engine) gated on first paying B2B customer
+- See ROADMAP.md Phase 5A–5C and MARKETING.md for full context
 
 ---
 

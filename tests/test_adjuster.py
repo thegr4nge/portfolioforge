@@ -11,7 +11,6 @@ example: pre-split ~$400 raw → $100 adjusted (factor = 0.25).
 import sqlite3
 
 import pytest
-
 from src.market_data.db.models import OHLCVRecord, SecurityRecord, SplitRecord
 from src.market_data.db.schema import run_migrations
 from src.market_data.db.writer import DatabaseWriter
@@ -57,7 +56,7 @@ def setup() -> tuple[sqlite3.Connection, int, AdjustmentCalculator]:
             volume=5_000_000,
             adj_close=close,  # unadjusted at ingestion
         )
-        for dt, close in zip(PRE_SPLIT_DATES, PRE_SPLIT_CLOSES)
+        for dt, close in zip(PRE_SPLIT_DATES, PRE_SPLIT_CLOSES, strict=True)
     ]
     # Post-split row (raw price ~$125 after split)
     post_split = [
@@ -100,7 +99,7 @@ def test_aapl_4_to_1_split_adjusts_historical_prices(
     conn, sec_id, calc = setup
     calc.recalculate_for_split(sec_id, _aapl_split(sec_id))
 
-    for dt, raw_close in zip(PRE_SPLIT_DATES, PRE_SPLIT_CLOSES):
+    for dt, raw_close in zip(PRE_SPLIT_DATES, PRE_SPLIT_CLOSES, strict=True):
         row = conn.execute(
             "SELECT adj_close FROM ohlcv WHERE security_id=? AND date=?",
             (sec_id, dt),
@@ -177,7 +176,7 @@ def test_reverse_split_adjustment(
     )
     calc.recalculate_for_split(sec_id, reverse_split)
 
-    for dt, raw_close in zip(PRE_SPLIT_DATES, PRE_SPLIT_CLOSES):
+    for dt, raw_close in zip(PRE_SPLIT_DATES, PRE_SPLIT_CLOSES, strict=True):
         row = conn.execute(
             "SELECT adj_close, adj_factor FROM ohlcv WHERE security_id=? AND date=?",
             (sec_id, dt),

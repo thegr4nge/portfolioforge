@@ -15,6 +15,10 @@ import pandas as pd
 TRADING_DAYS_PER_YEAR: int = 252
 CALENDAR_DAYS_PER_YEAR: float = 365.25
 
+# Approximate RBA cash rate as of 2024. Use as --risk-free-rate for a more
+# realistic Sharpe ratio. Not updated automatically — avoids live data dependency.
+RBA_CASH_RATE_APPROX: float = 0.043
+
 
 def total_return(equity_curve: pd.Series) -> float:
     """Compute total return over the full equity curve.

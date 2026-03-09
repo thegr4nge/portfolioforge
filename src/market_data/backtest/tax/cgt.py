@@ -92,12 +92,22 @@ def build_tax_year_results(
     """Group disposed lots by Australian tax year and compute CGT payable.
 
     Loss-ordering algorithm (ATO rule — Pitfall 1 in RESEARCH.md):
-        1. net_non_discount = max(0, sum_non_discount_gains - total_losses)
-        2. remaining_losses  = max(0, total_losses - sum_non_discount_gains)
-        3. net_discount      = max(0, sum_discount_gains - remaining_losses)
-        4. discounted        = net_discount * 0.5
-        5. net_cgt           = net_non_discount + discounted
-        6. cgt_payable       = net_cgt * marginal_tax_rate
+        1. effective_losses  = total_losses + carry_forward_from_prior_year
+        2. net_non_discount  = max(0, sum_non_discount_gains - effective_losses)
+        3. remaining_losses  = max(0, effective_losses - sum_non_discount_gains)
+        4. net_discount      = max(0, sum_discount_gains - remaining_losses)
+        5. carry_forward_out = max(0, remaining_losses - sum_discount_gains)
+        6. discounted        = net_discount * 0.5
+        7. net_cgt           = net_non_discount + discounted
+        8. cgt_payable       = net_cgt * marginal_tax_rate
+
+    Cross-year carry-forward (ATO rule):
+        If a tax year results in a net capital loss, that loss carries forward
+        to the next year. Carry-forward is threaded sequentially across all
+        processed years. Years with no disposed lots are skipped, so a loss
+        from FY2024 carries directly to the next year that has CGT events.
+        ATO reference: Capital losses may be carried forward indefinitely —
+        there is no expiry period under Australian tax law.
 
     Franking credits and dividend income are zero-filled — they are updated
     by franking.py after this function runs.
@@ -120,6 +130,7 @@ def build_tax_year_results(
         by_year[year_key].append(lot)
 
     results: list[TaxYearResult] = []
+    carry_forward: float = 0.0  # net capital loss carried from the prior tax year
 
     for ending_year, year_lots in sorted(by_year.items()):
         # Separate gains from losses, and discountable from non-discountable gains.
@@ -135,10 +146,16 @@ def build_tax_year_results(
             else:
                 sum_non_discount_gains += lot.gain_aud
 
-        # ATO loss-ordering: net losses against non-discountable gains first.
-        net_non_discount = max(0.0, sum_non_discount_gains - total_losses)
-        remaining_losses = max(0.0, total_losses - sum_non_discount_gains)
+        # Include carried-forward losses from prior year(s).
+        effective_losses = total_losses + carry_forward
+
+        # ATO loss-ordering: net effective losses against non-discountable gains first.
+        net_non_discount = max(0.0, sum_non_discount_gains - effective_losses)
+        remaining_losses = max(0.0, effective_losses - sum_non_discount_gains)
         net_discount = max(0.0, sum_discount_gains - remaining_losses)
+
+        # Any losses not absorbed by either gain category carry to the next year.
+        carry_forward = max(0.0, remaining_losses - sum_discount_gains)
 
         # Apply 50% CGT discount to the remaining discountable net gain.
         discounted = net_discount * 0.5
@@ -158,6 +175,7 @@ def build_tax_year_results(
                 franking_credits_claimed=0.0,  # updated by franking.py
                 dividend_income=0.0,           # updated by franking.py
                 after_tax_return=gross_gain - cgt_payable,
+                carried_forward_loss=carry_forward,
             )
         )
 

@@ -388,6 +388,7 @@ def run_backtest_tax(
                     franking_credits_claimed=total_credits_year,
                     dividend_income=total_dividend_income_year,
                     after_tax_return=existing.after_tax_return,
+                    carried_forward_loss=existing.carried_forward_loss,
                 )
                 yr_map[yr_key] = updated
             else:
@@ -415,6 +416,7 @@ def run_backtest_tax(
         total_tax_paid=total_tax_paid,
         after_tax_cagr=after_tax_cagr,
         lots=all_disposed_lots,
+        marginal_tax_rate=marginal_tax_rate,
     )
 
     logger.info(

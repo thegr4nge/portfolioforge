@@ -30,6 +30,9 @@ Virtual env: `source ~/market-data/.venv/bin/activate`
 - Don't write full implementations unless explicitly asked — prefer spec + interface + test skeleton
 - **After every execution**: one sentence summarising what was done, then one clear next problem scoped tightly enough to just start — not a menu of options
 
+## Session Start
+Read `MASTER_PROMPT.md` before starting any work. It contains full project context, architecture, known limitations, and the prioritised build order.
+
 ## Code Conventions
 - Follow global CLAUDE.md standards (type hints, minimal changes, TDD)
 - Keep files under 400 lines — this is infrastructure code, it should be boring and correct

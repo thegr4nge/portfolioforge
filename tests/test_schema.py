@@ -1,7 +1,7 @@
 """Tests for SQLite schema and migration runner.
 
 Verifies that:
-- All 7 tables are created on a fresh in-memory database
+- All 8 tables are created on a fresh in-memory database
 - Migrations are idempotent (running twice produces no errors)
 - Column constraints are correct (NOT NULL, DEFAULT values, nullable franking fields)
 - UNIQUE constraints are enforced
@@ -12,7 +12,6 @@ import sqlite3
 
 import pytest
 from pydantic import ValidationError
-
 from src.market_data.db.models import OHLCVRecord
 from src.market_data.db.schema import MIGRATIONS, run_migrations
 
@@ -24,6 +23,7 @@ EXPECTED_TABLES = {
     "fx_rates",
     "ingestion_log",
     "ingestion_coverage",
+    "trades",
 }
 
 
@@ -36,14 +36,14 @@ def mem_conn() -> sqlite3.Connection:
 
 
 def test_all_tables_created(mem_conn: sqlite3.Connection) -> None:
-    """All 7 expected tables are present after running migrations."""
+    """All 8 expected tables are present after running migrations."""
     tables = {
         r[0]
         for r in mem_conn.execute(
             "SELECT name FROM sqlite_master WHERE type='table'"
         ).fetchall()
     }
-    assert EXPECTED_TABLES == tables, f"Missing tables: {EXPECTED_TABLES - tables}"
+    assert tables == EXPECTED_TABLES, f"Missing tables: {EXPECTED_TABLES - tables}"
 
 
 def test_idempotency() -> None:

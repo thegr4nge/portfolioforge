@@ -15,6 +15,7 @@ import typer
 
 from market_data.cli.analyse import analyse_app
 from market_data.cli.ingest import ingest_app
+from market_data.cli.ingest_trades import ingest_trades_command
 from market_data.cli.status import gaps_command, quality_command, status_app
 
 app = typer.Typer(
@@ -28,6 +29,9 @@ app.add_typer(analyse_app, name="analyse")
 # Expose quality and gaps as top-level commands (also accessible via status sub-group)
 app.command("quality")(quality_command)
 app.command("gaps")(gaps_command)
+
+# Phase 5B: broker CSV ingestion
+app.command("ingest-trades")(ingest_trades_command)
 
 if __name__ == "__main__":
     app()

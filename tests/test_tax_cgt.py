@@ -264,6 +264,122 @@ def test_no_discount_on_loss() -> None:
     assert result.after_tax_return == pytest.approx(-500.0)
 
 
+# ===========================================================================
+# build_tax_year_results() — cross-year capital loss carry-forward
+# ===========================================================================
+
+
+def test_carry_forward_loss_absorbed_in_next_year() -> None:
+    """Net loss in FY2024 carries forward and is absorbed by FY2025 gains.
+
+    FY2024: short-term loss of $500. No gains. cgt_payable=0, carry_forward=500.
+    FY2025: short-term gain of $800. Effective losses = 500 (carry-in).
+      net_non_discount = max(0, 800 - 500) = 300
+      net_cgt = 300; cgt_payable = 300 × 0.45 = 135
+      carry_forward = 0 (fully absorbed)
+    """
+    loss_lot = _make_lot(
+        acquired_date=date(2023, 9, 1),
+        disposed_date=date(2024, 3, 1),  # FY2024
+        gain_aud=-500.0,
+        discount_applied=False,
+    )
+    gain_lot = _make_lot(
+        acquired_date=date(2024, 8, 1),
+        disposed_date=date(2025, 2, 1),  # FY2025
+        gain_aud=800.0,
+        discount_applied=False,
+    )
+    results = build_tax_year_results([loss_lot, gain_lot], marginal_tax_rate=0.45)
+
+    assert len(results) == 2
+    fy24, fy25 = results[0], results[1]
+
+    assert fy24.ending_year == 2024
+    assert fy24.cgt_payable == pytest.approx(0.0)
+    assert fy24.carried_forward_loss == pytest.approx(500.0)
+
+    assert fy25.ending_year == 2025
+    assert fy25.cgt_payable == pytest.approx(135.0)   # 300 × 0.45
+    assert fy25.carried_forward_loss == pytest.approx(0.0)
+
+
+def test_carry_forward_loss_spans_multiple_years() -> None:
+    """Loss too large to absorb in FY2025, remainder carries to FY2026.
+
+    FY2024: loss=$1000 → carry_forward=1000
+    FY2025: gain=$300 (non-discountable) → effective_losses=1000,
+      net_non_discount=0, remaining=700, net_discount=0 → cgt=0, carry_forward=700
+    FY2026: gain=$800 (non-discountable) → effective_losses=700,
+      net_non_discount = max(0, 800-700) = 100
+      cgt = 100 × 0.45 = 45; carry_forward = 0 (fully absorbed)
+    """
+    loss_lot = _make_lot(
+        acquired_date=date(2023, 8, 1),
+        disposed_date=date(2024, 3, 1),  # FY2024
+        gain_aud=-1000.0,
+        discount_applied=False,
+    )
+    gain_fy25 = _make_lot(
+        acquired_date=date(2024, 8, 1),
+        disposed_date=date(2025, 2, 1),  # FY2025
+        gain_aud=300.0,
+        discount_applied=False,
+    )
+    gain_fy26 = _make_lot(
+        acquired_date=date(2025, 8, 1),
+        disposed_date=date(2026, 2, 1),  # FY2026
+        gain_aud=800.0,
+        discount_applied=False,
+    )
+    results = build_tax_year_results([loss_lot, gain_fy25, gain_fy26], marginal_tax_rate=0.45)
+
+    assert len(results) == 3
+    fy24, fy25, fy26 = results[0], results[1], results[2]
+
+    assert fy24.cgt_payable == pytest.approx(0.0)
+    assert fy24.carried_forward_loss == pytest.approx(1000.0)
+
+    assert fy25.cgt_payable == pytest.approx(0.0)
+    assert fy25.carried_forward_loss == pytest.approx(700.0)
+
+    assert fy26.cgt_payable == pytest.approx(45.0)   # 100 × 0.45
+    assert fy26.carried_forward_loss == pytest.approx(0.0)
+
+
+def test_carry_forward_exhausted_against_discountable_gains() -> None:
+    """Carried loss offsets a discountable gain — applied before the 50% discount.
+
+    FY2024: loss=$200 → carry_forward=200
+    FY2025: discountable gain=$500.
+      effective_losses=200, net_non_discount=0, remaining=200,
+      net_discount = max(0, 500-200) = 300 → discounted = 150
+      cgt = 150 × 0.45 = 67.50; carry_forward = 0
+    """
+    loss_lot = _make_lot(
+        acquired_date=date(2023, 9, 1),
+        disposed_date=date(2024, 3, 1),  # FY2024
+        gain_aud=-200.0,
+        discount_applied=False,
+    )
+    gain_lot = _make_lot(
+        acquired_date=date(2022, 8, 1),
+        disposed_date=date(2025, 2, 1),  # FY2025 — held >12 months
+        gain_aud=500.0,
+        discount_applied=True,
+    )
+    results = build_tax_year_results([loss_lot, gain_lot], marginal_tax_rate=0.45)
+
+    assert len(results) == 2
+    fy24, fy25 = results[0], results[1]
+
+    assert fy24.cgt_payable == pytest.approx(0.0)
+    assert fy24.carried_forward_loss == pytest.approx(200.0)
+
+    assert fy25.cgt_payable == pytest.approx(67.5)   # 150 × 0.45
+    assert fy25.carried_forward_loss == pytest.approx(0.0)
+
+
 def test_multiple_tax_years() -> None:
     """Three lots across two tax years → 2 TaxYearResult, sorted ascending by ending_year."""
     # FY2024 lots (disposed before 30 Jun 2024)

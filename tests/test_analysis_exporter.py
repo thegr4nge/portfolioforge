@@ -1,8 +1,9 @@
-"""Tests for analysis/exporter.py — Word document export."""
+"""Tests for analysis/exporter.py -- Word document export."""
 
 from __future__ import annotations
 
 from datetime import date
+from decimal import Decimal
 from pathlib import Path
 
 import pandas as pd
@@ -72,7 +73,7 @@ def _make_tax_result(br: BacktestResult) -> TaxAwareResult:
         disposed_date=date(2022, 11, 20),
         quantity=100.0,
         cost_basis_usd=None,
-        cost_basis_aud=5_000.0,
+        cost_basis_aud=Decimal("5000.0"),
         proceeds_usd=None,
         proceeds_aud=5_800.0,
         gain_aud=800.0,
@@ -276,3 +277,69 @@ def test_coverage_quality_status_column_present(tmp_path: Path) -> None:
     text = _all_text(out)
     assert "Quality Status" in text
     assert "validated" in text
+
+
+# ── semantic tests (HARD-08) ──────────────────────────────────────────────────
+
+
+def test_disclaimer_present_semantic(tmp_path: Path) -> None:
+    """DISCLAIMER text appears in the exported document (structural check)."""
+    br = _make_backtest()
+    tax = _make_tax_result(br)
+    out = tmp_path / "report.docx"
+    conn = get_connection(":memory:")
+    export_report(AnalysisReport(result=tax), conn, out)
+    doc = Document(str(out))
+    all_text = " ".join(p.text for p in doc.paragraphs)
+    assert DISCLAIMER[:50] in all_text  # first 50 chars of disclaimer constant
+
+
+def test_cgt_table_row_count_semantic(tmp_path: Path) -> None:
+    """CGT summary table has exactly header + N data rows (one per tax year)."""
+    br = _make_backtest()
+    tax = _make_tax_result(br)
+    out = tmp_path / "report.docx"
+    conn = get_connection(":memory:")
+    export_report(AnalysisReport(result=tax), conn, out)
+    doc = Document(str(out))
+    # The tax analysis table is the only 6-column table in the document.
+    tax_tables = [t for t in doc.tables if len(t.columns) == 6]
+    assert len(tax_tables) == 1, f"Expected 1 six-column table, got {len(tax_tables)}"
+    # Fixture has 1 tax year -> header row + 1 data row = 2 total
+    assert len(tax_tables[0].rows) == 2, (
+        f"Expected 2 rows (header + 1 year), got {len(tax_tables[0].rows)}"
+    )
+
+
+def test_methodology_table_present_semantic(tmp_path: Path) -> None:
+    """Methodology section creates a 3-column table in the document."""
+    br = _make_backtest()
+    out = tmp_path / "report.docx"
+    conn = get_connection(":memory:")
+    export_report(AnalysisReport(result=br), conn, out)
+    doc = Document(str(out))
+    three_col_tables = [t for t in doc.tables if len(t.columns) == 3]
+    # Methodology table is the last 3-column table (Composition and Performance also have 3 cols)
+    assert len(three_col_tables) >= 3, (
+        f"Expected at least 3 three-column tables (Composition, Performance, Methodology), "
+        f"got {len(three_col_tables)}"
+    )
+
+
+def test_methodology_table_row_count_semantic(tmp_path: Path) -> None:
+    """Methodology table has at least header + 8 static rule rows."""
+    br = _make_backtest()
+    tax = _make_tax_result(br)
+    out = tmp_path / "report.docx"
+    conn = get_connection(":memory:")
+    export_report(AnalysisReport(result=tax), conn, out)
+    doc = Document(str(out))
+    three_col_tables = [t for t in doc.tables if len(t.columns) == 3]
+    assert len(three_col_tables) >= 3
+    # Methodology table is the last 3-column table in the document
+    methodology_table = three_col_tables[-1]
+    # _CGT_RULES has 8 entries + header = 9 minimum
+    # With tax_result (HARD-02 adds version row, plus 2 existing dynamic rows) = 12
+    assert len(methodology_table.rows) >= 9, (
+        f"Expected >= 9 rows in Methodology table, got {len(methodology_table.rows)}"
+    )

@@ -10,6 +10,7 @@ import os
 import sqlite3
 import sys
 import tempfile
+import time
 from datetime import date
 from pathlib import Path
 
@@ -88,28 +89,30 @@ SMSF_RATES = {
 }
 
 
+@st.cache_data(ttl=3600, show_spinner=False)
+def _yf_fetch(ticker: str, start: str, end: str) -> pd.DataFrame:
+    """Fetch OHLCV from yfinance with retry backoff. Cached for 1 hour."""
+    last_exc: Exception = RuntimeError("No attempts made")
+    for attempt in range(4):
+        try:
+            tk = yf.Ticker(ticker)
+            df = tk.history(start=start, end=end, auto_adjust=True)
+            return df
+        except Exception as exc:
+            last_exc = exc
+            if attempt < 3:
+                time.sleep(2 ** attempt)  # 1s, 2s, 4s
+    raise last_exc
+
+
 def _fetch_prices(
     conn: sqlite3.Connection,
     ticker: str,
     start: date,
     end: date,
 ) -> int:
-    """Download OHLCV from yfinance and write to the temp database.
-
-    Args:
-        conn: Open SQLite connection with schema already applied.
-        ticker: ASX or US ticker symbol.
-        start: Inclusive start date.
-        end: Inclusive end date.
-
-    Returns:
-        Number of OHLCV rows written.
-
-    Raises:
-        ValueError: If Yahoo Finance returns no data for the ticker.
-    """
-    tk = yf.Ticker(ticker)
-    df = tk.history(start=str(start), end=str(end), auto_adjust=True)
+    """Download OHLCV from yfinance and write to the temp database."""
+    df = _yf_fetch(ticker, str(start), str(end))
 
     if df.empty:
         raise ValueError(
@@ -312,8 +315,16 @@ if generate:
                             f"No data returned for **{ticker}**. "
                             "Check the ticker (ASX stocks need .AX, e.g. VAS.AX)."
                         )
-                except ValueError as exc:
-                    st.error(str(exc))
+                except Exception as exc:
+                    msg = str(exc)
+                    if "rate" in msg.lower() or "too many" in msg.lower() or "429" in msg:
+                        st.error(
+                            "Yahoo Finance is rate-limiting this server. "
+                            "Wait 30 seconds and click Generate again — "
+                            "your data will be cached after the first successful fetch."
+                        )
+                    else:
+                        st.error(msg)
                     st.stop()
 
             # Fetch benchmark

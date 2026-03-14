@@ -24,8 +24,9 @@ demo_output.txt
 *.Zone.Identifier
 ~$*
 
-# Generated exports (keep samples in docs/samples/)
+# Generated exports — client reports stay local, example report is committed
 *.docx
+!docs/example/*.docx
 
 # Runtime logs
 logs/

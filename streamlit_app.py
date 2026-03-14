@@ -26,6 +26,7 @@ if _SRC.exists() and str(_SRC) not in sys.path:
     sys.path.insert(0, str(_SRC))
 
 from market_data.analysis.exporter import export_report, export_trades_cgt_workpaper  # noqa: E402
+from market_data.analysis.pdf_exporter import export_pdf_report, export_pdf_trades_report  # noqa: E402
 from market_data.analysis.models import AnalysisReport  # noqa: E402
 from market_data.backtest.tax.broker_parsers import SUPPORTED_BROKERS, parse_broker_csv  # noqa: E402
 from market_data.backtest.tax.engine import run_backtest_tax, run_cgt_from_trades  # noqa: E402
@@ -329,10 +330,18 @@ with tab_csv:
                                     entity_type=csv_entity,
                                 )
 
+                                pdf_path = Path(tmpdir) / "PortfolioForge_CGT_Actual.pdf"
                                 export_trades_cgt_workpaper(
                                     trades=validation.valid,
                                     tax=tax_summary,
                                     output_path=report_path,
+                                    entity_type=csv_entity,
+                                    broker=broker_choice,
+                                )
+                                export_pdf_trades_report(
+                                    trades=validation.valid,
+                                    tax=tax_summary,
+                                    output_path=pdf_path,
                                     entity_type=csv_entity,
                                     broker=broker_choice,
                                 )
@@ -365,21 +374,31 @@ with tab_csv:
                                 with open(report_path, "rb") as f:
                                     docx_bytes = f.read()
 
-                                st.download_button(
-                                    label="Download CGT Workpaper (.docx)",
-                                    data=docx_bytes,
-                                    file_name=f"PortfolioForge_CGT_ActualTrades_{date.today().isoformat()}.docx",
-                                    mime=(
-                                        "application/vnd.openxmlformats-officedocument"
-                                        ".wordprocessingml.document"
-                                    ),
-                                    use_container_width=True,
-                                )
+                                dl1, dl2 = st.columns(2)
+                                with dl1:
+                                    st.download_button(
+                                        label="Download Workpaper (.docx)",
+                                        data=docx_bytes,
+                                        file_name=f"PortfolioForge_CGT_ActualTrades_{date.today().isoformat()}.docx",
+                                        mime=(
+                                            "application/vnd.openxmlformats-officedocument"
+                                            ".wordprocessingml.document"
+                                        ),
+                                        use_container_width=True,
+                                    )
+                                with dl2:
+                                    with open(pdf_path, "rb") as pf:
+                                        st.download_button(
+                                            label="Download Summary (.pdf)",
+                                            data=pf.read(),
+                                            file_name=f"PortfolioForge_CGT_ActualTrades_{date.today().isoformat()}.pdf",
+                                            mime="application/pdf",
+                                            use_container_width=True,
+                                        )
 
                                 st.caption(
-                                    "This workpaper is based on the actual trade prices and dates "
-                                    "from your broker CSV. Verify dividend and franking data "
-                                    "against registry statements before ATO lodgement."
+                                    "This workpaper is based on actual trade prices from your broker CSV. "
+                                    "Verify dividend and franking data against registry statements before ATO lodgement."
                                 )
 
                             except Exception as exc:
@@ -549,11 +568,13 @@ with tab_manual:
                     entity_type=entity_type,
                 )
 
-                # Export Word doc
+                # Export Word doc + PDF
                 progress.progress(1.0, text="Generating document...")
                 status.caption("Exporting Word document…")
                 report = AnalysisReport(result=result)
                 export_report(report, conn, report_path, sample_data=True)
+                pdf_report_path = Path(tmpdir) / "PortfolioForge_CGT.pdf"
+                export_pdf_report(result, pdf_report_path)
                 conn.close()
 
                 progress.empty()
@@ -579,16 +600,27 @@ with tab_manual:
                 with open(report_path, "rb") as f:
                     docx_bytes = f.read()
 
-                st.download_button(
-                    label="Download CGT Workpaper (.docx)",
-                    data=docx_bytes,
-                    file_name=f"PortfolioForge_CGT_{date.today().isoformat()}.docx",
-                    mime=(
-                        "application/vnd.openxmlformats-officedocument"
-                        ".wordprocessingml.document"
-                    ),
-                    use_container_width=True,
-                )
+                dl1, dl2 = st.columns(2)
+                with dl1:
+                    st.download_button(
+                        label="Download Workpaper (.docx)",
+                        data=docx_bytes,
+                        file_name=f"PortfolioForge_CGT_{date.today().isoformat()}.docx",
+                        mime=(
+                            "application/vnd.openxmlformats-officedocument"
+                            ".wordprocessingml.document"
+                        ),
+                        use_container_width=True,
+                    )
+                with dl2:
+                    with open(pdf_report_path, "rb") as pf:
+                        st.download_button(
+                            label="Download Summary (.pdf)",
+                            data=pf.read(),
+                            file_name=f"PortfolioForge_CGT_{date.today().isoformat()}.pdf",
+                            mime="application/pdf",
+                            use_container_width=True,
+                        )
 
                 st.caption(
                     "Sample data — simulated portfolio, not real client trades. "

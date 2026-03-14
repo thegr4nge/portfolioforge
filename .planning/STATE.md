@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 06-01-PLAN.md (production hardening core)
-last_updated: "2026-03-14T05:31:19.467Z"
+stopped_at: Completed 06-02-PLAN.md (CGT precision hardening)
+last_updated: "2026-03-14T05:41:55.081Z"
 progress:
   total_phases: 9
   completed_phases: 4
   total_plans: 25
-  completed_plans: 22
+  completed_plans: 23
   percent: 85
 ---
 
@@ -67,6 +67,7 @@ Phase 1 [████████] Phase 2 [████████] Phase 3 [�
 
 ---
 | Phase 06 P01 | 6 | 3 tasks | 6 files |
+| Phase 06 P02 | 8m 2s | 3 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -143,6 +144,8 @@ Phase 1 [████████] Phase 2 [████████] Phase 3 [�
 | tax_engine_version default in models.py mirrors TAX_ENGINE_VERSION constant | Avoids circular import (models.py cannot import from engine.py); engine.py stamps version at all construction sites explicitly |
 | FX fallback walks 5 calendar days — covers 4-day Easter weekend | Exact date always preferred; ValueError with 'Re-ingest FX data' after exhaustion; loguru.debug emitted when fallback used |
 | SMSF pension phase option kept visible in SMSF_RATES | st.stop() after st.error() gates Generate button without removing user-visible choice; NotImplementedError in engine is the hard safety guard |
+| CgtEventRow.cost_basis_aud stays float (audit DTO, not accumulated) | float() at callsite in audit.py; Decimal precision only needed for accumulated parcels, not audit summary fields |
+| Decimal(str(float_value)) pattern for float-to-Decimal conversions | Prevents float imprecision propagating into Decimal; always convert via str intermediate at system boundaries |
 
 ### Open Questions / Blockers
 
@@ -188,8 +191,8 @@ Phase 1 [████████] Phase 2 [████████] Phase 3 [�
 
 **To resume:** Read this file, then `.planning/ROADMAP.md` for phase detail.
 
-**Last session:** 2026-03-14T05:31:19.461Z
-**Stopped at:** Completed 06-01-PLAN.md (production hardening core)
+**Last session:** 2026-03-14T05:41:55.073Z
+**Stopped at:** Completed 06-02-PLAN.md (CGT precision hardening)
 **Resume file:** None
 
 **Next action:** Demo / outreach in progress (18 SMSF accountant connections sent). Next dev work depends on early user feedback. Candidates: Phase 5C (existing portfolio cost basis) or hardening based on real CommSec CSV files once received from early users.

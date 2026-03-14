@@ -108,24 +108,14 @@ def _fetch_prices(
     Raises:
         ValueError: If Yahoo Finance returns no data for the ticker.
     """
-    df = yf.download(
-        ticker,
-        start=str(start),
-        end=str(end),
-        auto_adjust=True,
-        progress=False,
-        multi_level_index=False,
-    )
+    tk = yf.Ticker(ticker)
+    df = tk.history(start=str(start), end=str(end), auto_adjust=True)
 
     if df.empty:
         raise ValueError(
             f"No price data for {ticker}. Check the ticker symbol "
             f"(ASX stocks need the .AX suffix, e.g. VAS.AX)."
         )
-
-    # Flatten MultiIndex columns if yfinance returns them
-    if isinstance(df.columns, pd.MultiIndex):
-        df.columns = [col[0] for col in df.columns]
 
     # Normalise column names to title case
     df.columns = [str(c).title() for c in df.columns]

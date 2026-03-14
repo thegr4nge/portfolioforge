@@ -1,0 +1,12 @@
+[
+  {
+    "after_tax_return": 506.25,
+    "carried_forward_loss": 0.0,
+    "cgt_events": 1,
+    "cgt_payable": 243.75,
+    "dividend_income": 0.0,
+    "ending_year": 2023,
+    "franking_credits_claimed": 0.0,
+    "tax_engine_version": "1.0.0"
+  }
+]

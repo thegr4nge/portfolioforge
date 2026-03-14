@@ -598,7 +598,7 @@ def test_missing_fx_raises() -> None:
         patch("market_data.backtest.engine.run_backtest", return_value=fake_result),
         patch("market_data.backtest.tax.engine.run_backtest", return_value=fake_result),
         patch("market_data.backtest.tax.engine.get_connection", return_value=tax_conn),
-        pytest.raises(ValueError, match="No FX rate for AUD/USD on"),
+        pytest.raises(ValueError, match="Re-ingest FX data"),
     ):
         run_backtest_tax(
             portfolio={"AAPL": 1.0},

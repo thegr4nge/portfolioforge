@@ -33,6 +33,7 @@ from market_data.analysis.scenario import compute_drawdown_series, compute_recov
 from market_data.backtest.models import BacktestResult
 from market_data.backtest.tax.audit import build_cgt_event_rows
 from market_data.backtest.tax.audit_models import CgtEventRow
+from market_data.backtest.tax.engine import TAX_ENGINE_VERSION
 from market_data.backtest.tax.franking import resolve_franking_pct
 from market_data.backtest.tax.models import TaxAwareResult
 
@@ -490,6 +491,15 @@ def _add_methodology(doc: object, tax_result: TaxAwareResult | None = None) -> N
                 "Carries to next tax year",
             ],
             shade=((n + 1) % 2 == 1),
+        )
+        _body_row(
+            table,
+            [
+                "Tax engine version",
+                TAX_ENGINE_VERSION,
+                "PortfolioForge internal — audit traceability",
+            ],
+            shade=((n + 2) % 2 == 1),
         )
 
     doc.add_paragraph()  # type: ignore[attr-defined]

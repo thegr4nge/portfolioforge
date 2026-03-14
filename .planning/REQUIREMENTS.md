@@ -55,6 +55,21 @@
 
 ---
 
+### Production Hardening (Phase 6)
+
+- [x] **HARD-01**: SMSF pension phase is hard-blocked with a clear error until ECPI is implemented — no silent 0% tax miscalculation
+- [x] **HARD-02**: TAX_ENGINE_VERSION constant stamped into every TaxYearResult and Word export Methodology section
+- [x] **HARD-03**: FX rate lookup falls back to prior business day (up to 5 days) instead of raising ValueError
+- [x] **HARD-04**: Feb 29 anniversary date and contract-date assumptions annotated with named constants and TODO markers in cgt.py
+- [x] **HARD-05**: Explicit parametrized test for carry-forward loss across two or more silent years (no disposals in intervening year)
+- [x] **HARD-06**: Cost basis in CostBasisLedger uses decimal.Decimal (not float) to prevent accumulated rounding error on large portfolios
+- [x] **HARD-07**: BrokerageModel accepts named broker profiles: CommSec, SelfWealth, Stake, IBKR — default profile unchanged
+- [x] **HARD-08**: Word document export has semantic tests: disclaimer present, CGT summary table rows match expected count, Methodology section present
+- [ ] **HARD-09**: Golden test fixtures in tests/golden/ for ATO worked examples A, B, and C — regeneration is explicit and gated
+- [ ] **HARD-10**: Streamlit app has smoke tests: imports without error, portfolio parse validates, generate flow completes with mocked yfinance
+
+---
+
 ## v2 Requirements
 
 ### Data
@@ -126,10 +141,20 @@
 | ADVI-04 | Phase 5 — Advisory Engine | Pending |
 | ADVI-05 | Phase 5 — Advisory Engine | Pending |
 | ADVI-06 | Phase 5 — Advisory Engine | Pending |
+| HARD-01 | Phase 6 — Production Hardening | Complete |
+| HARD-02 | Phase 6 — Production Hardening | Complete |
+| HARD-03 | Phase 6 — Production Hardening | Complete |
+| HARD-04 | Phase 6 — Production Hardening | Complete |
+| HARD-05 | Phase 6 — Production Hardening | Complete |
+| HARD-06 | Phase 6 — Production Hardening | Complete |
+| HARD-07 | Phase 6 — Production Hardening | Complete |
+| HARD-08 | Phase 6 — Production Hardening | Complete |
+| HARD-09 | Phase 6 — Production Hardening | Pending |
+| HARD-10 | Phase 6 — Production Hardening | Pending |
 
 **Coverage:**
-- v1 requirements: 34 total
-- Mapped to phases: 34
+- v1 requirements: 44 total
+- Mapped to phases: 44
 - Unmapped: 0
 
 ---

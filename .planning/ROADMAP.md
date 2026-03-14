@@ -19,7 +19,7 @@ A 4-layer financial platform built bottom-up: clean market data enables honest b
 | 3 | Backtest Engine (Tax) | Complete 2026-03-01 | BACK-07 to BACK-12 | Phase 2 |
 | 4 | Analysis & Reporting | Complete    | 2026-03-02 | Phase 3 |
 | 5 | Advisory Engine | Users can describe their financial situation and receive a ranked, rules-based, plain-language recommendation | ADVI-01 to ADVI-06 | Phase 4 |
-| 6 | 1/4 | In Progress|  | Phase 3 |
+| 6 | 3/4 | In Progress|  | Phase 3 |
 
 ---
 
@@ -237,7 +237,7 @@ Getting opening cost basis wrong produces incorrect CGT, which is **legally wors
 
 **Requirements:** HARD-01, HARD-02, HARD-03, HARD-04, HARD-05, HARD-06, HARD-07, HARD-08, HARD-09, HARD-10
 
-**Plans:** 1/4 plans executed
+**Plans:** 3/4 plans executed
 
 Plans:
 - [ ] 06-01-PLAN.md — Tax engine core: pension guard (HARD-01), TAX_ENGINE_VERSION (HARD-02), FX fallback (HARD-03)

@@ -250,3 +250,80 @@ def test_coverage_includes_benchmark(db_conn: sqlite3.Connection) -> None:
     tickers_in_coverage = {c.ticker for c in result.coverage}
     assert "STW.AX" in tickers_in_coverage, "Benchmark must appear in coverage list"
     assert "VAS.AX" in tickers_in_coverage, "Portfolio ticker must appear in coverage list"
+
+
+# ---------------------------------------------------------------------------
+# Broker profile tests (HARD-07)
+# ---------------------------------------------------------------------------
+
+
+def test_broker_profile_default_unchanged() -> None:
+    """BrokerageModel() and BrokerageModel(broker='default') behave identically."""
+    from market_data.backtest.brokerage import BrokerageModel
+
+    m_no_arg = BrokerageModel()
+    m_default = BrokerageModel(broker="default")
+    # $10,000 trade: max($10, 10_000 * 0.001) = max($10, $10) = $10
+    assert m_no_arg.cost(10_000.0) == 10.0
+    assert m_default.cost(10_000.0) == 10.0
+    # $20,000 trade: max($10, 20_000 * 0.001) = max($10, $20) = $20
+    assert m_no_arg.cost(20_000.0) == 20.0
+    assert m_default.cost(20_000.0) == 20.0
+
+
+def test_broker_profile_commsec() -> None:
+    """BrokerageModel(broker='commsec') uses $10 min, 0.1% — same as default."""
+    from market_data.backtest.brokerage import BrokerageModel
+
+    m = BrokerageModel(broker="commsec")
+    # $10,000 trade: max($10, 10_000 * 0.001) = $10
+    assert m.cost(10_000.0) == 10.0
+    # $20,000 trade: max($10, 20_000 * 0.001) = $20
+    assert m.cost(20_000.0) == 20.0
+
+
+def test_broker_profile_selfwealth() -> None:
+    """BrokerageModel(broker='selfwealth') returns flat $9.50 for any trade value."""
+    from market_data.backtest.brokerage import BrokerageModel
+
+    m = BrokerageModel(broker="selfwealth")
+    assert m.cost(1_000.0) == 9.50
+    assert m.cost(10_000.0) == 9.50
+    assert m.cost(100_000.0) == 9.50
+
+
+def test_broker_profile_stake() -> None:
+    """BrokerageModel(broker='stake') returns flat $3.00 for any trade value."""
+    from market_data.backtest.brokerage import BrokerageModel
+
+    m = BrokerageModel(broker="stake")
+    assert m.cost(1_000.0) == 3.00
+    assert m.cost(50_000.0) == 3.00
+
+
+def test_broker_profile_ibkr() -> None:
+    """BrokerageModel(broker='ibkr') uses $1 min, 0.08%."""
+    from market_data.backtest.brokerage import BrokerageModel
+
+    m = BrokerageModel(broker="ibkr")
+    # $10,000 trade: max($1.00, 10_000 * 0.0008) = max($1.00, $8.00) = $8.00
+    assert m.cost(10_000.0) == 8.00
+    # $500 trade: max($1.00, 500 * 0.0008) = max($1.00, $0.40) = $1.00
+    assert m.cost(500.0) == 1.00
+
+
+def test_broker_profile_unknown_raises() -> None:
+    """BrokerageModel(broker='unknownbroker') raises ValueError with broker name."""
+    from market_data.backtest.brokerage import BrokerageModel
+
+    with pytest.raises(ValueError, match="unknownbroker"):
+        BrokerageModel(broker="unknownbroker")
+
+
+def test_broker_profile_zero_trade_value_still_raises() -> None:
+    """BrokerageModel(broker='commsec').cost(0.0) raises ValueError (existing guard preserved)."""
+    from market_data.backtest.brokerage import BrokerageModel
+
+    m = BrokerageModel(broker="commsec")
+    with pytest.raises(ValueError, match="trade_value must be > 0"):
+        m.cost(0.0)

@@ -1,18 +1,13 @@
 """pytest configuration for golden fixture tests.
 
+The --regen-golden option is registered in the root conftest.py.
+This file provides the regen_golden fixture for tests in this directory
+and for tests/test_golden.py.
+
 Run with --regen-golden to regenerate JSON fixtures from current engine output.
 Normal run (no flag) compares engine output to stored fixtures.
 """
 import pytest
-
-
-def pytest_addoption(parser: pytest.Parser) -> None:
-    parser.addoption(
-        "--regen-golden",
-        action="store_true",
-        default=False,
-        help="Regenerate golden fixture JSON files from current engine output.",
-    )
 
 
 @pytest.fixture

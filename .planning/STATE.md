@@ -1,3 +1,18 @@
+---
+gsd_state_version: 1.0
+milestone: v1.0
+milestone_name: milestone
+status: unknown
+stopped_at: Completed 06-01-PLAN.md (production hardening core)
+last_updated: "2026-03-14T05:31:19.467Z"
+progress:
+  total_phases: 9
+  completed_phases: 4
+  total_plans: 25
+  completed_plans: 22
+  percent: 85
+---
+
 # Project State: Market Data — Investment Research & Advisory Platform
 
 ## Project Reference
@@ -19,7 +34,7 @@
 | Overall Progress | 23/23 plans done (Phase 1: 8/8; Phase 2: 4/4; Phase 3: 5/5; Phase 4: 4/4; Phase 5A–5B: complete)
 
 ```
-Progress: [████████████████████████████████████████] ~91% (Phase 1: 8/8; Phase 2: 4/4; Phase 3: 5/5; Phase 4: 4/4; Phase 5: pending)
+Progress: [█████████░] 85%
 Phase 1 [████████] Phase 2 [████████] Phase 3 [█████████] Phase 4 [████████] Phase 5 [        ]
 ```
 
@@ -51,6 +66,7 @@ Phase 1 [████████] Phase 2 [████████] Phase 3 [�
 | Plans complete | 23/23 — all plans complete |
 
 ---
+| Phase 06 P01 | 6 | 3 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -124,6 +140,9 @@ Phase 1 [████████] Phase 2 [████████] Phase 3 [�
 | run_backtest() params: start/end/benchmark/rebalance/db_path (not start_date/etc.) | Actual engine signature differs from plan template; corrected in 04-04 cli/analyse.py |
 | CLI render needs separate get_connection() after run_backtest() | run_backtest() opens its own connection internally; renderer requires conn for sector/geo lookups |
 | rebalance default 'annually' not 'annual' in CLI | run_backtest() engine accepts 'annually'; CLI Option default corrected from 'annual' to 'annually' in commit 3efa996 |
+| tax_engine_version default in models.py mirrors TAX_ENGINE_VERSION constant | Avoids circular import (models.py cannot import from engine.py); engine.py stamps version at all construction sites explicitly |
+| FX fallback walks 5 calendar days — covers 4-day Easter weekend | Exact date always preferred; ValueError with 'Re-ingest FX data' after exhaustion; loguru.debug emitted when fallback used |
+| SMSF pension phase option kept visible in SMSF_RATES | st.stop() after st.error() gates Generate button without removing user-visible choice; NotImplementedError in engine is the hard safety guard |
 
 ### Open Questions / Blockers
 
@@ -169,8 +188,8 @@ Phase 1 [████████] Phase 2 [████████] Phase 3 [�
 
 **To resume:** Read this file, then `.planning/ROADMAP.md` for phase detail.
 
-**Last session:** 2026-03-06
-**Stopped at:** Phase 5A–5C + Phase 6 planned and committed to ROADMAP.md. MARKETING.md created. Strategic direction locked.
+**Last session:** 2026-03-14T05:31:19.461Z
+**Stopped at:** Completed 06-01-PLAN.md (production hardening core)
 **Resume file:** None
 
 **Next action:** Demo / outreach in progress (18 SMSF accountant connections sent). Next dev work depends on early user feedback. Candidates: Phase 5C (existing portfolio cost basis) or hardening based on real CommSec CSV files once received from early users.

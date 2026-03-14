@@ -4,7 +4,7 @@
 
 A 4-layer financial platform built bottom-up: clean market data enables honest backtests, backtests with correct Australian tax treatment enable meaningful analysis, and analysis enables plain-language advisory recommendations. Each layer is a verifiable delivery boundary before the next begins.
 
-**Phases:** 5
+**Phases:** 6
 **Depth:** Standard
 **Coverage:** 34/34 v1 requirements mapped
 
@@ -19,6 +19,7 @@ A 4-layer financial platform built bottom-up: clean market data enables honest b
 | 3 | Backtest Engine (Tax) | Complete 2026-03-01 | BACK-07 to BACK-12 | Phase 2 |
 | 4 | Analysis & Reporting | Complete    | 2026-03-02 | Phase 3 |
 | 5 | Advisory Engine | Users can describe their financial situation and receive a ranked, rules-based, plain-language recommendation | ADVI-01 to ADVI-06 | Phase 4 |
+| 6 | Production Hardening | The tax engine is financially precise, defensively coded, and fully tested — every identified correctness risk from external review is resolved | HARD-01 to HARD-10 | Phase 3 |
 
 ---
 
@@ -226,7 +227,55 @@ Getting opening cost basis wrong produces incorrect CGT, which is **legally wors
 
 ---
 
-## Phase 6: Advisory Engine (Post-Revenue, Separate Planning Session)
+## Phase 6: Production Hardening
+
+**Goal:** The tax engine is financially precise, defensively coded, and fully tested. Every correctness risk identified across three independent external reviews (ChatGPT, Gemini/Claude.ai, Perplexity) is resolved. The Streamlit app has smoke tests. No silent miscalculations reach a client report.
+
+**Strategic context:** Three AI reviewers independently found the same cluster of risks: float cost basis precision, SMSF pension phase silent miscalculation, missing TAX_ENGINE_VERSION traceability, FX ValueError with no fallback, and zero coverage on the Streamlit app. These are credibility risks for B2B sales. Fix them before onboarding paying clients.
+
+**Dependencies:** Phase 3 (all fixes are to the tax engine and its supporting infrastructure)
+
+**Requirements:** HARD-01, HARD-02, HARD-03, HARD-04, HARD-05, HARD-06, HARD-07, HARD-08, HARD-09, HARD-10
+
+**Plans:** 4 plans
+
+Plans:
+- [ ] 06-01-PLAN.md — Tax engine core: pension guard (HARD-01), TAX_ENGINE_VERSION (HARD-02), FX fallback (HARD-03)
+- [ ] 06-02-PLAN.md — CGT precision: cgt.py annotations (HARD-04), silent-year carry-forward test (HARD-05), Decimal migration (HARD-06)
+- [ ] 06-03-PLAN.md — Brokerage profiles (HARD-07) and Word export semantic tests (HARD-08)
+- [ ] 06-04-PLAN.md — Golden test fixtures (HARD-09) and Streamlit smoke tests (HARD-10)
+
+### Requirements
+
+| ID | Description |
+|----|-------------|
+| HARD-01 | SMSF pension phase is hard-blocked with a clear error until ECPI is implemented — no silent 0% miscalculation |
+| HARD-02 | TAX_ENGINE_VERSION constant is stamped into every TaxYearResult and appears in Word export Methodology section |
+| HARD-03 | FX rate lookup falls back to prior business day (up to 5 days) instead of raising ValueError |
+| HARD-04 | Feb 29 anniversary date and contract-date assumptions are annotated with named constants and TODO markers in cgt.py |
+| HARD-05 | Explicit parametrized test for carry-forward loss across two or more silent years with no disposals |
+| HARD-06 | Cost basis in CostBasisLedger uses decimal.Decimal (not float) to prevent accumulated rounding error |
+| HARD-07 | BrokerageModel accepts named broker profiles: CommSec, SelfWealth, Stake, IBKR — default profile unchanged |
+| HARD-08 | Word document export has semantic tests: disclaimer present, CGT summary table rows match expected count, Methodology section present |
+| HARD-09 | Golden test fixtures in tests/golden/ for at minimum ATO worked examples A, B, and C — regeneration is explicit and gated |
+| HARD-10 | Streamlit app has smoke tests: app imports without error, portfolio parse validates, generate button flow completes with mocked yfinance |
+
+### Success Criteria
+
+1. Running `--entity-type smsf --pension-phase` raises a clear, user-facing error (not a 0% tax rate silently applied).
+2. Every TaxYearResult dict and Word export Methodology section includes `tax_engine_version: "X.Y.Z"`.
+3. A backtest date that falls on a weekend or public holiday still resolves FX — never raises ValueError.
+4. `grep -n "TODO\|NOTE.*Feb 29\|anniversary" src/market_data/backtest/tax/cgt.py` returns at least one annotated line.
+5. `pytest tests/test_tax_cgt.py -k "carry_forward_silent"` passes with a 3-year gap scenario.
+6. `grep -r "Decimal" src/market_data/backtest/tax/ledger.py` shows cost basis fields are `decimal.Decimal`.
+7. `BrokerageModel(broker="commsec")` and `BrokerageModel(broker="selfwealth")` return correctly parameterized instances.
+8. `pytest tests/test_analysis_exporter.py -k "semantic"` passes with disclaimer and table assertions.
+9. `tests/golden/` contains at least 3 JSON fixture files and a `conftest.py` that loads and compares them.
+10. `pytest tests/test_streamlit_smoke.py` passes without a running Streamlit server.
+
+---
+
+## Phase 7: Advisory Engine (Post-Revenue, Separate Planning Session)
 
 **Goal:** A complete beginner can describe their financial situation and receive a ranked, rules-based, plain-language recommendation on what to do with their money.
 
@@ -261,7 +310,8 @@ Getting opening cost basis wrong produces incorrect CGT, which is **legally wors
 | 5A - Compliance & Audit Trail | Complete | 1 plan | 2026-03-08 | 2026-03-08 |
 | 5B - Broker CSV Ingestion | Pending | — | — | — |
 | 5C - Existing Portfolio Cost Basis | Pending | — | — | — |
-| 6 - Advisory Engine | Pending (post-revenue) | — | — | — |
+| 6 - Production Hardening | In Progress | 4 plans | 2026-03-14 | — |
+| 7 - Advisory Engine | Pending (post-revenue) | — | — | — |
 
 ---
 
@@ -309,4 +359,4 @@ Getting opening cost basis wrong produces incorrect CGT, which is **legally wors
 ---
 
 *Roadmap created: 2026-02-26*
-*Last updated: 2026-03-02 — Phase 4 complete; 04-04 CLI integration human-verified; all 6 ANAL requirements (ANAL-01 through ANAL-06) accessible via market-data analyse CLI; 217 total tests passing*
+*Last updated: 2026-03-14 — Phase 6 planned; 4 plans created; all HARD-01 through HARD-10 mapped*

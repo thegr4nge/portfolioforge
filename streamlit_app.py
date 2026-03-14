@@ -265,6 +265,16 @@ with col4:
 with col5:
     capital = st.number_input("Capital (AUD)", value=100_000, min_value=1_000, step=10_000)
 
+# HARD-01: SMSF pension phase is not implemented — hard-block before generate.
+# Keep "0% pension phase" visible in SMSF_RATES so users know the option exists.
+if entity_type == "smsf" and "pension" in rate_label.lower():
+    st.error(
+        "SMSF pension phase (ECPI) is not yet supported. "
+        "ECPI requires an actuarial certificate input that is not implemented. "
+        "Use accumulation phase (15% rate) instead."
+    )
+    st.stop()
+
 st.divider()
 
 # --- Generate ---

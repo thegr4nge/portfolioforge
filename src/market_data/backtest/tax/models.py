@@ -76,6 +76,10 @@ class TaxYearResult:
     tax year after this year's gains are fully absorbed. Zero when all losses
     are offset within the year. Under Australian tax law, capital losses carry
     forward indefinitely with no expiry.
+
+    tax_engine_version is stamped by engine.py for audit traceability.
+    See TAX_ENGINE_VERSION constant in engine.py. The default here mirrors that
+    constant — updated in engine.py at all TaxYearResult construction sites.
     """
 
     ending_year: int
@@ -85,6 +89,7 @@ class TaxYearResult:
     dividend_income: float
     after_tax_return: float
     carried_forward_loss: float = 0.0
+    tax_engine_version: str = "1.0.0"  # Updated by engine.py — see TAX_ENGINE_VERSION constant
 
 
 @dataclass

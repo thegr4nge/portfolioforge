@@ -16,6 +16,20 @@ from __future__ import annotations
 import sqlite3
 from datetime import date
 
+# Tax engine version — stamped into every TaxYearResult for audit traceability.
+# Increment on any change to CGT calculation logic, discount fractions, or
+# franking credit treatment. Never reset; only increment.
+TAX_ENGINE_VERSION: str = "1.0.0"
+
+# Error message for SMSF pension phase — ECPI not yet implemented.
+_PENSION_PHASE_UNIMPLEMENTED = (
+    "SMSF pension phase is not yet supported. "
+    "ECPI (Exempt Current Pension Income) requires an actuarial certificate "
+    "input and is not implemented. Use accumulation phase (15% rate) instead. "
+    "See: https://www.ato.gov.au/individuals-and-families/super-for-individuals-and-families/"
+    "smsf/smsf-tax/income-tax/income-tax-for-smfs-in-the-retirement-phase"
+)
+
 import pandas as pd
 from loguru import logger
 
@@ -204,6 +218,7 @@ def run_backtest_tax(
     franking_credits: dict[str, float] | None = None,
     parcel_method: str = "fifo",
     entity_type: str = "individual",
+    pension_phase: bool = False,
 ) -> TaxAwareResult:
     """Run a tax-aware portfolio backtest over a date range.
 
@@ -227,13 +242,23 @@ def run_backtest_tax(
         entity_type: "individual" (default) or "smsf". Controls CGT discount
             fraction (individual=50%, SMSF=33.33%) and whether the $5k
             franking credit exemption from the 45-day rule applies.
+        pension_phase: When True and entity_type="smsf", raises NotImplementedError.
+            ECPI (Exempt Current Pension Income) is not yet implemented. Ignored
+            for entity_type="individual".
 
     Returns:
         TaxAwareResult with backtest (Phase 2 BacktestResult) and tax (TaxSummary).
 
     Raises:
+        NotImplementedError: If entity_type="smsf" and pension_phase=True.
+            ECPI support requires actuarial certificate input — not implemented.
         ValueError: If FX rate is missing for a USD ticker's trade date.
     """
+    # HARD-01: Hard-block SMSF pension phase before any computation.
+    # ECPI not implemented — running with 0% tax would silently miscalculate.
+    if entity_type == "smsf" and pension_phase:
+        raise NotImplementedError(_PENSION_PHASE_UNIMPLEMENTED)
+
     portfolio_tickers = list(portfolio.keys())
 
     # Resolve entity-specific tax parameters.
@@ -436,6 +461,7 @@ def run_backtest_tax(
                     dividend_income=total_dividend_income_year,
                     after_tax_return=existing.after_tax_return,
                     carried_forward_loss=existing.carried_forward_loss,
+                    tax_engine_version=TAX_ENGINE_VERSION,
                 )
                 yr_map[yr_key] = updated
             else:
@@ -447,6 +473,7 @@ def run_backtest_tax(
                     franking_credits_claimed=total_credits_year,
                     dividend_income=total_dividend_income_year,
                     after_tax_return=total_dividend_income_year,
+                    tax_engine_version=TAX_ENGINE_VERSION,
                 )
 
         # Rebuild tax_years from the updated map.

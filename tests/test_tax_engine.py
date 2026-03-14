@@ -699,3 +699,209 @@ def test_run_backtest_tax_backtest_field_is_backtest_result() -> None:
     assert hasattr(result, "tax")
     # result.backtest IS the fake_result unchanged.
     assert result.backtest is fake_result
+
+
+# ---------------------------------------------------------------------------
+# HARD-01: pension_phase guard tests (Task 1)
+# ---------------------------------------------------------------------------
+
+
+def test_pension_phase_raises_not_implemented() -> None:
+    """SMSF + pension_phase=True must raise NotImplementedError with 'ECPI' in message."""
+    buy_date = date(2023, 1, 3)
+    sell_date = date(2023, 6, 1)
+    trades = [
+        Trade(
+            date=buy_date, ticker="VAS.AX", action="BUY", shares=100, price=100.0, cost=_BROKERAGE
+        ),
+    ]
+    fake_result = _make_fake_backtest_result(
+        trades=trades, tickers=["VAS.AX"], start=buy_date, end=sell_date
+    )
+    tax_conn = _tax_conn_with_securities([("VAS.AX", "AUD")])
+
+    with (
+        patch("market_data.backtest.engine.run_backtest", return_value=fake_result),
+        patch("market_data.backtest.tax.engine.run_backtest", return_value=fake_result),
+        patch("market_data.backtest.tax.engine.get_connection", return_value=tax_conn),
+        pytest.raises(NotImplementedError, match="ECPI"),
+    ):
+        run_backtest_tax(
+            portfolio={"VAS.AX": 1.0},
+            start=buy_date,
+            end=sell_date,
+            rebalance="never",
+            entity_type="smsf",
+            pension_phase=True,
+        )
+
+
+def test_pension_phase_false_does_not_raise() -> None:
+    """SMSF + pension_phase=False (default) must NOT raise — existing behaviour preserved."""
+    buy_date = date(2023, 1, 3)
+    sell_date = date(2023, 6, 1)
+    trades = [
+        Trade(
+            date=buy_date, ticker="VAS.AX", action="BUY", shares=100, price=100.0, cost=_BROKERAGE
+        ),
+    ]
+    fake_result = _make_fake_backtest_result(
+        trades=trades, tickers=["VAS.AX"], start=buy_date, end=sell_date
+    )
+    tax_conn = _tax_conn_with_securities([("VAS.AX", "AUD")])
+
+    with (
+        patch("market_data.backtest.engine.run_backtest", return_value=fake_result),
+        patch("market_data.backtest.tax.engine.run_backtest", return_value=fake_result),
+        patch("market_data.backtest.tax.engine.get_connection", return_value=tax_conn),
+    ):
+        result = run_backtest_tax(
+            portfolio={"VAS.AX": 1.0},
+            start=buy_date,
+            end=sell_date,
+            rebalance="never",
+            entity_type="smsf",
+            pension_phase=False,
+        )
+    assert result is not None
+
+
+def test_individual_pension_phase_ignored() -> None:
+    """Individual entity_type + pension_phase=True must NOT raise — guard is SMSF-only."""
+    buy_date = date(2023, 1, 3)
+    sell_date = date(2023, 6, 1)
+    trades = [
+        Trade(
+            date=buy_date, ticker="VAS.AX", action="BUY", shares=100, price=100.0, cost=_BROKERAGE
+        ),
+    ]
+    fake_result = _make_fake_backtest_result(
+        trades=trades, tickers=["VAS.AX"], start=buy_date, end=sell_date
+    )
+    tax_conn = _tax_conn_with_securities([("VAS.AX", "AUD")])
+
+    with (
+        patch("market_data.backtest.engine.run_backtest", return_value=fake_result),
+        patch("market_data.backtest.tax.engine.run_backtest", return_value=fake_result),
+        patch("market_data.backtest.tax.engine.get_connection", return_value=tax_conn),
+    ):
+        result = run_backtest_tax(
+            portfolio={"VAS.AX": 1.0},
+            start=buy_date,
+            end=sell_date,
+            rebalance="never",
+            entity_type="individual",
+            pension_phase=True,
+        )
+    assert result is not None
+
+
+# ---------------------------------------------------------------------------
+# HARD-02: TAX_ENGINE_VERSION on TaxYearResult (Task 1)
+# ---------------------------------------------------------------------------
+
+
+def test_tax_year_result_has_version_field() -> None:
+    """TaxYearResult must have a tax_engine_version field."""
+    from market_data.backtest.tax.models import TaxYearResult
+
+    yr = TaxYearResult(
+        ending_year=2024,
+        cgt_events=0,
+        cgt_payable=0.0,
+        franking_credits_claimed=0.0,
+        dividend_income=0.0,
+        after_tax_return=0.0,
+    )
+    assert hasattr(yr, "tax_engine_version"), "TaxYearResult must have tax_engine_version field"
+
+
+def test_tax_year_result_version_matches_constant() -> None:
+    """TaxYearResult().tax_engine_version must equal TAX_ENGINE_VERSION constant."""
+    from market_data.backtest.tax.engine import TAX_ENGINE_VERSION
+    from market_data.backtest.tax.models import TaxYearResult
+
+    yr = TaxYearResult(
+        ending_year=2024,
+        cgt_events=0,
+        cgt_payable=0.0,
+        franking_credits_claimed=0.0,
+        dividend_income=0.0,
+        after_tax_return=0.0,
+    )
+    assert yr.tax_engine_version == TAX_ENGINE_VERSION
+    assert yr.tax_engine_version == "1.0.0"
+
+
+# ---------------------------------------------------------------------------
+# HARD-03: FX fallback loop tests (Task 2)
+# ---------------------------------------------------------------------------
+
+
+def _make_fx_conn_with_rates(fx_rows: list[tuple[str, float]]) -> sqlite3.Connection:
+    """Create an in-memory DB with fx_rates populated for FX fallback tests."""
+    conn = sqlite3.connect(":memory:")
+    run_migrations(conn)
+    for date_iso, rate in fx_rows:
+        conn.execute(
+            "INSERT OR REPLACE INTO fx_rates (date, from_ccy, to_ccy, rate)"
+            " VALUES (?, 'AUD', 'USD', ?)",
+            (date_iso, rate),
+        )
+    conn.commit()
+    return conn
+
+
+def test_fx_fallback_returns_friday_rate_for_saturday() -> None:
+    """Saturday date lookup must return the Friday rate (T-1 fallback)."""
+    from market_data.backtest.tax.fx import get_aud_usd_rate
+
+    friday = date(2024, 3, 1)   # Friday
+    saturday = date(2024, 3, 2)  # Saturday
+    assert friday.weekday() == 4, "sanity: 2024-03-01 is Friday"
+    assert saturday.weekday() == 5, "sanity: 2024-03-02 is Saturday"
+
+    conn = _make_fx_conn_with_rates([(friday.isoformat(), 0.65)])
+    rate = get_aud_usd_rate(conn, saturday)
+    assert rate == pytest.approx(0.65), f"Expected Friday rate 0.65, got {rate}"
+
+
+def test_fx_fallback_returns_friday_rate_for_sunday() -> None:
+    """Sunday date lookup must return the Friday rate (T-2 fallback)."""
+    from market_data.backtest.tax.fx import get_aud_usd_rate
+
+    friday = date(2024, 3, 1)   # Friday
+    sunday = date(2024, 3, 3)   # Sunday
+    assert sunday.weekday() == 6, "sanity: 2024-03-03 is Sunday"
+
+    conn = _make_fx_conn_with_rates([(friday.isoformat(), 0.65)])
+    rate = get_aud_usd_rate(conn, sunday)
+    assert rate == pytest.approx(0.65), f"Expected Friday rate 0.65, got {rate}"
+
+
+def test_fx_fallback_exact_date_preferred() -> None:
+    """When exact date has a rate, it is returned — not the prior day."""
+    from market_data.backtest.tax.fx import get_aud_usd_rate
+
+    monday = date(2024, 3, 4)    # Monday
+    tuesday = date(2024, 3, 5)   # Tuesday
+
+    conn = _make_fx_conn_with_rates([
+        (monday.isoformat(), 0.64),
+        (tuesday.isoformat(), 0.66),
+    ])
+    rate = get_aud_usd_rate(conn, tuesday)
+    assert rate == pytest.approx(0.66), f"Expected exact-date rate 0.66, got {rate}"
+
+
+def test_fx_fallback_raises_after_max_days() -> None:
+    """ValueError raised when no rate exists within 5 prior calendar days."""
+    from market_data.backtest.tax.fx import get_aud_usd_rate
+
+    # Insert rate for 6 days ago — beyond the 5-day fallback window.
+    lookup_date = date(2024, 3, 7)
+    old_date = date(2024, 3, 1)  # 6 days earlier
+    conn = _make_fx_conn_with_rates([(old_date.isoformat(), 0.65)])
+
+    with pytest.raises(ValueError, match="Re-ingest FX data"):
+        get_aud_usd_rate(conn, lookup_date)

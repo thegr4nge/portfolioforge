@@ -65,8 +65,8 @@
 - [x] **HARD-06**: Cost basis in CostBasisLedger uses decimal.Decimal (not float) to prevent accumulated rounding error on large portfolios
 - [x] **HARD-07**: BrokerageModel accepts named broker profiles: CommSec, SelfWealth, Stake, IBKR — default profile unchanged
 - [x] **HARD-08**: Word document export has semantic tests: disclaimer present, CGT summary table rows match expected count, Methodology section present
-- [ ] **HARD-09**: Golden test fixtures in tests/golden/ for ATO worked examples A, B, and C — regeneration is explicit and gated
-- [ ] **HARD-10**: Streamlit app has smoke tests: imports without error, portfolio parse validates, generate flow completes with mocked yfinance
+- [x] **HARD-09**: Golden test fixtures in tests/golden/ for ATO worked examples A, B, and C — regeneration is explicit and gated
+- [x] **HARD-10**: Streamlit app has smoke tests: imports without error, portfolio parse validates, generate flow completes with mocked yfinance
 
 ---
 
@@ -149,8 +149,8 @@
 | HARD-06 | Phase 6 — Production Hardening | Complete |
 | HARD-07 | Phase 6 — Production Hardening | Complete |
 | HARD-08 | Phase 6 — Production Hardening | Complete |
-| HARD-09 | Phase 6 — Production Hardening | Pending |
-| HARD-10 | Phase 6 — Production Hardening | Pending |
+| HARD-09 | Phase 6 — Production Hardening | Complete |
+| HARD-10 | Phase 6 — Production Hardening | Complete |
 
 **Coverage:**
 - v1 requirements: 44 total

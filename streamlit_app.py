@@ -25,9 +25,11 @@ _SRC = Path(__file__).parent / "src"
 if _SRC.exists() and str(_SRC) not in sys.path:
     sys.path.insert(0, str(_SRC))
 
-from market_data.analysis.exporter import export_report  # noqa: E402
+from market_data.analysis.exporter import export_report, export_trades_cgt_workpaper  # noqa: E402
 from market_data.analysis.models import AnalysisReport  # noqa: E402
-from market_data.backtest.tax.engine import run_backtest_tax  # noqa: E402
+from market_data.backtest.tax.broker_parsers import SUPPORTED_BROKERS, parse_broker_csv  # noqa: E402
+from market_data.backtest.tax.engine import run_backtest_tax, run_cgt_from_trades  # noqa: E402
+from market_data.backtest.tax.trade_validator import validate_trade_records  # noqa: E402
 from market_data.db.schema import get_connection  # noqa: E402
 
 # ---------------------------------------------------------------------------
@@ -196,216 +198,410 @@ def _parse_portfolio(raw: str) -> dict[str, float]:
 # UI
 # ---------------------------------------------------------------------------
 
-st.markdown("## 📊 PortfolioForge")
+st.markdown("## PortfolioForge")
 st.markdown(
     "**ATO-validated CGT workpapers** for Australian SMSF trustees and accountants.  \n"
-    "Enter a portfolio, click Generate, download a ready-to-lodge Word document."
+    "Enter a portfolio or import a broker CSV, click Generate, download your Word workpaper."
 )
 st.divider()
 
-# --- Portfolio input ---
-st.markdown("### Portfolio")
+# ---------------------------------------------------------------------------
+# Tabs — CSV tab rendered first to avoid st.stop() in manual tab blocking it
+# ---------------------------------------------------------------------------
+tab_manual, tab_csv = st.tabs(["Manual Entry / Backtest", "Import Broker CSV"])
 
-preset_label = st.selectbox(
-    "Quick start",
-    options=list(PRESET_PORTFOLIOS.keys()),
-    index=0,
-)
-preset_value = PRESET_PORTFOLIOS[preset_label]
-
-if preset_label == "Custom — enter below" or not preset_value:
-    portfolio_raw = st.text_input(
-        "Tickers and weights",
-        placeholder="VAS.AX:0.60, VGS.AX:0.40",
-        help="Comma-separated. Weights must sum to 1.0. ASX tickers need .AX suffix.",
-    )
-else:
-    portfolio_raw = preset_value
-    st.code(portfolio_raw, language=None)
-
-# --- Date and settings ---
-st.markdown("### Analysis period")
-
-col1, col2 = st.columns(2)
-with col1:
-    from_date = st.date_input(
-        "From",
-        value=date(2019, 1, 1),
-        min_value=date(2010, 1, 1),
-        max_value=date.today(),
-    )
-with col2:
-    to_date = st.date_input(
-        "To",
-        value=date(2024, 6, 30),
-        min_value=date(2010, 1, 2),
-        max_value=date.today(),
+# ── TAB 2: Broker CSV import ─────────────────────────────────────────────────
+with tab_csv:
+    st.markdown("### Import broker trade history")
+    st.markdown(
+        "Upload your broker's trade history CSV. PortfolioForge will parse the actual trades, "
+        "apply FIFO cost basis, and calculate CGT using real purchase prices — no simulation."
     )
 
-if from_date >= to_date:
-    st.error("'From' date must be before 'To' date.")
-    st.stop()
+    col_u, col_b_sel = st.columns([3, 1])
+    with col_u:
+        uploaded_file = st.file_uploader(
+            "Broker trade history CSV",
+            type=["csv"],
+            help="Export your trade history from your broker's website.",
+        )
+    with col_b_sel:
+        broker_choice = st.selectbox(
+            "Broker format",
+            options=SUPPORTED_BROKERS,
+            format_func=str.title,
+        )
 
-st.markdown("### Entity & tax settings")
+    if uploaded_file is not None:
+        # Parse the CSV
+        csv_text = uploaded_file.read().decode("utf-8-sig", errors="replace")
+        try:
+            raw_records = parse_broker_csv(csv_text, broker_choice)
+        except Exception as exc:
+            st.error(f"Could not parse CSV: {exc}")
+            raw_records = []
 
-col3, col4, col5 = st.columns([2, 2, 1])
-with col3:
-    entity_type = st.selectbox(
-        "Entity type",
-        options=["individual", "smsf"],
-        format_func=lambda x: (
-            "Individual (50% CGT discount)" if x == "individual"
-            else "SMSF (33.33% CGT discount)"
-        ),
+        if not raw_records:
+            st.warning("No trade records found in the CSV. Check the broker format.")
+        else:
+            # Validate
+            validation = validate_trade_records(raw_records)
+
+            if validation.errors:
+                st.error("Validation errors — fix before proceeding:")
+                for err in validation.errors:
+                    st.markdown(f"- {err}")
+
+            if validation.warnings:
+                for warn in validation.warnings:
+                    st.warning(warn)
+
+            # Preview table
+            with st.expander(f"Preview: {len(validation.valid)} trade(s) detected", expanded=True):
+                preview_data = [
+                    {
+                        "Date": str(r.trade_date),
+                        "Ticker": r.ticker,
+                        "Action": r.action,
+                        "Qty": f"{r.quantity:,.4g}",
+                        "Price (AUD)": f"${r.price_aud:,.4f}",
+                        "Brokerage (AUD)": f"${r.brokerage_aud:,.2f}",
+                    }
+                    for r in validation.valid
+                ]
+                st.dataframe(preview_data, use_container_width=True)
+
+            if validation.errors:
+                st.stop()
+
+            # Entity & tax settings
+            st.markdown("### Entity & tax settings")
+            col_e, col_r = st.columns(2)
+            with col_e:
+                csv_entity = st.selectbox(
+                    "Entity type",
+                    options=["individual", "smsf"],
+                    format_func=lambda x: (
+                        "Individual (50% CGT discount)" if x == "individual"
+                        else "SMSF (33.33% CGT discount)"
+                    ),
+                    key="csv_entity",
+                )
+            with col_r:
+                if csv_entity == "smsf":
+                    csv_rate_label = st.selectbox(
+                        "Tax rate", options=list(SMSF_RATES.keys()), key="csv_rate"
+                    )
+                    csv_tax_rate = SMSF_RATES[csv_rate_label]
+                else:
+                    csv_rate_label = st.selectbox(
+                        "Marginal tax rate",
+                        options=list(TAX_RATES.keys()),
+                        index=2,
+                        key="csv_rate",
+                    )
+                    csv_tax_rate = TAX_RATES[csv_rate_label]
+
+            if csv_entity == "smsf" and "pension" in csv_rate_label.lower():
+                st.error(
+                    "SMSF pension phase (ECPI) is not yet supported. "
+                    "Use accumulation phase (15% rate) instead."
+                )
+            else:
+                st.divider()
+                generate_csv = st.button(
+                    "Calculate CGT from Actual Trades",
+                    type="primary",
+                    use_container_width=True,
+                    key="gen_csv",
+                )
+
+                if generate_csv:
+                    with tempfile.TemporaryDirectory() as tmpdir:
+                        report_path = Path(tmpdir) / "PortfolioForge_CGT_Actual.docx"
+
+                        with st.spinner("Calculating CGT from actual trades..."):
+                            try:
+                                tax_summary = run_cgt_from_trades(
+                                    trades=validation.valid,
+                                    marginal_tax_rate=float(csv_tax_rate),
+                                    parcel_method="fifo",
+                                    entity_type=csv_entity,
+                                )
+
+                                export_trades_cgt_workpaper(
+                                    trades=validation.valid,
+                                    tax=tax_summary,
+                                    output_path=report_path,
+                                    entity_type=csv_entity,
+                                    broker=broker_choice,
+                                )
+
+                                st.success("CGT workpaper generated from actual trades.")
+
+                                # Summary metrics
+                                total_events = sum(y.cgt_events for y in tax_summary.years)
+                                m1, m2, m3 = st.columns(3)
+                                m1.metric("Trades Imported", str(len(validation.valid)))
+                                m2.metric("CGT Events", str(total_events))
+                                m3.metric("Total CGT Payable", f"${tax_summary.total_tax_paid:,.2f}")
+
+                                # Year-by-year table
+                                if tax_summary.years:
+                                    st.markdown("**Year-by-year CGT breakdown**")
+                                    year_data = [
+                                        {
+                                            "Tax Year": f"FY{yr.ending_year}",
+                                            "CGT Events": yr.cgt_events,
+                                            "CGT Payable": f"${yr.cgt_payable:,.2f}",
+                                            "Carry-Fwd Loss": f"${yr.carried_forward_loss:,.2f}",
+                                        }
+                                        for yr in tax_summary.years
+                                    ]
+                                    st.dataframe(year_data, use_container_width=True)
+
+                                st.divider()
+
+                                with open(report_path, "rb") as f:
+                                    docx_bytes = f.read()
+
+                                st.download_button(
+                                    label="Download CGT Workpaper (.docx)",
+                                    data=docx_bytes,
+                                    file_name=f"PortfolioForge_CGT_ActualTrades_{date.today().isoformat()}.docx",
+                                    mime=(
+                                        "application/vnd.openxmlformats-officedocument"
+                                        ".wordprocessingml.document"
+                                    ),
+                                    use_container_width=True,
+                                )
+
+                                st.caption(
+                                    "This workpaper is based on the actual trade prices and dates "
+                                    "from your broker CSV. Verify dividend and franking data "
+                                    "against registry statements before ATO lodgement."
+                                )
+
+                            except Exception as exc:
+                                st.error(f"CGT calculation failed: {exc}")
+                                with st.expander("Error detail"):
+                                    st.exception(exc)
+
+    with st.expander("Supported broker formats"):
+        st.markdown(
+            "| Broker | Export path |\n"
+            "|--------|-------------|\n"
+            "| **CommSec** | Investor Login > Portfolio > Trade History > Export to CSV |\n"
+            "| **SelfWealth** | Portfolio > Trade History > Export |\n"
+            "| **Stake** | Activity > Export CSV |\n\n"
+            "Note: These formats are based on publicly documented exports. "
+            "Verify your CSV matches the expected columns if parsing fails."
+        )
+
+# ── TAB 1: Manual entry / backtest ───────────────────────────────────────────
+with tab_manual:
+    # --- Portfolio input ---
+    st.markdown("### Portfolio")
+
+    preset_label = st.selectbox(
+        "Quick start",
+        options=list(PRESET_PORTFOLIOS.keys()),
+        index=0,
     )
-with col4:
-    if entity_type == "smsf":
-        rate_label = st.selectbox("Tax rate", options=list(SMSF_RATES.keys()))
-        tax_rate = SMSF_RATES[rate_label]
+    preset_value = PRESET_PORTFOLIOS[preset_label]
+
+    if preset_label == "Custom — enter below" or not preset_value:
+        portfolio_raw = st.text_input(
+            "Tickers and weights",
+            placeholder="VAS.AX:0.60, VGS.AX:0.40",
+            help="Comma-separated. Weights must sum to 1.0. ASX tickers need .AX suffix.",
+        )
     else:
-        rate_label = st.selectbox("Marginal tax rate", options=list(TAX_RATES.keys()), index=2)
-        tax_rate = TAX_RATES[rate_label]
-with col5:
-    capital = st.number_input("Capital (AUD)", value=100_000, min_value=1_000, step=10_000)
+        portfolio_raw = preset_value
+        st.code(portfolio_raw, language=None)
 
-# HARD-01: SMSF pension phase is not implemented — hard-block before generate.
-# Keep "0% pension phase" visible in SMSF_RATES so users know the option exists.
-if entity_type == "smsf" and "pension" in rate_label.lower():
-    st.error(
-        "SMSF pension phase (ECPI) is not yet supported. "
-        "ECPI requires an actuarial certificate input that is not implemented. "
-        "Use accumulation phase (15% rate) instead."
-    )
-    st.stop()
+    # --- Date and settings ---
+    st.markdown("### Analysis period")
 
-st.divider()
+    col1, col2 = st.columns(2)
+    with col1:
+        from_date = st.date_input(
+            "From",
+            value=date(2019, 1, 1),
+            min_value=date(2010, 1, 1),
+            max_value=date.today(),
+        )
+    with col2:
+        to_date = st.date_input(
+            "To",
+            value=date(2024, 6, 30),
+            min_value=date(2010, 1, 2),
+            max_value=date.today(),
+        )
 
-# --- Generate ---
-generate = st.button("Generate CGT Workpaper", type="primary", use_container_width=True)
-
-if generate:
-    # Validate portfolio input
-    try:
-        portfolio = _parse_portfolio(portfolio_raw)
-    except ValueError as exc:
-        st.error(f"Portfolio error: {exc}")
+    if from_date >= to_date:
+        st.error("'From' date must be before 'To' date.")
         st.stop()
 
-    with tempfile.TemporaryDirectory() as tmpdir:
-        db_path = os.path.join(tmpdir, "analysis.db")
-        report_path = Path(tmpdir) / "PortfolioForge_CGT.docx"
+    st.markdown("### Entity & tax settings")
 
-        progress = st.progress(0.0, text="Initialising...")
-        status = st.empty()
+    col3, col4, col5 = st.columns([2, 2, 1])
+    with col3:
+        entity_type = st.selectbox(
+            "Entity type",
+            options=["individual", "smsf"],
+            format_func=lambda x: (
+                "Individual (50% CGT discount)" if x == "individual"
+                else "SMSF (33.33% CGT discount)"
+            ),
+        )
+    with col4:
+        if entity_type == "smsf":
+            rate_label = st.selectbox("Tax rate", options=list(SMSF_RATES.keys()))
+            tax_rate = SMSF_RATES[rate_label]
+        else:
+            rate_label = st.selectbox("Marginal tax rate", options=list(TAX_RATES.keys()), index=2)
+            tax_rate = TAX_RATES[rate_label]
+    with col5:
+        capital = st.number_input("Capital (AUD)", value=100_000, min_value=1_000, step=10_000)
 
+    # HARD-01: SMSF pension phase is not implemented — hard-block before generate.
+    if entity_type == "smsf" and "pension" in rate_label.lower():
+        st.error(
+            "SMSF pension phase (ECPI) is not yet supported. "
+            "ECPI requires an actuarial certificate input that is not implemented. "
+            "Use accumulation phase (15% rate) instead."
+        )
+        st.stop()
+
+    st.divider()
+
+    # --- Generate ---
+    generate = st.button("Generate CGT Workpaper", type="primary", use_container_width=True)
+
+    if generate:
+        # Validate portfolio input
         try:
-            conn = get_connection(db_path)
-            tickers = list(portfolio.keys())
-            n_steps = len(tickers) + 2  # tickers + benchmark + backtest
+            portfolio = _parse_portfolio(portfolio_raw)
+        except ValueError as exc:
+            st.error(f"Portfolio error: {exc}")
+            st.stop()
 
-            # Fetch price data
-            for i, ticker in enumerate(tickers):
-                pct = i / n_steps
-                progress.progress(pct, text=f"Fetching {ticker} from Yahoo Finance...")
-                status.caption(f"Downloading price history for {ticker}…")
-                try:
-                    count = _fetch_prices(conn, ticker, from_date, to_date)
-                    if count == 0:
-                        st.warning(
-                            f"No data returned for **{ticker}**. "
-                            "Check the ticker (ASX stocks need .AX, e.g. VAS.AX)."
-                        )
-                except Exception as exc:
-                    msg = str(exc)
-                    if "rate" in msg.lower() or "too many" in msg.lower() or "429" in msg:
-                        st.error(
-                            "Yahoo Finance is rate-limiting this server. "
-                            "Wait 30 seconds and click Generate again — "
-                            "your data will be cached after the first successful fetch."
-                        )
-                    else:
-                        st.error(msg)
-                    st.stop()
+        with tempfile.TemporaryDirectory() as tmpdir:
+            db_path = os.path.join(tmpdir, "analysis.db")
+            report_path = Path(tmpdir) / "PortfolioForge_CGT.docx"
 
-            # Fetch benchmark
-            progress.progress(len(tickers) / n_steps, text="Fetching benchmark (STW.AX)...")
-            status.caption("Downloading benchmark data…")
-            if BENCHMARK not in portfolio:
-                try:
-                    _fetch_prices(conn, BENCHMARK, from_date, to_date)
-                except Exception:
-                    pass  # Benchmark failure is non-fatal
+            progress = st.progress(0.0, text="Initialising...")
+            status = st.empty()
 
-            # Run backtest
-            progress.progress((len(tickers) + 1) / n_steps, text="Running CGT calculations...")
-            status.caption("Running ATO-validated CGT calculations…")
+            try:
+                conn = get_connection(db_path)
+                tickers = list(portfolio.keys())
+                n_steps = len(tickers) + 2  # tickers + benchmark + backtest
 
-            result = run_backtest_tax(
-                portfolio=portfolio,
-                start=from_date,
-                end=to_date,
-                benchmark=BENCHMARK,
-                initial_capital=float(capital),
-                rebalance="annually",
-                db_path=db_path,
-                marginal_tax_rate=float(tax_rate),
-                parcel_method="fifo",
-                entity_type=entity_type,
-            )
+                # Fetch price data
+                for i, ticker in enumerate(tickers):
+                    pct = i / n_steps
+                    progress.progress(pct, text=f"Fetching {ticker} from Yahoo Finance...")
+                    status.caption(f"Downloading price history for {ticker}…")
+                    try:
+                        count = _fetch_prices(conn, ticker, from_date, to_date)
+                        if count == 0:
+                            st.warning(
+                                f"No data returned for **{ticker}**. "
+                                "Check the ticker (ASX stocks need .AX, e.g. VAS.AX)."
+                            )
+                    except Exception as exc:
+                        msg = str(exc)
+                        if "rate" in msg.lower() or "too many" in msg.lower() or "429" in msg:
+                            st.error(
+                                "Yahoo Finance is rate-limiting this server. "
+                                "Wait 30 seconds and click Generate again — "
+                                "your data will be cached after the first successful fetch."
+                            )
+                        else:
+                            st.error(msg)
+                        st.stop()
 
-            # Export Word doc
-            progress.progress(1.0, text="Generating document...")
-            status.caption("Exporting Word document…")
-            report = AnalysisReport(result=result)
-            export_report(report, conn, report_path, sample_data=True)
-            conn.close()
+                # Fetch benchmark
+                progress.progress(len(tickers) / n_steps, text="Fetching benchmark (STW.AX)...")
+                status.caption("Downloading benchmark data…")
+                if BENCHMARK not in portfolio:
+                    try:
+                        _fetch_prices(conn, BENCHMARK, from_date, to_date)
+                    except Exception:
+                        pass  # Benchmark failure is non-fatal
 
-            progress.empty()
-            status.empty()
+                # Run backtest
+                progress.progress((len(tickers) + 1) / n_steps, text="Running CGT calculations...")
+                status.caption("Running ATO-validated CGT calculations…")
 
-            # --- Results ---
-            tax = result.tax
-            br = result.backtest
+                result = run_backtest_tax(
+                    portfolio=portfolio,
+                    start=from_date,
+                    end=to_date,
+                    benchmark=BENCHMARK,
+                    initial_capital=float(capital),
+                    rebalance="annually",
+                    db_path=db_path,
+                    marginal_tax_rate=float(tax_rate),
+                    parcel_method="fifo",
+                    entity_type=entity_type,
+                )
 
-            st.success("Report generated.")
+                # Export Word doc
+                progress.progress(1.0, text="Generating document...")
+                status.caption("Exporting Word document…")
+                report = AnalysisReport(result=result)
+                export_report(report, conn, report_path, sample_data=True)
+                conn.close()
 
-            m1, m2, m3, m4 = st.columns(4)
-            m1.metric("After-Tax CAGR", f"{tax.after_tax_cagr:.1%}")
-            m2.metric("Pre-Tax Return", f"{br.metrics.total_return:.1%}")
-            m3.metric("Total CGT Paid", f"${tax.total_tax_paid:,.0f}")
-            m4.metric(
-                "CGT Events",
-                str(sum(y.cgt_events for y in tax.years)),
-            )
+                progress.empty()
+                status.empty()
 
-            st.divider()
+                # --- Results ---
+                tax = result.tax
+                br = result.backtest
 
-            with open(report_path, "rb") as f:
-                docx_bytes = f.read()
+                st.success("Report generated.")
 
-            st.download_button(
-                label="⬇  Download CGT Workpaper (.docx)",
-                data=docx_bytes,
-                file_name=f"PortfolioForge_CGT_{date.today().isoformat()}.docx",
-                mime=(
-                    "application/vnd.openxmlformats-officedocument"
-                    ".wordprocessingml.document"
-                ),
-                use_container_width=True,
-            )
+                m1, m2, m3, m4 = st.columns(4)
+                m1.metric("After-Tax CAGR", f"{tax.after_tax_cagr:.1%}")
+                m2.metric("Pre-Tax Return", f"{br.metrics.total_return:.1%}")
+                m3.metric("Total CGT Paid", f"${tax.total_tax_paid:,.0f}")
+                m4.metric(
+                    "CGT Events",
+                    str(sum(y.cgt_events for y in tax.years)),
+                )
 
-            st.caption(
-                "⚠️  Sample data — simulated portfolio, not real client trades. "
-                "Verify dividend and franking data against registry statements "
-                "before ATO lodgement."
-            )
+                st.divider()
 
-        except Exception as exc:
-            progress.empty()
-            status.empty()
-            st.error(f"Analysis failed: {exc}")
-            with st.expander("Error detail"):
-                st.exception(exc)
+                with open(report_path, "rb") as f:
+                    docx_bytes = f.read()
+
+                st.download_button(
+                    label="Download CGT Workpaper (.docx)",
+                    data=docx_bytes,
+                    file_name=f"PortfolioForge_CGT_{date.today().isoformat()}.docx",
+                    mime=(
+                        "application/vnd.openxmlformats-officedocument"
+                        ".wordprocessingml.document"
+                    ),
+                    use_container_width=True,
+                )
+
+                st.caption(
+                    "Sample data — simulated portfolio, not real client trades. "
+                    "Verify dividend and franking data against registry statements "
+                    "before ATO lodgement."
+                )
+
+            except Exception as exc:
+                progress.empty()
+                status.empty()
+                st.error(f"Analysis failed: {exc}")
+                with st.expander("Error detail"):
+                    st.exception(exc)
 
 # ---------------------------------------------------------------------------
 # Footer

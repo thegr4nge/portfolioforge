@@ -50,6 +50,7 @@ from market_data.backtest.tax.franking import (
 )
 from market_data.backtest.tax.fx import get_aud_usd_rate, usd_to_aud
 from market_data.backtest.tax.ledger import CostBasisLedger
+from market_data.backtest.tax.trade_record import TradeRecord
 from market_data.backtest.tax.models import (
     DisposedLot,
     DividendRecord,
@@ -504,3 +505,90 @@ def run_backtest_tax(
     )
 
     return TaxAwareResult(backtest=bt_result, tax=tax_summary)
+
+
+def run_cgt_from_trades(
+    trades: list[TradeRecord],
+    marginal_tax_rate: float = 0.325,
+    parcel_method: str = "fifo",
+    entity_type: str = "individual",
+    pension_phase: bool = False,
+) -> TaxSummary:
+    """Calculate CGT from actual broker trade records without a backtest simulation.
+
+    Unlike run_backtest_tax(), this works directly from real broker trades (e.g.
+    imported via CommSec/SelfWealth/Stake CSV). It calculates CGT using actual
+    purchase prices and disposal dates from the broker records.
+
+    Limitations compared to run_backtest_tax():
+    - after_tax_cagr is always 0.0 (no equity curve without price history)
+    - Dividends are not included (not in broker trade CSVs)
+    - USD tickers are not supported (FX lookup requires a populated DB)
+
+    Args:
+        trades: Validated TradeRecords from parse_broker_csv().
+        marginal_tax_rate: Investor's marginal income tax rate.
+        parcel_method: "fifo" or "highest_cost".
+        entity_type: "individual" or "smsf".
+        pension_phase: Raises NotImplementedError if True and entity_type="smsf".
+
+    Returns:
+        TaxSummary with per-year CGT results and disposed lots.
+    """
+    if entity_type == "smsf" and pension_phase:
+        raise NotImplementedError(_PENSION_PHASE_UNIMPLEMENTED)
+
+    smsf_mode = entity_type == "smsf"
+    cgt_discount_fraction = 1.0 / 3.0 if smsf_mode else 0.5
+
+    # Convert and sort trades by date.
+    trade_objs: list[Trade] = sorted(
+        [r.to_trade(security_id=0) for r in trades],
+        key=lambda t: t.date,
+    )
+
+    # Replay through FIFO / highest-cost ledger.
+    ledger = CostBasisLedger()
+    all_disposed_lots: list[DisposedLot] = []
+
+    for trade in trade_objs:
+        if trade.action == "BUY":
+            cost_aud = trade.shares * trade.price + trade.cost
+            lot = OpenLot(
+                ticker=trade.ticker,
+                acquired_date=trade.date,
+                quantity=float(trade.shares),
+                cost_basis_aud=Decimal(str(cost_aud)),
+                cost_basis_usd=None,
+            )
+            ledger.buy(trade.ticker, lot)
+        elif trade.action == "SELL":
+            raw_lots = ledger.sell(
+                trade.ticker,
+                float(trade.shares),
+                trade.date,
+                parcel_method=parcel_method,  # type: ignore[arg-type]
+            )
+            total_qty = sum(r.quantity for r in raw_lots)
+            for raw in raw_lots:
+                prop = raw.quantity / total_qty if total_qty > 0 else 1.0
+                gross_proceeds_aud = trade.shares * trade.price * prop
+                brokerage_aud = trade.cost * prop
+                proceeds_aud = gross_proceeds_aud - brokerage_aud
+                completed = _build_disposed_lot_with_cgt(raw, proceeds_aud, None)
+                all_disposed_lots.append(completed)
+
+    tax_years = build_tax_year_results(
+        all_disposed_lots,
+        marginal_tax_rate,
+        cgt_discount_fraction=cgt_discount_fraction,
+    )
+
+    return TaxSummary(
+        years=tax_years,
+        total_tax_paid=sum(yr.cgt_payable for yr in tax_years),
+        after_tax_cagr=0.0,
+        lots=all_disposed_lots,
+        marginal_tax_rate=marginal_tax_rate,
+        entity_type=entity_type,
+    )

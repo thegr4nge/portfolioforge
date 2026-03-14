@@ -35,7 +35,8 @@ from market_data.backtest.tax.audit import build_cgt_event_rows
 from market_data.backtest.tax.audit_models import CgtEventRow
 from market_data.backtest.tax.engine import TAX_ENGINE_VERSION
 from market_data.backtest.tax.franking import resolve_franking_pct
-from market_data.backtest.tax.models import TaxAwareResult
+from market_data.backtest.tax.models import DisposedLot, TaxAwareResult, TaxSummary
+from market_data.backtest.tax.trade_record import TradeRecord
 
 # ── colour palette ──────────────────────────────────────────────────────────────
 _NAVY_HEX = "1F3864"
@@ -639,6 +640,210 @@ def export_report(
         doc,
         tax_result=report.result if isinstance(report.result, TaxAwareResult) else None,
     )
+    _add_disclaimer(doc)
+
+    doc.save(str(output_path))
+
+
+# ── CSV import workpaper helpers ────────────────────────────────────────────────
+
+
+def _add_trade_history_table(doc: object, trades: list[TradeRecord]) -> None:
+    """Actual broker trade history — 7 columns."""
+    _section_heading(doc, "Trade History (Imported from Broker CSV)")
+
+    table = doc.add_table(rows=1, cols=7)  # type: ignore[attr-defined]
+    _header_row(
+        table,
+        ["Date", "Ticker", "Action", "Qty", "Price (AUD)", "Brokerage (AUD)", "Total (AUD)"],
+        font_size=8,
+    )
+    for i, r in enumerate(sorted(trades, key=lambda t: t.trade_date)):
+        total = r.quantity * r.price_aud + (r.brokerage_aud if r.action == "BUY" else -r.brokerage_aud)
+        _body_row(
+            table,
+            [
+                str(r.trade_date),
+                r.ticker,
+                r.action,
+                f"{r.quantity:,.4g}",
+                f"${r.price_aud:,.4f}",
+                f"${r.brokerage_aud:,.2f}",
+                f"${total:,.2f}",
+            ],
+            shade=(i % 2 == 1),
+            font_size=8,
+        )
+    _set_col_widths(table, [2.0, 1.5, 1.2, 1.2, 2.0, 2.2, 2.0])
+    _add_cell_borders(table)
+    doc.add_paragraph()  # type: ignore[attr-defined]
+
+
+def _add_cgt_tax_summary(doc: object, tax: TaxSummary) -> None:
+    """Year-by-year CGT summary table from a TaxSummary (no BacktestResult needed)."""
+    _section_heading(doc, "Australian Tax Analysis (CGT)")
+
+    table = doc.add_table(rows=1, cols=6)  # type: ignore[attr-defined]
+    _header_row(
+        table,
+        [
+            "Tax Year",
+            "CGT Events",
+            "CGT Payable (AUD)",
+            "Franking Credits (AUD)",
+            "Dividend Income (AUD)",
+            "Carry-Fwd Loss (AUD)",
+        ],
+    )
+    for i, yr in enumerate(tax.years):
+        _body_row(
+            table,
+            [
+                f"FY{yr.ending_year}",
+                str(yr.cgt_events),
+                f"${yr.cgt_payable:,.2f}",
+                f"${yr.franking_credits_claimed:,.2f}",
+                f"${yr.dividend_income:,.2f}",
+                f"${yr.carried_forward_loss:,.2f}",
+            ],
+            shade=(i % 2 == 1),
+        )
+    _add_cell_borders(table)
+
+    p = doc.add_paragraph()  # type: ignore[attr-defined]
+    p.add_run(
+        f"Total CGT payable across all years: ${tax.total_tax_paid:,.2f}   |   "
+        "Note: after-tax CAGR not computed (requires price history)."
+    ).font.size = Pt(9)
+    doc.add_paragraph()  # type: ignore[attr-defined]
+
+
+def _add_cgt_event_log_from_lots(doc: object, lots: list[DisposedLot]) -> None:
+    """CGT event log from DisposedLot list (no TaxAwareResult needed)."""
+    _section_heading(doc, "CGT Event Log")
+
+    rows = build_cgt_event_rows(lots)
+    if not rows:
+        doc.add_paragraph("No disposal events recorded in this period.")  # type: ignore[attr-defined]
+        return
+
+    table = doc.add_table(rows=1, cols=7)  # type: ignore[attr-defined]
+    _header_row(
+        table,
+        ["#", "Tax Year", "Ticker", "Acquired", "Disposed", "Gain/Loss (AUD)", "ATO Rule Applied"],
+        font_size=8,
+    )
+    for i, row in enumerate(rows):
+        _body_row(
+            table,
+            [
+                str(i + 1),
+                row.tax_year_label,
+                row.ticker,
+                row.acquired_date.strftime("%d %b %Y"),
+                row.disposed_date.strftime("%d %b %Y"),
+                f"${row.gain_aud:,.2f}",
+                _cgt_rule_annotation(row),
+            ],
+            shade=(i % 2 == 1),
+            font_size=8,
+        )
+    _set_col_widths(table, [0.4, 1.5, 1.5, 2.0, 2.0, 2.1, 6.5])
+    _add_cell_borders(table)
+    doc.add_paragraph()  # type: ignore[attr-defined]
+
+
+def export_trades_cgt_workpaper(
+    trades: list[TradeRecord],
+    tax: TaxSummary,
+    output_path: Path,
+    *,
+    entity_type: str = "individual",
+    broker: str = "unknown",
+) -> None:
+    """Export a CGT workpaper generated from actual broker trades (no backtest).
+
+    Produces a Word document suitable for SMSF auditors. Includes the actual
+    trade history, CGT event log, and year-by-year tax summary. Performance
+    metrics (CAGR, Sharpe, drawdown) are omitted — they require price history
+    which is not fetched in the actual-trades flow.
+
+    Args:
+        trades: Validated TradeRecord list from parse_broker_csv().
+        tax: TaxSummary from run_cgt_from_trades().
+        output_path: Destination .docx path. Parent must exist.
+        entity_type: "individual" or "smsf" — shown on cover page.
+        broker: Broker name for display (e.g. "commsec").
+
+    Raises:
+        ValueError: If output_path does not have a .docx extension.
+    """
+    if output_path.suffix.lower() != ".docx":
+        raise ValueError(f"output_path must end in .docx, got: {output_path}")
+
+    doc = Document()
+    for section in doc.sections:
+        section.top_margin = Cm(2)
+        section.bottom_margin = Cm(2)
+        section.left_margin = Cm(2.5)
+        section.right_margin = Cm(2.5)
+
+    _add_page_numbers(doc)
+
+    # Cover page
+    title_para = doc.add_paragraph()  # type: ignore[attr-defined]
+    title_run = title_para.add_run("PortfolioForge — CGT Workpaper (Actual Trades)")
+    title_run.bold = True
+    title_run.font.size = Pt(20)
+    title_run.font.color.rgb = _NAVY
+
+    sorted_trades = sorted(trades, key=lambda t: t.trade_date)
+    period_start = sorted_trades[0].trade_date if sorted_trades else date.today()
+    period_end = sorted_trades[-1].trade_date if sorted_trades else date.today()
+    tickers = sorted({r.ticker for r in trades})
+
+    sub = doc.add_paragraph()  # type: ignore[attr-defined]
+    sub.add_run(f"Securities: {', '.join(tickers)}").font.size = Pt(10)
+
+    period = doc.add_paragraph()  # type: ignore[attr-defined]
+    period.add_run(
+        f"Trade period: {period_start.strftime('%d %b %Y')} to {period_end.strftime('%d %b %Y')}"
+        f"   |   Entity: {entity_type.upper()}"
+        f"   |   Broker: {broker.title()}"
+        f"   |   Generated: {date.today().strftime('%d %b %Y')}"
+    ).font.size = Pt(10)
+
+    doc.add_paragraph()  # type: ignore[attr-defined]
+
+    # KPI row: 3 boxes
+    kpi_table = doc.add_table(rows=2, cols=3)  # type: ignore[attr-defined]
+    kpi_labels = ["Trades Imported", "CGT Events", "Total CGT Payable"]
+    cgt_events = sum(yr.cgt_events for yr in tax.years)
+    kpi_values = [str(len(trades)), str(cgt_events), f"${tax.total_tax_paid:,.2f}"]
+    label_row = kpi_table.rows[0]
+    value_row = kpi_table.rows[1]
+    for i, (lbl, val) in enumerate(zip(kpi_labels, kpi_values, strict=True)):
+        _shade_cell(label_row.cells[i], _NAVY_HEX)
+        lp = label_row.cells[i].paragraphs[0]
+        lp.clear()
+        lr = lp.add_run(lbl)
+        lr.bold = True
+        lr.font.color.rgb = _WHITE
+        lr.font.size = Pt(9)
+        _shade_cell(value_row.cells[i], _TEAL_HEX)
+        vp = value_row.cells[i].paragraphs[0]
+        vp.clear()
+        vr = vp.add_run(val)
+        vr.bold = True
+        vr.font.color.rgb = _WHITE
+        vr.font.size = Pt(14)
+
+    doc.add_page_break()  # type: ignore[attr-defined]
+
+    _add_trade_history_table(doc, trades)
+    _add_cgt_tax_summary(doc, tax)
+    _add_cgt_event_log_from_lots(doc, tax.lots)
+    _add_methodology(doc, tax_result=None)
     _add_disclaimer(doc)
 
     doc.save(str(output_path))

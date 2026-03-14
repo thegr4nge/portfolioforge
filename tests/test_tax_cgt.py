@@ -465,6 +465,72 @@ def test_individual_50_percent_discount_default() -> None:
     assert results[0].cgt_payable == pytest.approx(2250.0)
 
 
+# ===========================================================================
+# build_tax_year_results() -- carry-forward across a "silent year" (HARD-05)
+# ===========================================================================
+
+
+@pytest.mark.parametrize("marginal_tax_rate", [0.325, 0.45, 0.15])
+def test_carry_forward_silent_year(marginal_tax_rate: float) -> None:
+    """Carry-forward loss threads correctly across a year with zero disposals.
+
+    FY2024: short-term loss of $1,000. carry_forward=1000.
+    FY2025: NO lots (silent year -- key test condition). Absent from by_year dict.
+    FY2026: short-term gain of $800. effective_losses=1000 -> net=0. carry_forward=200.
+    FY2027: short-term gain of $400. effective_losses=200 -> net=200. cgt=200*rate.
+
+    The results list must contain exactly 3 entries (FY2024, FY2026, FY2027).
+    FY2025 is absent because build_tax_year_results() only emits years with events.
+    The carry_forward from FY2024 must pass directly to FY2026 without being reset.
+    """
+    # FY2024: loss disposed 2023-12-01 (tax_year_for_date -> 2024)
+    loss_fy24 = _make_lot(
+        acquired_date=date(2023, 1, 1),
+        disposed_date=date(2023, 12, 1),
+        gain_aud=-1000.0,
+        discount_applied=False,
+    )
+    # FY2025: no lots -- the "silent year"
+    # FY2026: gain disposed 2025-12-01 (tax_year_for_date -> 2026)
+    gain_fy26 = _make_lot(
+        acquired_date=date(2025, 1, 1),
+        disposed_date=date(2025, 12, 1),
+        gain_aud=800.0,
+        discount_applied=False,
+    )
+    # FY2027: gain disposed 2026-12-01 (tax_year_for_date -> 2027)
+    gain_fy27 = _make_lot(
+        acquired_date=date(2026, 1, 1),
+        disposed_date=date(2026, 12, 1),
+        gain_aud=400.0,
+        discount_applied=False,
+    )
+
+    results = build_tax_year_results(
+        [loss_fy24, gain_fy26, gain_fy27], marginal_tax_rate=marginal_tax_rate
+    )
+
+    # Exactly 3 results: FY2025 is absent (no disposals that year)
+    assert len(results) == 3
+
+    fy24, fy26, fy27 = results[0], results[1], results[2]
+    assert fy24.ending_year == 2024
+    assert fy26.ending_year == 2026
+    assert fy27.ending_year == 2027
+
+    # FY2024: loss year -- carry_forward=1000
+    assert fy24.cgt_payable == pytest.approx(0.0)
+    assert fy24.carried_forward_loss == pytest.approx(1000.0)
+
+    # FY2026: $800 gain fully offset by $1000 carry -- no tax, $200 remaining carry
+    assert fy26.cgt_payable == pytest.approx(0.0)
+    assert fy26.carried_forward_loss == pytest.approx(200.0)
+
+    # FY2027: $400 gain, $200 effective carry -> net=200 -> cgt=200*rate
+    # (carry amount is invariant to marginal rate -- only the tax owed changes)
+    assert fy27.cgt_payable == pytest.approx(200.0 * marginal_tax_rate)
+
+
 def test_smsf_discount_with_loss_netting() -> None:
     """SMSF: loss netting occurs before the one-third discount is applied.
 

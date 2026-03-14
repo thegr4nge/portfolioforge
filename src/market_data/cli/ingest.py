@@ -76,17 +76,14 @@ def _run_single(
 
     to_date = date.today()
     console.print(
-        f"Ingesting [bold]{ticker}[/bold] from {from_date} to {to_date} "
-        f"→ [dim]{db_path}[/dim]"
+        f"Ingesting [bold]{ticker}[/bold] from {from_date} to {to_date} " f"→ [dim]{db_path}[/dim]"
     )
 
     try:
         conn = get_connection(db_path)
         orchestrator = IngestionOrchestrator(conn)
 
-        result = asyncio.run(
-            orchestrator.ingest_ticker(ticker, adapter, from_date, to_date)
-        )
+        result = asyncio.run(orchestrator.ingest_ticker(ticker, adapter, from_date, to_date))
 
         console.print(
             f"[green]Done:[/green] {result.ohlcv_records} OHLCV, "
@@ -213,9 +210,7 @@ def ingest_default(
 
 @ingest_app.command("watchlist")
 def ingest_watchlist(
-    file: Path = typer.Argument(
-        ..., help="Path to watchlist file (one ticker per line)"
-    ),
+    file: Path = typer.Argument(..., help="Path to watchlist file (one ticker per line)"),
     from_date_str: str | None = typer.Option(
         None,
         "--from",
@@ -273,9 +268,7 @@ def _run_watchlist(
         else:
             error_count += 1
 
-    console.print(
-        f"\n[bold]Summary:[/bold] {success_count} succeeded, {error_count} failed"
-    )
+    console.print(f"\n[bold]Summary:[/bold] {success_count} succeeded, {error_count} failed")
 
     if error_count > 0:
         raise typer.Exit(1)

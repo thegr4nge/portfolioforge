@@ -82,8 +82,7 @@ def ingest_trades_command(
     # --- Write to DB ---
     written, skipped = _write_trades(result.valid, broker, db)
     console.print(
-        f"\n[green]Done.[/green] "
-        f"{written} trade(s) written, {skipped} duplicate(s) skipped."
+        f"\n[green]Done.[/green] " f"{written} trade(s) written, {skipped} duplicate(s) skipped."
     )
 
 

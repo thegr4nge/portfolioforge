@@ -282,9 +282,7 @@ class DatabaseWriter:
                 ),
             )
 
-        logger.debug(
-            "write_ingestion_log: ticker={} status={}", record.ticker, record.status
-        )
+        logger.debug("write_ingestion_log: ticker={} status={}", record.ticker, record.status)
 
     # ------------------------------------------------------------------
     # Coverage

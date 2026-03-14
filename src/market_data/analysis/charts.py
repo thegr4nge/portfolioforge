@@ -7,6 +7,7 @@ plotext's module-level global state before adding new series.
 Terminal width detection: charts default to 80 wide. Callers pass
 per_panel_width for side-by-side comparison (terminal_width // 2 - 4).
 """
+
 from __future__ import annotations
 
 import os

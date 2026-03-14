@@ -24,7 +24,6 @@ from market_data.db.models import DividendRecord, OHLCVRecord, SplitRecord
 from market_data.db.schema import run_migrations
 from market_data.pipeline.ingestion import IngestionOrchestrator
 
-
 # ---------------------------------------------------------------------------
 # Test helpers
 # ---------------------------------------------------------------------------
@@ -127,9 +126,7 @@ async def test_ingest_ohlcv_writes_records(
     ]
     adapter = make_mock_adapter(ohlcv=records)
 
-    result = await orchestrator.ingest_ticker(
-        "AAPL", adapter, date(2024, 1, 1), date(2024, 1, 31)
-    )
+    result = await orchestrator.ingest_ticker("AAPL", adapter, date(2024, 1, 1), date(2024, 1, 31))
 
     rows = conn.execute("SELECT security_id FROM ohlcv").fetchall()
     assert len(rows) == 3
@@ -156,9 +153,9 @@ async def test_ingest_incremental_skips_covered_range(
     await orchestrator.ingest_ticker("AAPL", adapter, date(2024, 1, 1), date(2024, 1, 31))
 
     # fetch_ohlcv should have been called exactly once.
-    assert adapter.fetch_ohlcv.call_count == 1, (
-        f"Expected 1 adapter call, got {adapter.fetch_ohlcv.call_count}"
-    )
+    assert (
+        adapter.fetch_ohlcv.call_count == 1
+    ), f"Expected 1 adapter call, got {adapter.fetch_ohlcv.call_count}"
     # No duplicate rows.
     row_count = conn.execute("SELECT COUNT(*) FROM ohlcv").fetchone()[0]
     assert row_count == 3
@@ -202,9 +199,7 @@ async def test_every_fetch_logged(
 
     await orchestrator.ingest_ticker("AAPL", adapter, date(2024, 1, 1), date(2024, 1, 31))
 
-    rows = conn.execute(
-        "SELECT data_type, status FROM ingestion_log ORDER BY data_type"
-    ).fetchall()
+    rows = conn.execute("SELECT data_type, status FROM ingestion_log ORDER BY data_type").fetchall()
     data_types = {row[0] for row in rows}
     assert "ohlcv" in data_types
     assert "dividends" in data_types
@@ -223,9 +218,7 @@ async def test_error_logged_not_raised(
     adapter.fetch_ohlcv = AsyncMock(side_effect=RuntimeError("network error"))
 
     # Must not raise.
-    result = await orchestrator.ingest_ticker(
-        "AAPL", adapter, date(2024, 1, 1), date(2024, 1, 31)
-    )
+    result = await orchestrator.ingest_ticker("AAPL", adapter, date(2024, 1, 1), date(2024, 1, 31))
 
     error_row = conn.execute(
         "SELECT status, error_message FROM ingestion_log WHERE data_type='ohlcv'"
@@ -253,9 +246,7 @@ async def test_split_triggers_adjustment(
     init_adapter = make_mock_adapter()
     await orchestrator.ingest_ticker("AAPL", init_adapter, date(2020, 1, 1), date(2020, 1, 2))
 
-    security_id: int = conn.execute(
-        "SELECT id FROM securities WHERE ticker='AAPL'"
-    ).fetchone()[0]
+    security_id: int = conn.execute("SELECT id FROM securities WHERE ticker='AAPL'").fetchone()[0]
 
     # Step 2: Insert a raw OHLCV row dated before the split.
     conn.execute(
@@ -292,10 +283,10 @@ async def test_ingest_result_contains_counts(
         splits=[make_split(ex_date="2024-01-15")],
     )
 
-    result = await orchestrator.ingest_ticker(
-        "MSFT", adapter, date(2024, 1, 1), date(2024, 1, 31)
-    )
+    result = await orchestrator.ingest_ticker("MSFT", adapter, date(2024, 1, 1), date(2024, 1, 31))
 
     assert result.ohlcv_records == 5, f"Expected 5 ohlcv records, got {result.ohlcv_records}"
-    assert result.dividend_records == 2, f"Expected 2 dividend records, got {result.dividend_records}"
+    assert (
+        result.dividend_records == 2
+    ), f"Expected 2 dividend records, got {result.dividend_records}"
     assert result.split_records == 1, f"Expected 1 split record, got {result.split_records}"

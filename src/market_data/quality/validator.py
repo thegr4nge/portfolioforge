@@ -154,9 +154,7 @@ class ValidationSuite:
         """Return True if volume is zero."""
         return volume == 0
 
-    def _check_ohlc_violation(
-        self, open_: float, high: float, low: float, close: float
-    ) -> bool:
+    def _check_ohlc_violation(self, open_: float, high: float, low: float, close: float) -> bool:
         """Return True if any OHLC constraint is violated.
 
         Violated when:

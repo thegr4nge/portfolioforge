@@ -1,5 +1,4 @@
 """Tests for analysis/charts.py — plotext ASCII chart string generation."""
-from datetime import date
 
 import pandas as pd
 import pytest

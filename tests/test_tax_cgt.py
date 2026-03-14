@@ -300,7 +300,7 @@ def test_carry_forward_loss_absorbed_in_next_year() -> None:
     assert fy24.carried_forward_loss == pytest.approx(500.0)
 
     assert fy25.ending_year == 2025
-    assert fy25.cgt_payable == pytest.approx(135.0)   # 300 × 0.45
+    assert fy25.cgt_payable == pytest.approx(135.0)  # 300 × 0.45
     assert fy25.carried_forward_loss == pytest.approx(0.0)
 
 
@@ -343,7 +343,7 @@ def test_carry_forward_loss_spans_multiple_years() -> None:
     assert fy25.cgt_payable == pytest.approx(0.0)
     assert fy25.carried_forward_loss == pytest.approx(700.0)
 
-    assert fy26.cgt_payable == pytest.approx(45.0)   # 100 × 0.45
+    assert fy26.cgt_payable == pytest.approx(45.0)  # 100 × 0.45
     assert fy26.carried_forward_loss == pytest.approx(0.0)
 
 
@@ -376,7 +376,7 @@ def test_carry_forward_exhausted_against_discountable_gains() -> None:
     assert fy24.cgt_payable == pytest.approx(0.0)
     assert fy24.carried_forward_loss == pytest.approx(200.0)
 
-    assert fy25.cgt_payable == pytest.approx(67.5)   # 150 × 0.45
+    assert fy25.cgt_payable == pytest.approx(67.5)  # 150 × 0.45
     assert fy25.carried_forward_loss == pytest.approx(0.0)
 
 
@@ -402,9 +402,7 @@ def test_multiple_tax_years() -> None:
         gain_aud=500.0,
         discount_applied=True,
     )
-    results = build_tax_year_results(
-        [lot_fy24_a, lot_fy24_b, lot_fy25], marginal_tax_rate=0.30
-    )
+    results = build_tax_year_results([lot_fy24_a, lot_fy24_b, lot_fy25], marginal_tax_rate=0.30)
 
     assert len(results) == 2
     # Results must be sorted ascending by ending_year
@@ -418,3 +416,77 @@ def test_multiple_tax_years() -> None:
     # FY2025: non-discount=0, discount=500 → net_disc=250 → net_cgt=250 × 0.30 = 75
     assert results[1].cgt_events == 1
     assert results[1].cgt_payable == pytest.approx(75.0)
+
+
+# ===========================================================================
+# build_tax_year_results() — SMSF one-third CGT discount
+# ===========================================================================
+
+
+def test_smsf_one_third_discount() -> None:
+    """SMSF accumulation phase: 33.33% CGT discount instead of 50%.
+
+    ATO s.115-100: complying SMSF in accumulation phase receives a one-third
+    discount (not one-half) on capital gains from assets held > 12 months.
+
+    Long-term gain: $10,000
+    SMSF discount fraction: 1/3 → taxable portion retained: 2/3
+    Net taxable after discount: $10,000 × 2/3 ≈ $6,666.67
+    SMSF accumulation rate: 15%
+    CGT payable: $6,666.67 × 0.15 = $1,000.00
+    """
+    lot = _make_lot(
+        acquired_date=date(2022, 1, 1),
+        disposed_date=date(2023, 6, 1),  # FY2023, held > 12 months
+        gain_aud=10_000.0,
+        discount_applied=True,
+    )
+    results = build_tax_year_results([lot], marginal_tax_rate=0.15, cgt_discount_fraction=1.0 / 3.0)
+    assert len(results) == 1
+    assert results[0].cgt_payable == pytest.approx(1000.0)
+
+
+def test_individual_50_percent_discount_default() -> None:
+    """Individual (default cgt_discount_fraction=0.5): 50% discount unchanged.
+
+    Long-term gain: $10,000
+    Individual discount: 50% → taxable: $5,000
+    Top marginal rate: 45%
+    CGT payable: $5,000 × 0.45 = $2,250
+    """
+    lot = _make_lot(
+        acquired_date=date(2022, 1, 1),
+        disposed_date=date(2023, 6, 1),
+        gain_aud=10_000.0,
+        discount_applied=True,
+    )
+    results = build_tax_year_results([lot], marginal_tax_rate=0.45)
+    assert len(results) == 1
+    assert results[0].cgt_payable == pytest.approx(2250.0)
+
+
+def test_smsf_discount_with_loss_netting() -> None:
+    """SMSF: loss netting occurs before the one-third discount is applied.
+
+    Loss of $2,000 in FY2025, discountable gain of $8,000 in FY2025.
+    ATO ordering: net against discountable gain → net_discount = 6,000.
+    SMSF discount (1/3): taxable = 6,000 × 2/3 = 4,000.
+    SMSF rate 15%: CGT = 4,000 × 0.15 = 600.00
+    """
+    loss_lot = _make_lot(
+        acquired_date=date(2024, 8, 1),
+        disposed_date=date(2025, 2, 1),
+        gain_aud=-2_000.0,
+        discount_applied=False,
+    )
+    gain_lot = _make_lot(
+        acquired_date=date(2022, 1, 1),
+        disposed_date=date(2025, 3, 1),
+        gain_aud=8_000.0,
+        discount_applied=True,
+    )
+    results = build_tax_year_results(
+        [loss_lot, gain_lot], marginal_tax_rate=0.15, cgt_discount_fraction=1.0 / 3.0
+    )
+    assert len(results) == 1
+    assert results[0].cgt_payable == pytest.approx(600.0)

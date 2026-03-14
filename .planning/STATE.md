@@ -4,7 +4,7 @@
 
 **Core Value:** Anyone — regardless of investment experience — can describe their financial situation and goals, and receive a plain-language recommendation on what to do with their money, backed by real historical data, honest cost assumptions, and transparent reasoning.
 
-**Current Focus:** Phases 1–4 + post-Phase-4 priorities COMPLETE. Phase 5A (Compliance & Audit Trail) — next to plan and build.
+**Current Focus:** Phases 1–5B complete. Demo/outreach in progress. Next dev work depends on early user feedback.
 
 ---
 
@@ -13,10 +13,10 @@
 | Field | Value |
 |-------|-------|
 | Milestone | v1 |
-| Current Phase | 4 — Analysis & Reporting — COMPLETE |
-| Current Plan | 04 (complete — all plans done) |
-| Phase Status | Complete |
-| Overall Progress | 23/23 plans done (Phase 1: 8/8; Phase 2: 4/4; Phase 3: 5/5; Phase 4: 4/4)
+| Current Phase | 5B — Broker CSV Ingestion — COMPLETE |
+| Current Plan | 05A-01 (complete) |
+| Phase Status | Demo / outreach in progress |
+| Overall Progress | 23/23 plans done (Phase 1: 8/8; Phase 2: 4/4; Phase 3: 5/5; Phase 4: 4/4; Phase 5A–5B: complete)
 
 ```
 Progress: [████████████████████████████████████████] ~91% (Phase 1: 8/8; Phase 2: 4/4; Phase 3: 5/5; Phase 4: 4/4; Phase 5: pending)
@@ -34,8 +34,8 @@ Phase 1 [████████] Phase 2 [████████] Phase 3 [�
 | 3 | Backtest Engine (Tax) | Complete | 2026-03-01 |
 | 4 | Analysis & Reporting | Complete | 2026-03-02 |
 | 4.x | Post-Phase-4 Priorities (carry-forward, Word export, CSV import, tax compare, Sharpe, benchmark fix) | Complete | 2026-03-05 |
-| 5A | Compliance & Audit Trail | Complete | 2026-03-08 |
-| 5B | Broker CSV Ingestion | Pending | — |
+| 5A | Compliance & Audit Trail | Complete | 2026-03-08 | CGT audit trail, audit_models, build_cgt_event_rows, Word export of event log |
+| 5B | Broker CSV Ingestion | Complete | 2026-03-10 | TradeRecord, broker_parsers (CommSec/Stake/SelfWealth), trade_validator, ingest-trades CLI, trades table |
 | 5C | Existing Portfolio Cost Basis | Pending | — |
 | 6 | Advisory Engine (post-revenue) | Pending | — |
 
@@ -173,7 +173,7 @@ Phase 1 [████████] Phase 2 [████████] Phase 3 [�
 **Stopped at:** Phase 5A–5C + Phase 6 planned and committed to ROADMAP.md. MARKETING.md created. Strategic direction locked.
 **Resume file:** None
 
-**Next action:** Evaluate Phase 5B (Broker CSV Ingestion). Requirements: PROF-04 to PROF-07. Broker parsers for CommSec, Stake, SelfWealth; TradeRecord schema; `market-data ingest-trades` CLI command; validation layer.
+**Next action:** Demo / outreach in progress (18 SMSF accountant connections sent). Next dev work depends on early user feedback. Candidates: Phase 5C (existing portfolio cost basis) or hardening based on real CommSec CSV files once received from early users.
 
 **Post-Phase-4 deliveries (2026-03-05):**
 - Cross-year capital loss carry-forward (build_tax_year_results, 3 new tests)

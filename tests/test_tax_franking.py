@@ -185,6 +185,26 @@ def test_threshold_boundary_exactly_5000() -> None:
     assert should_apply_45_day_rule(5000.0) is True
 
 
+def test_smsf_mode_always_applies_45_day_rule() -> None:
+    """SMSF: small shareholder ($5k) exemption does not apply — rule always enforced.
+
+    ATO rule: the $5,000 small shareholder exemption is available only to
+    individuals. Superannuation funds (including SMSFs) are excluded from the
+    exemption and must always satisfy the 45-day holding rule.
+    """
+    # Even with zero credits, rule applies for SMSF.
+    assert should_apply_45_day_rule(0.0, smsf_mode=True) is True
+    # Below individual threshold — would be waived for individual, not for SMSF.
+    assert should_apply_45_day_rule(1000.0, smsf_mode=True) is True
+    assert should_apply_45_day_rule(4999.99, smsf_mode=True) is True
+
+
+def test_individual_default_45_day_below_threshold_waived() -> None:
+    """Individual (default smsf_mode=False): below $5k threshold, rule waived."""
+    assert should_apply_45_day_rule(1000.0) is False
+    assert should_apply_45_day_rule(1000.0, smsf_mode=False) is False
+
+
 # ---------------------------------------------------------------------------
 # FRANKING_LOOKUP coverage tests
 # ---------------------------------------------------------------------------
@@ -200,8 +220,26 @@ def test_franking_lookup_covers_all_etfs() -> None:
 def test_franking_lookup_covers_top20_asx() -> None:
     """FRANKING_LOOKUP contains all top-20 ASX stock tickers specified in CONTEXT.md."""
     expected_stocks = {
-        "BHP", "CBA", "ANZ", "WBC", "NAB", "CSL", "WES", "WOW", "MQG", "RIO",
-        "TLS", "FMG", "TCL", "GMG", "WDS", "STO", "QBE", "SHL", "APA", "ASX",
+        "BHP",
+        "CBA",
+        "ANZ",
+        "WBC",
+        "NAB",
+        "CSL",
+        "WES",
+        "WOW",
+        "MQG",
+        "RIO",
+        "TLS",
+        "FMG",
+        "TCL",
+        "GMG",
+        "WDS",
+        "STO",
+        "QBE",
+        "SHL",
+        "APA",
+        "ASX",
     }
     for ticker in expected_stocks:
         assert ticker in FRANKING_LOOKUP, f"Stock {ticker} missing from FRANKING_LOOKUP"

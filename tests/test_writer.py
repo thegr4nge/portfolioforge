@@ -7,20 +7,16 @@ Each test uses a fresh in-memory DB via function-scoped fixtures.
 import sqlite3
 
 import pytest
-
 from src.market_data.db.models import (
     CoverageRecord,
     DividendRecord,
-    FXRateRecord,
     IngestionLogRecord,
     OHLCVRecord,
     SecurityRecord,
-    SplitRecord,
 )
 from src.market_data.db.schema import run_migrations
 from src.market_data.db.writer import DatabaseWriter
 from src.market_data.quality.flags import QualityFlag
-
 
 # ---------------------------------------------------------------------------
 # Fixtures

@@ -3,6 +3,7 @@
 All types here are the shared contract between analysis sub-modules
 (scenario.py, charts.py, breakdown.py, renderer.py) and callers.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field

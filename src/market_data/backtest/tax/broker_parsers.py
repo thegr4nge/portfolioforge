@@ -52,8 +52,7 @@ def _normalize_action(raw: str) -> Literal["BUY", "SELL"]:
     key = raw.strip().lower()
     if key not in _ACTION_MAP:
         raise ValueError(
-            f"Cannot interpret action {raw!r}. Expected one of: "
-            f"{sorted(_ACTION_MAP)}."
+            f"Cannot interpret action {raw!r}. Expected one of: " f"{sorted(_ACTION_MAP)}."
         )
     return _ACTION_MAP[key]
 
@@ -79,9 +78,7 @@ def _parse_date(raw: str) -> date:
             return datetime.strptime(raw, fmt).date()
         except ValueError:
             continue
-    raise ValueError(
-        f"Cannot parse date {raw!r}. Supported formats: {_DATE_FORMATS}."
-    )
+    raise ValueError(f"Cannot parse date {raw!r}. Supported formats: {_DATE_FORMATS}.")
 
 
 def _clean_number(raw: str) -> float:
@@ -153,13 +150,26 @@ def _read_csv_rows(
 
 _COMMSEC_DETAILS_RE = re.compile(
     r"(?i)"
-    r"(bought|sold|buy|sell)\s+"           # group 1: action
-    r"([\d,]+(?:\.\d+)?)\s+"              # group 2: quantity
-    r"\S+\s+"                              # security code in details (skip)
-    r"@\s*\$?([\d,]+(?:\.\d+)?)"          # group 3: price
+    r"(bought|sold|buy|sell)\s+"  # group 1: action
+    r"([\d,]+(?:\.\d+)?)\s+"  # group 2: quantity
+    r"\S+\s+"  # security code in details (skip)
+    r"@\s*\$?([\d,]+(?:\.\d+)?)"  # group 3: price (optional '$' handled)
     r"(?:.*?[Bb]rok(?:erage)?\s*\$?([\d,]+(?:\.\d+)?))?",  # group 4: brokerage
     re.DOTALL,
 )
+# FRAGILE POINTS in _COMMSEC_DETAILS_RE (ASSUMED FORMAT — verify against real export):
+#
+# 1. Security code token: '\S+' expects exactly one whitespace-delimited token between
+#    quantity and '@'. Codes with embedded spaces would not parse (unlikely for ASX/ASX).
+#
+# 2. Price dollar sign: '@\s*\$?' handles both '@ 95.50' and '@ $95.50' — not fragile.
+#
+# 3. Brokerage separator: expects 'Brokerage 19.95' or 'Brok 19.95' (space, no colon).
+#    'Brokerage: 19.95' does NOT match group 4 → brokerage_aud = 0.0 (trade still
+#    parsed; validator warns). If CommSec changes format, add r'\:?' after the label.
+#
+# 4. 'Commission' / 'Fee' labels not matched — only 'Brok'/'Brokerage' recognised.
+#    If CommSec ever labels brokerage differently, extend [Bb]rok(?:erage)? accordingly.
 
 
 def parse_commsec(source: Path | str) -> list[TradeRecord]:
@@ -228,6 +238,7 @@ def parse_commsec(source: Path | str) -> list[TradeRecord]:
 #   Amount (AUD)- total consideration in AUD (ignored; computed from qty * price)
 #   Fees        - brokerage/fees in AUD (0.00 for Stake's zero-brokerage plans)
 #   Notes       - free-text notes
+
 
 def parse_stake(source: Path | str) -> list[TradeRecord]:
     """Parse a Stake activity CSV into TradeRecords.
@@ -303,6 +314,7 @@ def parse_stake(source: Path | str) -> list[TradeRecord]:
 #
 # Ticker is constructed as Code + "." + Market if Market is not empty,
 # unless Code already contains a "." suffix (e.g. "VAS.AX").
+
 
 def parse_selfwealth(source: Path | str) -> list[TradeRecord]:
     """Parse a SelfWealth trade history CSV into TradeRecords.
@@ -384,7 +396,5 @@ def parse_broker_csv(source: Path | str, broker: str) -> list[TradeRecord]:
     """
     key = broker.strip().lower()
     if key not in _PARSERS:
-        raise ValueError(
-            f"Unknown broker {broker!r}. Supported brokers: {SUPPORTED_BROKERS}."
-        )
+        raise ValueError(f"Unknown broker {broker!r}. Supported brokers: {SUPPORTED_BROKERS}.")
     return _PARSERS[key](source)

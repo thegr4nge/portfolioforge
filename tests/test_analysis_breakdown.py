@@ -1,4 +1,5 @@
 """Tests for analysis/breakdown.py — sector and geographic exposure aggregation."""
+
 import sqlite3
 
 import pytest
@@ -10,15 +11,13 @@ from market_data.db.schema import get_connection
 def _make_test_conn() -> sqlite3.Connection:
     """In-memory DB with a minimal securities table."""
     conn = get_connection(":memory:")
-    conn.execute(
-        """
+    conn.execute("""
         INSERT INTO securities (ticker, name, exchange, currency, sector)
         VALUES
             ('VAS.AX',  'Vanguard ASX 300', 'ASX',    'AUD', 'Financials'),
             ('NDQ.AX',  'BetaShares NASDAQ', 'ASX',   'AUD', NULL),
             ('SPY',     'SPDR S&P 500',       'NYSE',   'USD', 'Index')
-        """
-    )
+        """)
     conn.commit()
     return conn
 

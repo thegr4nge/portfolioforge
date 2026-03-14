@@ -13,14 +13,12 @@ GREEN phase: all tests pass after metrics.py is implemented.
 import numpy as np
 import pandas as pd
 import pytest
-
 from src.market_data.backtest.metrics import (
     cagr,
     max_drawdown,
     sharpe_ratio,
     total_return,
 )
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -211,9 +209,7 @@ class TestSharpeRatio:
         values = [100.0 * (1.01**i) for i in range(n)]
         curve = _series(values)
         daily_returns = pd.Series(values).pct_change().dropna()
-        expected = float(
-            (daily_returns.mean() / daily_returns.std()) * np.sqrt(252)
-        )
+        expected = float((daily_returns.mean() / daily_returns.std()) * np.sqrt(252))
         result = sharpe_ratio(curve, risk_free_rate=0.0)
         assert result == pytest.approx(expected, rel=1e-4)
 

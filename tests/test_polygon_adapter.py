@@ -22,11 +22,11 @@ def adapter() -> PolygonAdapter:
 # ---------------------------------------------------------------------------
 
 
-async def test_fetch_ohlcv_single_page(adapter: PolygonAdapter, respx_mock: respx.MockRouter) -> None:
+async def test_fetch_ohlcv_single_page(
+    adapter: PolygonAdapter, respx_mock: respx.MockRouter
+) -> None:
     """Single-page OHLCV response is mapped correctly to OHLCVRecord list."""
-    respx_mock.get(
-        f"{BASE_URL}/v2/aggs/ticker/AAPL/range/1/day/2024-01-02/2024-01-31"
-    ).mock(
+    respx_mock.get(f"{BASE_URL}/v2/aggs/ticker/AAPL/range/1/day/2024-01-02/2024-01-31").mock(
         return_value=httpx.Response(
             200,
             json={
@@ -48,9 +48,7 @@ async def test_fetch_ohlcv_single_page(adapter: PolygonAdapter, respx_mock: resp
 
     from datetime import date
 
-    records = await adapter.fetch_ohlcv(
-        "AAPL", date(2024, 1, 2), date(2024, 1, 31)
-    )
+    records = await adapter.fetch_ohlcv("AAPL", date(2024, 1, 2), date(2024, 1, 31))
 
     assert len(records) == 1
     record = records[0]
@@ -65,7 +63,9 @@ async def test_fetch_ohlcv_single_page(adapter: PolygonAdapter, respx_mock: resp
     assert record.security_id == 0
 
 
-async def test_fetch_ohlcv_pagination(adapter: PolygonAdapter, respx_mock: respx.MockRouter) -> None:
+async def test_fetch_ohlcv_pagination(
+    adapter: PolygonAdapter, respx_mock: respx.MockRouter
+) -> None:
     """Adapter follows next_url chain and combines both pages into one list.
 
     Polygon's next_url is a different URL (cursor-based endpoint), so we mock
@@ -82,7 +82,14 @@ async def test_fetch_ohlcv_pagination(adapter: PolygonAdapter, respx_mock: respx
             json={
                 "status": "OK",
                 "results": [
-                    {"t": 1704153600000, "o": 185.0, "h": 186.0, "l": 184.0, "c": 185.5, "v": 50000000}
+                    {
+                        "t": 1704153600000,
+                        "o": 185.0,
+                        "h": 186.0,
+                        "l": 184.0,
+                        "c": 185.5,
+                        "v": 50000000,
+                    }
                 ],
                 "next_url": cursor_url,
             },
@@ -94,7 +101,14 @@ async def test_fetch_ohlcv_pagination(adapter: PolygonAdapter, respx_mock: respx
             json={
                 "status": "OK",
                 "results": [
-                    {"t": 1704240000000, "o": 186.0, "h": 188.0, "l": 185.5, "c": 187.0, "v": 45000000}
+                    {
+                        "t": 1704240000000,
+                        "o": 186.0,
+                        "h": 188.0,
+                        "l": 185.5,
+                        "c": 187.0,
+                        "v": 45000000,
+                    }
                 ],
                 "next_url": "",
             },
@@ -103,26 +117,31 @@ async def test_fetch_ohlcv_pagination(adapter: PolygonAdapter, respx_mock: respx
 
     from datetime import date
 
-    records = await adapter.fetch_ohlcv(
-        "AAPL", date(2024, 1, 2), date(2024, 1, 31)
-    )
+    records = await adapter.fetch_ohlcv("AAPL", date(2024, 1, 2), date(2024, 1, 31))
 
     assert len(records) == 2
     assert records[0].close == 185.5
     assert records[1].close == 187.0
 
 
-async def test_fetch_ohlcv_timestamp_conversion(adapter: PolygonAdapter, respx_mock: respx.MockRouter) -> None:
+async def test_fetch_ohlcv_timestamp_conversion(
+    adapter: PolygonAdapter, respx_mock: respx.MockRouter
+) -> None:
     """Unix millisecond timestamp 1704153600000 converts to ISO date 2024-01-02."""
-    respx_mock.get(
-        f"{BASE_URL}/v2/aggs/ticker/AAPL/range/1/day/2024-01-02/2024-01-31"
-    ).mock(
+    respx_mock.get(f"{BASE_URL}/v2/aggs/ticker/AAPL/range/1/day/2024-01-02/2024-01-31").mock(
         return_value=httpx.Response(
             200,
             json={
                 "status": "OK",
                 "results": [
-                    {"t": 1704153600000, "o": 185.0, "h": 186.0, "l": 184.0, "c": 185.5, "v": 1000000}
+                    {
+                        "t": 1704153600000,
+                        "o": 185.0,
+                        "h": 186.0,
+                        "l": 184.0,
+                        "c": 185.5,
+                        "v": 1000000,
+                    }
                 ],
                 "next_url": "",
             },
@@ -131,18 +150,16 @@ async def test_fetch_ohlcv_timestamp_conversion(adapter: PolygonAdapter, respx_m
 
     from datetime import date
 
-    records = await adapter.fetch_ohlcv(
-        "AAPL", date(2024, 1, 2), date(2024, 1, 31)
-    )
+    records = await adapter.fetch_ohlcv("AAPL", date(2024, 1, 2), date(2024, 1, 31))
 
     assert records[0].date == "2024-01-02"
 
 
-async def test_fetch_ohlcv_empty_results(adapter: PolygonAdapter, respx_mock: respx.MockRouter) -> None:
+async def test_fetch_ohlcv_empty_results(
+    adapter: PolygonAdapter, respx_mock: respx.MockRouter
+) -> None:
     """Empty results list from Polygon returns empty list without error."""
-    respx_mock.get(
-        f"{BASE_URL}/v2/aggs/ticker/AAPL/range/1/day/2024-01-02/2024-01-31"
-    ).mock(
+    respx_mock.get(f"{BASE_URL}/v2/aggs/ticker/AAPL/range/1/day/2024-01-02/2024-01-31").mock(
         return_value=httpx.Response(
             200,
             json={"status": "OK", "results": [], "next_url": ""},
@@ -151,9 +168,7 @@ async def test_fetch_ohlcv_empty_results(adapter: PolygonAdapter, respx_mock: re
 
     from datetime import date
 
-    records = await adapter.fetch_ohlcv(
-        "AAPL", date(2024, 1, 2), date(2024, 1, 31)
-    )
+    records = await adapter.fetch_ohlcv("AAPL", date(2024, 1, 2), date(2024, 1, 31))
 
     assert records == []
 
@@ -163,7 +178,9 @@ async def test_fetch_ohlcv_empty_results(adapter: PolygonAdapter, respx_mock: re
 # ---------------------------------------------------------------------------
 
 
-async def test_fetch_dividends_maps_fields(adapter: PolygonAdapter, respx_mock: respx.MockRouter) -> None:
+async def test_fetch_dividends_maps_fields(
+    adapter: PolygonAdapter, respx_mock: respx.MockRouter
+) -> None:
     """Polygon dividend fields are mapped correctly to DividendRecord fields."""
     respx_mock.get(f"{BASE_URL}/v3/reference/dividends").mock(
         return_value=httpx.Response(
@@ -188,9 +205,7 @@ async def test_fetch_dividends_maps_fields(adapter: PolygonAdapter, respx_mock: 
 
     from datetime import date
 
-    records = await adapter.fetch_dividends(
-        "AAPL", date(2024, 1, 1), date(2024, 3, 31)
-    )
+    records = await adapter.fetch_dividends("AAPL", date(2024, 1, 1), date(2024, 3, 31))
 
     assert len(records) == 1
     record = records[0]
@@ -211,7 +226,9 @@ async def test_fetch_dividends_maps_fields(adapter: PolygonAdapter, respx_mock: 
 # ---------------------------------------------------------------------------
 
 
-async def test_fetch_splits_aapl_2020(adapter: PolygonAdapter, respx_mock: respx.MockRouter) -> None:
+async def test_fetch_splits_aapl_2020(
+    adapter: PolygonAdapter, respx_mock: respx.MockRouter
+) -> None:
     """AAPL 4:1 forward split (2020-08-31): split_from=1, split_to=4.
 
     Documents the correct direction: split_to > split_from for a forward split.
@@ -235,9 +252,7 @@ async def test_fetch_splits_aapl_2020(adapter: PolygonAdapter, respx_mock: respx
 
     from datetime import date
 
-    records = await adapter.fetch_splits(
-        "AAPL", date(2020, 1, 1), date(2020, 12, 31)
-    )
+    records = await adapter.fetch_splits("AAPL", date(2020, 1, 1), date(2020, 12, 31))
 
     assert len(records) == 1
     record = records[0]
@@ -252,17 +267,15 @@ async def test_fetch_splits_aapl_2020(adapter: PolygonAdapter, respx_mock: respx
 # ---------------------------------------------------------------------------
 
 
-async def test_fetch_ohlcv_http_error_propagates(adapter: PolygonAdapter, respx_mock: respx.MockRouter) -> None:
+async def test_fetch_ohlcv_http_error_propagates(
+    adapter: PolygonAdapter, respx_mock: respx.MockRouter
+) -> None:
     """HTTP 429 (rate limit exceeded) from Polygon is not swallowed — raises HTTPStatusError."""
-    respx_mock.get(
-        f"{BASE_URL}/v2/aggs/ticker/AAPL/range/1/day/2024-01-02/2024-01-31"
-    ).mock(
+    respx_mock.get(f"{BASE_URL}/v2/aggs/ticker/AAPL/range/1/day/2024-01-02/2024-01-31").mock(
         return_value=httpx.Response(429, json={"status": "ERROR", "error": "Rate limit exceeded"})
     )
 
     from datetime import date
 
     with pytest.raises(httpx.HTTPStatusError):
-        await adapter.fetch_ohlcv(
-            "AAPL", date(2024, 1, 2), date(2024, 1, 31)
-        )
+        await adapter.fetch_ohlcv("AAPL", date(2024, 1, 2), date(2024, 1, 31))

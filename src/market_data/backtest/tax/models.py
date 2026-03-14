@@ -101,6 +101,7 @@ class TaxSummary:
     after_tax_cagr: float
     lots: list[DisposedLot]
     marginal_tax_rate: float = 0.325
+    entity_type: str = "individual"
 
 
 @dataclass

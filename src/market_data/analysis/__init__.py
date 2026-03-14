@@ -5,6 +5,7 @@ Public API:
     render_comparison() — side-by-side rich output for two portfolios
     report_to_json()    — JSON-serialisable dict for pipeline/--json use
 """
+
 from market_data.analysis.renderer import (
     render_comparison,
     render_report,

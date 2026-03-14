@@ -88,6 +88,7 @@ def tax_year_end(ending_year: int) -> date:
 def build_tax_year_results(
     disposed_lots: list[DisposedLot],
     marginal_tax_rate: float,
+    cgt_discount_fraction: float = 0.5,
 ) -> list[TaxYearResult]:
     """Group disposed lots by Australian tax year and compute CGT payable.
 
@@ -97,9 +98,15 @@ def build_tax_year_results(
         3. remaining_losses  = max(0, effective_losses - sum_non_discount_gains)
         4. net_discount      = max(0, sum_discount_gains - remaining_losses)
         5. carry_forward_out = max(0, remaining_losses - sum_discount_gains)
-        6. discounted        = net_discount * 0.5
+        6. discounted        = net_discount * (1 - cgt_discount_fraction)
         7. net_cgt           = net_non_discount + discounted
         8. cgt_payable       = net_cgt * marginal_tax_rate
+
+    cgt_discount_fraction is the proportion of a long-term gain that is EXCLUDED
+    from taxable income:
+        0.5   — individual or trust (50% discount, ATO s.115-25). Default.
+        1/3   — complying SMSF accumulation phase (33.33% discount, ATO s.115-100).
+        0.0   — non-complying SMSF or entity not eligible for discount.
 
     Cross-year carry-forward (ATO rule):
         If a tax year results in a net capital loss, that loss carries forward
@@ -118,6 +125,8 @@ def build_tax_year_results(
     Args:
         disposed_lots: All CGT events across all tax years to process.
         marginal_tax_rate: The investor's marginal income tax rate (0.0–1.0).
+        cgt_discount_fraction: Fraction of a long-term gain excluded from tax
+            (default 0.5 for individuals; use 1/3 for SMSF accumulation phase).
 
     Returns:
         List of TaxYearResult, one per tax year that has at least one event,
@@ -157,8 +166,10 @@ def build_tax_year_results(
         # Any losses not absorbed by either gain category carry to the next year.
         carry_forward = max(0.0, remaining_losses - sum_discount_gains)
 
-        # Apply 50% CGT discount to the remaining discountable net gain.
-        discounted = net_discount * 0.5
+        # Apply CGT discount to the remaining discountable net gain.
+        # cgt_discount_fraction is the exempt proportion: 0.5 (individual),
+        # 1/3 (SMSF accumulation). Taxable retained = 1 - discount_fraction.
+        discounted = net_discount * (1.0 - cgt_discount_fraction)
 
         # Net CGT is the sum of the two categories; cgt_payable is never negative.
         net_cgt = net_non_discount + discounted
@@ -173,7 +184,7 @@ def build_tax_year_results(
                 cgt_events=len(year_lots),
                 cgt_payable=cgt_payable,
                 franking_credits_claimed=0.0,  # updated by franking.py
-                dividend_income=0.0,           # updated by franking.py
+                dividend_income=0.0,  # updated by franking.py
                 after_tax_return=gross_gain - cgt_payable,
                 carried_forward_loss=carry_forward,
             )

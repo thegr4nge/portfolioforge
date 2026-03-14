@@ -134,10 +134,7 @@ def _make_fake_backtest_result(
         max_drawdown=-0.01,
         sharpe_ratio=0.8,
     )
-    coverage = [
-        DataCoverage(ticker=t, from_date=start, to_date=end, records=100)
-        for t in tickers
-    ]
+    coverage = [DataCoverage(ticker=t, from_date=start, to_date=end, records=100) for t in tickers]
     return BacktestResult(
         metrics=metrics,
         benchmark=benchmark_result,
@@ -166,9 +163,7 @@ def _tax_conn_with_securities(
     writer = DatabaseWriter(conn)
     for ticker, currency in tickers_currencies:
         exchange = "NASDAQ" if currency == "USD" else "ASX"
-        writer.upsert_security(
-            SecurityRecord(ticker=ticker, exchange=exchange, currency=currency)
-        )
+        writer.upsert_security(SecurityRecord(ticker=ticker, exchange=exchange, currency=currency))
     if fx_rows:
         for date_iso, rate in fx_rows:
             conn.execute(
@@ -257,8 +252,8 @@ def test_fixture_a_short_term_no_discount() -> None:
     assert lot.discount_applied is False
 
     # Verify gain calculation.
-    expected_cost_basis = 1000 * 1.50 + _BROKERAGE   # 1550.0
-    expected_proceeds = 1000 * 2.35 - _BROKERAGE      # 2300.0
+    expected_cost_basis = 1000 * 1.50 + _BROKERAGE  # 1550.0
+    expected_proceeds = 1000 * 2.35 - _BROKERAGE  # 2300.0
     expected_gain = expected_proceeds - expected_cost_basis  # 750.0
 
     assert abs(lot.cost_basis_aud - expected_cost_basis) < 0.01
@@ -268,9 +263,9 @@ def test_fixture_a_short_term_no_discount() -> None:
     # CGT payable = full gain * marginal rate (no discount).
     total_cgt = sum(yr.cgt_payable for yr in result.tax.years)
     expected_cgt = expected_gain * _MARGINAL_RATE  # 750 * 0.325 = 243.75
-    assert abs(total_cgt - expected_cgt) < 0.01, (
-        f"CGT payable {total_cgt:.2f} should be {expected_cgt:.2f}"
-    )
+    assert (
+        abs(total_cgt - expected_cgt) < 0.01
+    ), f"CGT payable {total_cgt:.2f} should be {expected_cgt:.2f}"
 
 
 # ---------------------------------------------------------------------------
@@ -395,14 +390,14 @@ def test_fixture_b_long_term_with_prior_loss() -> None:
     assert oth.discount_applied is False
 
     # Verify MLG gain.
-    expected_mlg_cost = 400 * 37.50 + _BROKERAGE   # 15050.0
-    expected_mlg_proc = 400 * 57.50 - _BROKERAGE   # 22950.0
+    expected_mlg_cost = 400 * 37.50 + _BROKERAGE  # 15050.0
+    expected_mlg_proc = 400 * 57.50 - _BROKERAGE  # 22950.0
     expected_mlg_gain = expected_mlg_proc - expected_mlg_cost  # 7900.0
     assert abs(mlg.gain_aud - expected_mlg_gain) < 0.01
 
     # Verify OTH loss.
-    expected_oth_cost = 100 * 20.00 + _BROKERAGE   # 2050.0
-    expected_oth_proc = 100 * 10.00 - _BROKERAGE   # 950.0
+    expected_oth_cost = 100 * 20.00 + _BROKERAGE  # 2050.0
+    expected_oth_proc = 100 * 10.00 - _BROKERAGE  # 950.0
     expected_oth_gain = expected_oth_proc - expected_oth_cost  # -1100.0
     assert abs(oth.gain_aud - expected_oth_gain) < 0.01
 
@@ -414,9 +409,9 @@ def test_fixture_b_long_term_with_prior_loss() -> None:
     # net_discount = (7900 - 1100) / 2 = 3400
     # net_cgt = 3400; cgt_payable = 3400 * 0.325 = 1105.0
     expected_cgt = 3400.0 * _MARGINAL_RATE  # 1105.0
-    assert abs(fy2024.cgt_payable - expected_cgt) < 1.0, (
-        f"FY2024 cgt_payable {fy2024.cgt_payable:.2f} should be ≈ {expected_cgt:.2f}"
-    )
+    assert (
+        abs(fy2024.cgt_payable - expected_cgt) < 1.0
+    ), f"FY2024 cgt_payable {fy2024.cgt_payable:.2f} should be ≈ {expected_cgt:.2f}"
 
 
 # ---------------------------------------------------------------------------
@@ -500,16 +495,14 @@ def test_fixture_c_fifo_oldest_parcel_first() -> None:
 
     disposed = result.tax.lots
     # Only Parcel 1 is sold — exactly 1 disposed lot.
-    assert len(disposed) == 1, (
-        f"Expected 1 disposed lot (oldest parcel only), got {len(disposed)}"
-    )
+    assert len(disposed) == 1, f"Expected 1 disposed lot (oldest parcel only), got {len(disposed)}"
 
     lot = disposed[0]
 
     # FIFO: oldest parcel disposed first.
-    assert lot.acquired_date == p1_buy, (
-        f"Expected acquired_date=2022-01-03 (Parcel 1), got {lot.acquired_date}"
-    )
+    assert (
+        lot.acquired_date == p1_buy
+    ), f"Expected acquired_date=2022-01-03 (Parcel 1), got {lot.acquired_date}"
 
     # Parcel 1 held >12 months (Jan 2022 → Jul 2023 > 12 months).
     assert lot.discount_applied is True, "Parcel 1 held >12 months → discount"
@@ -519,7 +512,7 @@ def test_fixture_c_fifo_oldest_parcel_first() -> None:
     assert lot.proceeds_usd is None
 
     # Verify gain arithmetic.
-    expected_cost = 100 * 90.0 + _BROKERAGE   # 9050.0
+    expected_cost = 100 * 90.0 + _BROKERAGE  # 9050.0
     expected_proceeds = 100 * 110.0 - _BROKERAGE  # 10950.0
     expected_gain = expected_proceeds - expected_cost  # 1900.0
 
@@ -531,9 +524,9 @@ def test_fixture_c_fifo_oldest_parcel_first() -> None:
     discounted = expected_gain * 0.5  # 950.0
     expected_cgt = discounted * _MARGINAL_RATE  # 308.75
     total_cgt = sum(yr.cgt_payable for yr in result.tax.years)
-    assert abs(total_cgt - expected_cgt) < 0.01, (
-        f"CGT payable {total_cgt:.2f} should be {expected_cgt:.2f} (discounted)"
-    )
+    assert (
+        abs(total_cgt - expected_cgt) < 0.01
+    ), f"CGT payable {total_cgt:.2f} should be {expected_cgt:.2f} (discounted)"
 
 
 # ---------------------------------------------------------------------------
@@ -546,10 +539,12 @@ def test_aud_tickers_skip_fx() -> None:
     buy_date = date(2023, 1, 3)
     sell_date = date(2023, 6, 1)
     trades = [
-        Trade(date=buy_date, ticker="VAS.AX", action="BUY",
-              shares=500, price=90.0, cost=_BROKERAGE),
-        Trade(date=sell_date, ticker="VAS.AX", action="SELL",
-              shares=500, price=95.0, cost=_BROKERAGE),
+        Trade(
+            date=buy_date, ticker="VAS.AX", action="BUY", shares=500, price=90.0, cost=_BROKERAGE
+        ),
+        Trade(
+            date=sell_date, ticker="VAS.AX", action="SELL", shares=500, price=95.0, cost=_BROKERAGE
+        ),
     ]
     fake_result = _make_fake_backtest_result(
         trades=trades, tickers=["VAS.AX"], start=buy_date, end=sell_date
@@ -586,10 +581,12 @@ def test_missing_fx_raises() -> None:
     trade_date = date(2023, 1, 3)
     sell_date = date(2023, 6, 1)
     trades = [
-        Trade(date=trade_date, ticker="AAPL", action="BUY",
-              shares=100, price=150.0, cost=_BROKERAGE),
-        Trade(date=sell_date, ticker="AAPL", action="SELL",
-              shares=100, price=175.0, cost=_BROKERAGE),
+        Trade(
+            date=trade_date, ticker="AAPL", action="BUY", shares=100, price=150.0, cost=_BROKERAGE
+        ),
+        Trade(
+            date=sell_date, ticker="AAPL", action="SELL", shares=100, price=175.0, cost=_BROKERAGE
+        ),
     ]
     fake_result = _make_fake_backtest_result(
         trades=trades, tickers=["AAPL"], start=trade_date, end=sell_date
@@ -653,9 +650,9 @@ def test_run_backtest_returns_backtest_result_not_tax_result(
             benchmark="AUD1.AX",
         )
 
-    assert isinstance(result, BacktestResult), (
-        f"run_backtest() must return BacktestResult, got {type(result)}"
-    )
+    assert isinstance(
+        result, BacktestResult
+    ), f"run_backtest() must return BacktestResult, got {type(result)}"
     # Verify all Phase 2 BacktestResult fields are present.
     assert hasattr(result, "metrics")
     assert hasattr(result, "benchmark")
@@ -674,8 +671,9 @@ def test_run_backtest_tax_backtest_field_is_backtest_result() -> None:
     buy_date = date(2023, 1, 3)
     sell_date = date(2023, 6, 1)
     trades = [
-        Trade(date=buy_date, ticker="TST.AX", action="BUY",
-              shares=100, price=10.0, cost=_BROKERAGE),
+        Trade(
+            date=buy_date, ticker="TST.AX", action="BUY", shares=100, price=10.0, cost=_BROKERAGE
+        ),
     ]
     fake_result = _make_fake_backtest_result(
         trades=trades, tickers=["TST.AX"], start=buy_date, end=sell_date

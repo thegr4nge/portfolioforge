@@ -21,9 +21,7 @@ class DataAdapter(Protocol):
 
     source_name: str
 
-    async def fetch_ohlcv(
-        self, ticker: str, from_date: date, to_date: date
-    ) -> list[OHLCVRecord]:
+    async def fetch_ohlcv(self, ticker: str, from_date: date, to_date: date) -> list[OHLCVRecord]:
         """Fetch unadjusted daily OHLCV bars for ticker in [from_date, to_date]."""
         ...
 
@@ -33,9 +31,7 @@ class DataAdapter(Protocol):
         """Fetch cash dividends for ticker with ex_date in [from_date, to_date]."""
         ...
 
-    async def fetch_splits(
-        self, ticker: str, from_date: date, to_date: date
-    ) -> list[SplitRecord]:
+    async def fetch_splits(self, ticker: str, from_date: date, to_date: date) -> list[SplitRecord]:
         """Fetch stock splits for ticker with ex_date in [from_date, to_date]."""
         ...
 

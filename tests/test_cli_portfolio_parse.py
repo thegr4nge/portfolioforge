@@ -6,6 +6,7 @@ Covers:
 - _resolve_portfolio(): dispatch and mutual-exclusion logic
 - _validate_weights(): weight sum and sign validation
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -21,6 +22,7 @@ from market_data.cli.analyse import (
 )
 
 # ── _validate_weights ──────────────────────────────────────────────────────────
+
 
 def test_validate_weights_passes_exact_sum() -> None:
     _validate_weights({"VAS.AX": 0.6, "VGS.AX": 0.4}, "test")  # no exception
@@ -42,6 +44,7 @@ def test_validate_weights_rejects_non_positive() -> None:
 
 
 # ── _parse_portfolio_spec ──────────────────────────────────────────────────────
+
 
 def test_parse_spec_single_ticker() -> None:
     result = _parse_portfolio_spec("VAS.AX:1.0")
@@ -74,6 +77,7 @@ def test_parse_spec_rejects_weights_not_summing_to_one() -> None:
 
 
 # ── _parse_portfolio_csv ───────────────────────────────────────────────────────
+
 
 def _write_csv(path: Path, content: str) -> None:
     path.write_text(content)
@@ -141,6 +145,7 @@ def test_parse_csv_empty_file(tmp_path: Path) -> None:
 
 
 # ── _resolve_portfolio ────────────────────────────────────────────────────────
+
 
 def test_resolve_uses_spec_when_provided() -> None:
     result = _resolve_portfolio("VAS.AX:1.0", None)

@@ -14,3 +14,18 @@ build/
 .env
 data/raw/
 data/cache/
+
+# Scratch outputs
+repomix-output.*
+.coverage
+demo_output.txt
+
+# WSL filesystem artifacts
+*.Zone.Identifier
+~$*
+
+# Generated exports (keep samples in docs/samples/)
+*.docx
+
+# Runtime logs
+logs/

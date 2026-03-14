@@ -60,12 +60,8 @@ def db_conn() -> sqlite3.Connection:
 
     writer = DatabaseWriter(conn)
 
-    vas_id = writer.upsert_security(
-        SecurityRecord(ticker="VAS.AX", exchange="ASX", currency="AUD")
-    )
-    stw_id = writer.upsert_security(
-        SecurityRecord(ticker="STW.AX", exchange="ASX", currency="AUD")
-    )
+    vas_id = writer.upsert_security(SecurityRecord(ticker="VAS.AX", exchange="ASX", currency="AUD"))
+    stw_id = writer.upsert_security(SecurityRecord(ticker="STW.AX", exchange="ASX", currency="AUD"))
 
     trading_days = _business_days(_START, _END)
     vas_rows: list[OHLCVRecord] = []
@@ -220,9 +216,9 @@ def test_equity_curve_indexed_by_date(db_conn: sqlite3.Connection) -> None:
     """result.equity_curve is indexed by datetime.date objects (not Timestamps)."""
     result = _run(db_conn, {"VAS.AX": 1.0})
     first_idx = result.equity_curve.index[0]
-    assert isinstance(first_idx, date), (
-        f"equity_curve index expected date, got {type(first_idx).__name__}"
-    )
+    assert isinstance(
+        first_idx, date
+    ), f"equity_curve index expected date, got {type(first_idx).__name__}"
 
 
 def test_benchmark_metrics_present(db_conn: sqlite3.Connection) -> None:

@@ -159,9 +159,7 @@ def _execute_rebalance(
     Returns:
         Tuple of (trades executed, updated_holdings, updated_cash).
     """
-    total_value = cash + sum(
-        holdings.get(t, 0.0) * float(today_prices[t]) for t in target_weights
-    )
+    total_value = cash + sum(holdings.get(t, 0.0) * float(today_prices[t]) for t in target_weights)
 
     trades: list[Trade] = []
 
@@ -234,9 +232,7 @@ def _simulate(
             )
             all_trades.extend(new_trades)
 
-        portfolio_value = cash + sum(
-            holdings.get(t, 0.0) * float(today_prices[t]) for t in tickers
-        )
+        portfolio_value = cash + sum(holdings.get(t, 0.0) * float(today_prices[t]) for t in tickers)
         equity_curve[current_date] = portfolio_value
 
     curve = pd.Series(equity_curve)

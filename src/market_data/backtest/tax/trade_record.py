@@ -83,9 +83,7 @@ class TradeRecord(BaseModel):
         """
         trade_value = self.quantity * self.price_aud
         cost = (
-            self.brokerage_aud
-            if self.brokerage_aud > 0.0
-            else BrokerageModel().cost(trade_value)
+            self.brokerage_aud if self.brokerage_aud > 0.0 else BrokerageModel().cost(trade_value)
         )
         return Trade(
             date=self.trade_date,

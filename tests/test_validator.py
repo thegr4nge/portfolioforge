@@ -10,12 +10,11 @@ from typing import Any
 
 import pytest
 
-from market_data.db.models import OHLCVRecord, SecurityRecord, SplitRecord
+from market_data.db.models import OHLCVRecord, SecurityRecord
 from market_data.db.schema import run_migrations
 from market_data.db.writer import DatabaseWriter
 from market_data.quality.flags import QualityFlag
 from market_data.quality.validator import ValidationSuite
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -28,9 +27,7 @@ def setup() -> dict[str, Any]:
     conn = sqlite3.connect(":memory:")
     run_migrations(conn)
     writer = DatabaseWriter(conn)
-    sec_id = writer.upsert_security(
-        SecurityRecord(ticker="TEST", exchange="NYSE", currency="USD")
-    )
+    sec_id = writer.upsert_security(SecurityRecord(ticker="TEST", exchange="NYSE", currency="USD"))
     validator = ValidationSuite(conn)
     return {"conn": conn, "sec_id": sec_id, "writer": writer, "validator": validator}
 
@@ -192,7 +189,9 @@ def test_price_spike_flag_set(setup: dict[str, Any]) -> None:
     )
     validator.validate(sec_id)
     flags = get_flags(conn, sec_id, "2024-01-03")
-    assert flags & QualityFlag.PRICE_SPIKE, f"Expected PRICE_SPIKE flag on 2024-01-03, got 0x{flags:02x}"
+    assert (
+        flags & QualityFlag.PRICE_SPIKE
+    ), f"Expected PRICE_SPIKE flag on 2024-01-03, got 0x{flags:02x}"
     # First row should NOT have PRICE_SPIKE (no previous row)
     first_flags = get_flags(conn, sec_id, "2024-01-02")
     assert not (first_flags & QualityFlag.PRICE_SPIKE), "First row should not have PRICE_SPIKE"
@@ -218,14 +217,18 @@ def test_price_spike_not_set_on_split_date(setup: dict[str, Any]) -> None:
         sec_id,
         [
             {"date": "2024-01-02", "close": 400.0, "adj_close": 100.0},
-            {"date": "2024-01-03", "close": 100.0, "adj_close": 100.0},  # price change on split date
+            {
+                "date": "2024-01-03",
+                "close": 100.0,
+                "adj_close": 100.0,
+            },  # price change on split date
         ],
     )
     validator.validate(sec_id)
     flags = get_flags(conn, sec_id, "2024-01-03")
-    assert not (flags & QualityFlag.PRICE_SPIKE), (
-        f"PRICE_SPIKE should NOT be set on split ex_date, got 0x{flags:02x}"
-    )
+    assert not (
+        flags & QualityFlag.PRICE_SPIKE
+    ), f"PRICE_SPIKE should NOT be set on split ex_date, got 0x{flags:02x}"
 
 
 # ---------------------------------------------------------------------------
@@ -253,12 +256,12 @@ def test_gap_adjacent_flag_set(setup: dict[str, Any]) -> None:
     validator.validate(sec_id)
     flags_first = get_flags(conn, sec_id, "2024-01-02")
     flags_second = get_flags(conn, sec_id, "2024-01-15")
-    assert flags_first & QualityFlag.GAP_ADJACENT, (
-        f"Expected GAP_ADJACENT on 2024-01-02, got 0x{flags_first:02x}"
-    )
-    assert flags_second & QualityFlag.GAP_ADJACENT, (
-        f"Expected GAP_ADJACENT on 2024-01-15, got 0x{flags_second:02x}"
-    )
+    assert (
+        flags_first & QualityFlag.GAP_ADJACENT
+    ), f"Expected GAP_ADJACENT on 2024-01-02, got 0x{flags_first:02x}"
+    assert (
+        flags_second & QualityFlag.GAP_ADJACENT
+    ), f"Expected GAP_ADJACENT on 2024-01-15, got 0x{flags_second:02x}"
 
 
 def test_gap_adjacent_not_set_for_normal_weekend(setup: dict[str, Any]) -> None:
@@ -281,12 +284,12 @@ def test_gap_adjacent_not_set_for_normal_weekend(setup: dict[str, Any]) -> None:
     validator.validate(sec_id)
     flags_fri = get_flags(conn, sec_id, "2024-01-05")
     flags_mon = get_flags(conn, sec_id, "2024-01-08")
-    assert not (flags_fri & QualityFlag.GAP_ADJACENT), (
-        f"Unexpected GAP_ADJACENT on Friday: 0x{flags_fri:02x}"
-    )
-    assert not (flags_mon & QualityFlag.GAP_ADJACENT), (
-        f"Unexpected GAP_ADJACENT on Monday: 0x{flags_mon:02x}"
-    )
+    assert not (
+        flags_fri & QualityFlag.GAP_ADJACENT
+    ), f"Unexpected GAP_ADJACENT on Friday: 0x{flags_fri:02x}"
+    assert not (
+        flags_mon & QualityFlag.GAP_ADJACENT
+    ), f"Unexpected GAP_ADJACENT on Monday: 0x{flags_mon:02x}"
 
 
 # ---------------------------------------------------------------------------
@@ -306,7 +309,16 @@ def test_multiple_flags_combined(setup: dict[str, Any]) -> None:
     insert_ohlcv(
         writer,
         sec_id,
-        [{"date": "2024-01-02", "open": 102.0, "high": 103.0, "low": 101.0, "close": 100.0, "volume": 0}],
+        [
+            {
+                "date": "2024-01-02",
+                "open": 102.0,
+                "high": 103.0,
+                "low": 101.0,
+                "close": 100.0,
+                "volume": 0,
+            }
+        ],
     )
     validator.validate(sec_id)
     flags = get_flags(conn, sec_id, "2024-01-02")
@@ -354,7 +366,7 @@ def test_validate_idempotent_on_clean_data(setup: dict[str, Any]) -> None:
 
 def test_validation_report_counts(setup: dict[str, Any]) -> None:
     """ValidationReport correctly counts total_rows and flagged_rows."""
-    conn, sec_id, writer, validator = (
+    _, sec_id, writer, validator = (
         setup["conn"],
         setup["sec_id"],
         setup["writer"],
@@ -375,6 +387,6 @@ def test_validation_report_counts(setup: dict[str, Any]) -> None:
     assert report.total_rows == 7, f"Expected 7 total rows, got {report.total_rows}"
     assert report.flagged_rows == 2, f"Expected 2 flagged rows, got {report.flagged_rows}"
     assert report.is_clean() is False, "Report should not be clean with 2 flagged rows"
-    assert report.flags_by_type["ZERO_VOLUME"] == 2, (
-        f"Expected 2 ZERO_VOLUME flags, got {report.flags_by_type['ZERO_VOLUME']}"
-    )
+    assert (
+        report.flags_by_type["ZERO_VOLUME"] == 2
+    ), f"Expected 2 ZERO_VOLUME flags, got {report.flags_by_type['ZERO_VOLUME']}"

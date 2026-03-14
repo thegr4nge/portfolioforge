@@ -10,8 +10,10 @@ Usage::
     market-data analyse report VAS.AX:1.0 --from 2020-01-01 --to 2023-12-31 --verbose
     market-data analyse report VAS.AX:1.0 --from 2020-01-01 --to 2023-12-31 --json
     market-data analyse report VAS.AX:1.0 --from 2020-01-01 --to 2023-12-31 --export report.docx
+    market-data analyse report VAS.AX:1.0 --from 2020-01-01 --to 2023-12-31 --export-bgl trades.csv
     market-data analyse compare VAS.AX:1.0 SPY:1.0 --from 2020-01-01 --to 2023-12-31
 """
+
 from __future__ import annotations
 
 import csv
@@ -25,6 +27,7 @@ from rich.console import Console
 
 from market_data.analysis.exporter import export_report
 from market_data.analysis.models import AnalysisReport
+from market_data.analysis.narrative import AMIT_NOTE
 from market_data.analysis.renderer import render_comparison, render_report, report_to_json
 from market_data.analysis.scenario import CRASH_PRESETS
 from market_data.backtest.engine import run_backtest
@@ -71,9 +74,7 @@ def _validate_weights(portfolio: dict[str, float], source: str) -> None:
     """
     for ticker, w in portfolio.items():
         if w <= 0:
-            raise typer.BadParameter(
-                f"{source}: weight for {ticker!r} must be > 0, got {w}"
-            )
+            raise typer.BadParameter(f"{source}: weight for {ticker!r} must be > 0, got {w}")
     total = sum(portfolio.values())
     if abs(total - 1.0) > _WEIGHT_TOLERANCE:
         raise typer.BadParameter(
@@ -97,9 +98,7 @@ def _parse_portfolio_spec(spec: str) -> dict[str, float]:
     for part in spec.split(","):
         part = part.strip()
         if ":" not in part:
-            raise typer.BadParameter(
-                f"Expected TICKER:WEIGHT (e.g. VAS.AX:0.6), got: {part!r}"
-            )
+            raise typer.BadParameter(f"Expected TICKER:WEIGHT (e.g. VAS.AX:0.6), got: {part!r}")
         ticker, weight_str = part.split(":", 1)
         try:
             portfolio[ticker.strip().upper()] = float(weight_str.strip())
@@ -137,13 +136,9 @@ def _parse_portfolio_csv(csv_path: Path) -> dict[str, float]:
         with csv_path.open(newline="") as fh:
             reader = csv.DictReader(fh)
             if reader.fieldnames is None or "ticker" not in reader.fieldnames:
-                raise typer.BadParameter(
-                    f"{csv_path}: CSV must have a 'ticker' column header"
-                )
+                raise typer.BadParameter(f"{csv_path}: CSV must have a 'ticker' column header")
             if "weight" not in reader.fieldnames:
-                raise typer.BadParameter(
-                    f"{csv_path}: CSV must have a 'weight' column header"
-                )
+                raise typer.BadParameter(f"{csv_path}: CSV must have a 'weight' column header")
             for line_num, row in enumerate(reader, start=2):
                 ticker = row["ticker"].strip().upper()
                 if not ticker:
@@ -217,7 +212,9 @@ def report_command(
         help="Portfolio weights: 'TICKER:WEIGHT,TICKER:WEIGHT' (e.g. VAS.AX:0.6,NDQ.AX:0.4)",
     ),
     portfolio_csv: str | None = typer.Option(
-        None, "--portfolio", help="Path to portfolio CSV file (ticker,weight,label columns)",
+        None,
+        "--portfolio",
+        help="Path to portfolio CSV file (ticker,weight,label columns)",
     ),
     from_date: str | None = typer.Option(None, "--from", help="Start date (YYYY-MM-DD)"),
     to_date: str | None = typer.Option(None, "--to", help="End date (YYYY-MM-DD)"),
@@ -229,25 +226,67 @@ def report_command(
     benchmark: str = typer.Option(_DEFAULT_BENCHMARK, "--benchmark", help="Benchmark ticker"),
     capital: float = typer.Option(10_000.0, "--capital", help="Initial capital (AUD)"),
     rebalance: str = typer.Option(
-        "annually", "--rebalance",
+        "annually",
+        "--rebalance",
         help="Rebalance frequency: monthly/quarterly/annually/never",
     ),
     export_path: str | None = typer.Option(
-        None, "--export",
+        None,
+        "--export",
         help="Export ATO-compliant CGT workpaper to a .docx file (e.g. --export report.docx)",
     ),
-    risk_free_rate: float = typer.Option(
-        0.0, "--risk-free-rate",
-        help="Annualised risk-free rate for Sharpe ratio (e.g. 0.043 for RBA cash rate)",
+    export_bgl: str | None = typer.Option(
+        None,
+        "--export-bgl",
+        help=(
+            "Export BGL Simple Fund 360 broker CSV for import into SMSF software "
+            "(e.g. --export-bgl trades.csv)"
+        ),
+    ),
+    risk_free_rate: float | None = typer.Option(
+        None,
+        "--risk-free-rate",
+        help=(
+            "Annualised risk-free rate for Sharpe ratio (e.g. 0.0385). "
+            "Defaults to the live RBA cash rate target fetched at runtime."
+        ),
     ),
     tax_rate: float | None = typer.Option(
-        None, "--tax-rate",
+        None,
+        "--tax-rate",
         help="Marginal income tax rate for CGT calculations (e.g. 0.325). "
-             "When provided, runs a tax-aware backtest and includes CGT sections in the report.",
+        "When provided, runs a tax-aware backtest and includes CGT sections in the report.",
+    ),
+    parcel_method: str = typer.Option(
+        "fifo",
+        "--parcel-method",
+        help="Parcel identification method: fifo (ATO default) or highest_cost "
+        "(specific identification — minimises taxable gain).",
+    ),
+    entity_type: str = typer.Option(
+        "individual",
+        "--entity-type",
+        help=(
+            "Entity type for CGT calculations: 'individual' (50% discount, default) "
+            "or 'smsf' (33.33% discount, ATO s.115-100; also enforces 45-day rule "
+            "regardless of credit amount). When 'smsf', --tax-rate defaults to 0.15."
+        ),
     ),
 ) -> None:
     """Generate an ATO-validated CGT workpaper and portfolio analysis report."""
     opts: _AnalyseOpts = ctx.obj
+
+    if entity_type not in ("individual", "smsf"):
+        Console(stderr=True).print(
+            f"[red]--entity-type must be 'individual' or 'smsf', got: {entity_type!r}[/red]"
+        )
+        raise typer.Exit(code=1)
+
+    # Resolve risk-free rate: auto-fetch live RBA cash rate if not provided.
+    if risk_free_rate is None:
+        from market_data.integrations.rba import fetch_cash_rate
+
+        risk_free_rate = fetch_cash_rate()
 
     try:
         portfolio = _resolve_portfolio(portfolio_spec, portfolio_csv)
@@ -273,6 +312,15 @@ def report_command(
         start = _parse_date(from_date, "--from")
         end = _parse_date(to_date, "--to")
 
+    # SMSF: default tax rate is 15% (accumulation phase) if not explicitly set.
+    _SMSF_DEFAULT_TAX_RATE: float = 0.15
+    if entity_type == "smsf" and tax_rate is None:
+        tax_rate = _SMSF_DEFAULT_TAX_RATE
+        Console().print(
+            "[dim]SMSF mode: using 15% accumulation phase tax rate "
+            "(override with --tax-rate).[/dim]"
+        )
+
     try:
         result: BacktestResult | TaxAwareResult
         if tax_rate is not None:
@@ -285,8 +333,14 @@ def report_command(
                 rebalance=rebalance,
                 db_path=opts.db_path,
                 marginal_tax_rate=tax_rate,
+                parcel_method=parcel_method,
+                entity_type=entity_type,
             )
         else:
+            if parcel_method != "fifo":
+                Console(stderr=True).print(
+                    "[yellow]Note: --parcel-method only applies when --tax-rate is set.[/yellow]"
+                )
             result = run_backtest(
                 portfolio=portfolio,
                 start=start,
@@ -304,6 +358,20 @@ def report_command(
     report = AnalysisReport(result=result)
     conn = get_connection(opts.db_path)
 
+    if export_bgl is not None:
+        from market_data.integrations.bgl import export_bgl_csv
+
+        bgl_out = Path(export_bgl)
+        trades = result.backtest.trades if isinstance(result, TaxAwareResult) else result.trades
+        try:
+            n = export_bgl_csv(trades, bgl_out)
+            Console().print(
+                f"[green]BGL CSV exported:[/green] {bgl_out.resolve()} ({n} transactions)"
+            )
+        except OSError as exc:
+            Console(stderr=True).print(f"[red]BGL export failed: {exc}[/red]")
+            raise typer.Exit(code=1) from exc
+
     if export_path is not None:
         out = Path(export_path)
         try:
@@ -317,6 +385,8 @@ def report_command(
         print(json.dumps(data, default=str, indent=2))
     else:
         render_report(report, conn, verbose=opts.verbose, risk_free_rate=risk_free_rate)
+        if tax_rate is not None:
+            Console().print(f"\n[dim]{AMIT_NOTE}[/dim]")
 
 
 @analyse_app.command("compare")
@@ -331,12 +401,19 @@ def compare_command(
     benchmark: str = typer.Option(_DEFAULT_BENCHMARK, "--benchmark", help="Benchmark ticker"),
     capital: float = typer.Option(10_000.0, "--capital", help="Initial capital (AUD)"),
     rebalance: str = typer.Option(
-        "annually", "--rebalance",
+        "annually",
+        "--rebalance",
         help="Rebalance frequency: monthly/quarterly/annually/never",
     ),
     tax_rate: float = typer.Option(
-        0.325, "--tax-rate",
+        0.325,
+        "--tax-rate",
         help="Marginal income tax rate for CGT calculations (default 32.5%%)",
+    ),
+    entity_type: str = typer.Option(
+        "individual",
+        "--entity-type",
+        help="Entity type: 'individual' (50% CGT discount) or 'smsf' (33.33% discount).",
     ),
 ) -> None:
     """Compare two portfolios side-by-side with pre- and after-tax metrics."""
@@ -356,6 +433,7 @@ def compare_command(
             rebalance=rebalance,
             db_path=opts.db_path,
             marginal_tax_rate=tax_rate,
+            entity_type=entity_type,
         )
         result_b = run_backtest_tax(
             portfolio=port_b,
@@ -366,6 +444,7 @@ def compare_command(
             rebalance=rebalance,
             db_path=opts.db_path,
             marginal_tax_rate=tax_rate,
+            entity_type=entity_type,
         )
     except Exception as exc:
         Console(stderr=True).print(f"[red]Backtest failed: {exc}[/red]")
@@ -376,6 +455,10 @@ def compare_command(
     conn = get_connection(opts.db_path)
 
     render_comparison(
-        report_a, report_b, conn,
-        label_a=label_a, label_b=label_b, verbose=opts.verbose,
+        report_a,
+        report_b,
+        conn,
+        label_a=label_a,
+        label_b=label_b,
+        verbose=opts.verbose,
     )

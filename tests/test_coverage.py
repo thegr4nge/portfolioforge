@@ -11,10 +11,8 @@ import sqlite3
 from datetime import date
 
 import pytest
-
 from src.market_data.db.schema import run_migrations
 from src.market_data.pipeline.coverage import CoverageTracker, DateRange
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -29,9 +27,7 @@ def setup() -> tuple[sqlite3.Connection, int, CoverageTracker]:
     conn.execute(
         "INSERT INTO securities (ticker, exchange, currency) VALUES ('TEST', 'NYSE', 'USD')"
     )
-    sec_id: int = conn.execute(
-        "SELECT id FROM securities WHERE ticker='TEST'"
-    ).fetchone()[0]
+    sec_id: int = conn.execute("SELECT id FROM securities WHERE ticker='TEST'").fetchone()[0]
     tracker = CoverageTracker(conn)
     return conn, sec_id, tracker
 
@@ -175,10 +171,14 @@ def test_record_coverage_idempotent(
     # Verify still fully covered (no gaps) and count was updated
     gaps = tracker.get_gaps(sec_id, "ohlcv", "polygon", date(2024, 1, 1), date(2024, 1, 15))
     assert gaps == []
-    row = setup[0].execute(
-        "SELECT records FROM ingestion_coverage WHERE security_id=? AND from_date='2024-01-01'",
-        (sec_id,),
-    ).fetchone()
+    row = (
+        setup[0]
+        .execute(
+            "SELECT records FROM ingestion_coverage WHERE security_id=? AND from_date='2024-01-01'",
+            (sec_id,),
+        )
+        .fetchone()
+    )
     assert row[0] == 12
 
 
@@ -234,7 +234,10 @@ def test_different_sources_independent(
             date(2024, 1, 20),
             date(2024, 1, 1),
             date(2024, 1, 31),
-            [DateRange(date(2024, 1, 1), date(2024, 1, 10)), DateRange(date(2024, 1, 21), date(2024, 1, 31))],
+            [
+                DateRange(date(2024, 1, 1), date(2024, 1, 10)),
+                DateRange(date(2024, 1, 21), date(2024, 1, 31)),
+            ],
         ),
         # Covered range exactly matches requested window → no gap
         (date(2024, 1, 1), date(2024, 1, 31), date(2024, 1, 1), date(2024, 1, 31), []),

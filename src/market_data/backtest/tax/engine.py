@@ -21,6 +21,7 @@ from loguru import logger
 
 from market_data.backtest.engine import run_backtest
 from market_data.backtest.metrics import cagr as compute_cagr
+from market_data.backtest.models import Trade
 from market_data.backtest.tax.cgt import (
     build_tax_year_results,
     qualifies_for_discount,
@@ -91,6 +92,27 @@ def _load_dividends(
             )
         )
     return records
+
+
+def _shares_held_at(trades: list[Trade], ticker: str, ex_date: date) -> int:
+    """Return shares held for ticker at close of ex_date by replaying trade history.
+
+    Args:
+        trades: Ordered Trade list from BacktestResult (guaranteed date-sorted).
+        ticker: Security ticker to compute position for.
+        ex_date: Dividend ex-date; trades on this date are included.
+
+    Returns:
+        Integer share count (minimum 0). Returns 0 if no position exists.
+    """
+    position = 0
+    for trade in trades:
+        if trade.ticker == ticker and trade.date <= ex_date:
+            if trade.action == "BUY":
+                position += trade.shares
+            elif trade.action == "SELL":
+                position -= trade.shares
+    return max(position, 0)
 
 
 def _get_ticker_currencies(
@@ -180,6 +202,8 @@ def run_backtest_tax(
     risk_free_rate: float = 0.0,
     marginal_tax_rate: float = 0.325,
     franking_credits: dict[str, float] | None = None,
+    parcel_method: str = "fifo",
+    entity_type: str = "individual",
 ) -> TaxAwareResult:
     """Run a tax-aware portfolio backtest over a date range.
 
@@ -198,7 +222,11 @@ def run_backtest_tax(
         db_path: Path to the SQLite database. Defaults to data/market.db.
         risk_free_rate: Annualised risk-free rate for Sharpe ratio (default 0.0).
         marginal_tax_rate: Investor's marginal income tax rate (default 32.5%).
+            For SMSF accumulation phase use 0.15; pension phase use 0.0.
         franking_credits: Optional override dict {ticker: franking_pct}.
+        entity_type: "individual" (default) or "smsf". Controls CGT discount
+            fraction (individual=50%, SMSF=33.33%) and whether the $5k
+            franking credit exemption from the 45-day rule applies.
 
     Returns:
         TaxAwareResult with backtest (Phase 2 BacktestResult) and tax (TaxSummary).
@@ -207,6 +235,14 @@ def run_backtest_tax(
         ValueError: If FX rate is missing for a USD ticker's trade date.
     """
     portfolio_tickers = list(portfolio.keys())
+
+    # Resolve entity-specific tax parameters.
+    # SMSF accumulation phase: one-third CGT discount (ATO s.115-100), no $5k exemption.
+    # Individual / trust: one-half CGT discount (ATO s.115-25), $5k exemption applies.
+    _SMSF_DISCOUNT_FRACTION: float = 1.0 / 3.0
+    _INDIVIDUAL_DISCOUNT_FRACTION: float = 0.5
+    smsf_mode = entity_type == "smsf"
+    cgt_discount_fraction = _SMSF_DISCOUNT_FRACTION if smsf_mode else _INDIVIDUAL_DISCOUNT_FRACTION
 
     logger.info(
         "run_backtest_tax: {} tickers, start={}, end={}, rebalance={}",
@@ -270,7 +306,12 @@ def run_backtest_tax(
             open_lots_by_ticker.setdefault(trade.ticker, []).append(lot)
 
         elif trade.action == "SELL":
-            raw_lots = ledger.sell(trade.ticker, float(trade.shares), trade.date)
+            raw_lots = ledger.sell(
+                trade.ticker,
+                float(trade.shares),
+                trade.date,
+                parcel_method=parcel_method,  # type: ignore[arg-type]
+            )
 
             if is_usd:
                 fx_rate = get_aud_usd_rate(conn, trade.date)
@@ -298,7 +339,9 @@ def run_backtest_tax(
     dividend_records = _load_dividends(conn, portfolio_tickers, start, end)
 
     # Step 6: Build tax year results from disposed lots.
-    tax_years = build_tax_year_results(all_disposed_lots, marginal_tax_rate)
+    tax_years = build_tax_year_results(
+        all_disposed_lots, marginal_tax_rate, cgt_discount_fraction=cgt_discount_fraction
+    )
 
     # Step 7: Build open-lot lookup for 45-day rule checking.
     # Use the equity curve end date as the "last held" date for open lots.
@@ -321,15 +364,17 @@ def run_backtest_tax(
             total_potential_credits = 0.0
             for record in yr_dividends:
                 franking_pct = resolve_franking_pct(record.ticker, franking_credits)
-                dividend_aud = record.amount
+                shares = _shares_held_at(bt_result.trades, record.ticker, record.ex_date)
+                per_share = record.amount
                 if record.currency == "USD":
-                    # FX convert dividend amount.
+                    # FX convert per-share amount before scaling by position.
                     fx_rate = get_aud_usd_rate(conn, record.ex_date)
-                    dividend_aud = usd_to_aud(record.amount, fx_rate)
+                    per_share = usd_to_aud(record.amount, fx_rate)
+                dividend_aud = per_share * shares
                 credit = compute_franking_credit(dividend_aud, franking_pct)
                 total_potential_credits += credit
 
-            apply_rule = should_apply_45_day_rule(total_potential_credits)
+            apply_rule = should_apply_45_day_rule(total_potential_credits, smsf_mode=smsf_mode)
 
             # Second pass: compute actual credits applying 45-day rule where needed.
             total_credits_year = 0.0
@@ -337,10 +382,12 @@ def run_backtest_tax(
 
             for record in yr_dividends:
                 franking_pct = resolve_franking_pct(record.ticker, franking_credits)
-                dividend_aud = record.amount
+                shares = _shares_held_at(bt_result.trades, record.ticker, record.ex_date)
+                per_share = record.amount
                 if record.currency == "USD":
                     fx_rate = get_aud_usd_rate(conn, record.ex_date)
-                    dividend_aud = usd_to_aud(record.amount, fx_rate)
+                    per_share = usd_to_aud(record.amount, fx_rate)
+                dividend_aud = per_share * shares
 
                 credit = compute_franking_credit(dividend_aud, franking_pct)
                 total_dividend_income_year += dividend_aud
@@ -417,6 +464,7 @@ def run_backtest_tax(
         after_tax_cagr=after_tax_cagr,
         lots=all_disposed_lots,
         marginal_tax_rate=marginal_tax_rate,
+        entity_type=entity_type,
     )
 
     logger.info(

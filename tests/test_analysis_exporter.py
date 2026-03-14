@@ -1,4 +1,5 @@
 """Tests for analysis/exporter.py — Word document export."""
+
 from __future__ import annotations
 
 from datetime import date
@@ -214,8 +215,11 @@ def test_carry_forward_loss_in_tax_table(tmp_path: Path) -> None:
         carried_forward_loss=500.0,
     )
     tax = TaxSummary(
-        years=[yr], total_tax_paid=0.0, after_tax_cagr=-0.05,
-        lots=[], marginal_tax_rate=0.325,
+        years=[yr],
+        total_tax_paid=0.0,
+        after_tax_cagr=-0.05,
+        lots=[],
+        marginal_tax_rate=0.325,
     )
     tax_result = TaxAwareResult(
         backtest=_make_backtest(),
@@ -232,3 +236,43 @@ def test_carry_forward_loss_in_tax_table(tmp_path: Path) -> None:
     assert "Carry-Fwd Loss" in text
     # The value $500.00 appears
     assert "$500.00" in text
+
+
+def test_sample_data_label_appears_when_flag_set(tmp_path: Path) -> None:
+    """SAMPLE DATA banner appears on the cover when sample_data=True."""
+    br = _make_backtest()
+    report = AnalysisReport(result=br)
+    conn = get_connection(":memory:")
+    out = tmp_path / "sample.docx"
+
+    export_report(report, conn, out, sample_data=True)
+
+    text = _all_text(out)
+    assert "SAMPLE DATA" in text
+
+
+def test_sample_data_label_absent_by_default(tmp_path: Path) -> None:
+    """No SAMPLE DATA banner when sample_data is not set (default False)."""
+    br = _make_backtest()
+    report = AnalysisReport(result=br)
+    conn = get_connection(":memory:")
+    out = tmp_path / "normal.docx"
+
+    export_report(report, conn, out)
+
+    text = _all_text(out)
+    assert "SAMPLE DATA" not in text
+
+
+def test_coverage_quality_status_column_present(tmp_path: Path) -> None:
+    """Data Coverage table includes a Quality Status column showing 'validated'."""
+    br = _make_backtest()
+    report = AnalysisReport(result=br)
+    conn = get_connection(":memory:")
+    out = tmp_path / "coverage.docx"
+
+    export_report(report, conn, out)
+
+    text = _all_text(out)
+    assert "Quality Status" in text
+    assert "validated" in text

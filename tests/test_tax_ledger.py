@@ -138,8 +138,8 @@ def test_sell_multiple_lots_fifo() -> None:
 def test_sell_across_two_lots() -> None:
     """Sell 80 shares: exhaust lot 1 (50), take 30 from lot 2 (50)."""
     ledger = CostBasisLedger()
-    ledger.buy("VAS.AX", _lot("VAS.AX", DATE_A, 50.0, 50.0))   # lot 1: $1/share
-    ledger.buy("VAS.AX", _lot("VAS.AX", DATE_B, 50.0, 60.0))   # lot 2: $1.20/share
+    ledger.buy("VAS.AX", _lot("VAS.AX", DATE_A, 50.0, 50.0))  # lot 1: $1/share
+    ledger.buy("VAS.AX", _lot("VAS.AX", DATE_B, 50.0, 60.0))  # lot 2: $1.20/share
 
     disposed = ledger.sell("VAS.AX", 80.0, DATE_C)
 

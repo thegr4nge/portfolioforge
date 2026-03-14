@@ -1,4 +1,5 @@
 """Tests for analysis/narrative.py — plain-language metric sentences."""
+
 from market_data.analysis.narrative import (
     narrative_cagr,
     narrative_max_drawdown,

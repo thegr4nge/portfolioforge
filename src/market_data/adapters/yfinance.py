@@ -20,7 +20,13 @@ from datetime import date
 import yfinance as yf
 from loguru import logger
 
-from market_data.db.models import DividendRecord, FXRateRecord, OHLCVRecord, SplitRecord
+from market_data.db.models import (
+    DividendRecord,
+    FXRateRecord,
+    OHLCVRecord,
+    SecurityRecord,
+    SplitRecord,
+)
 
 
 class YFinanceAdapter:
@@ -183,6 +189,38 @@ class YFinanceAdapter:
         logger.debug("fetch_splits: {} records for {}", len(records), yf_symbol)
         await asyncio.sleep(self._sleep_secs)
         return records
+
+    async def fetch_security_info(self, ticker: str) -> SecurityRecord:
+        """Fetch security metadata from yfinance — name, exchange, sector, industry.
+
+        Uses yf.Ticker.info which returns a dict of metadata fields. Not all
+        fields are populated for every ticker; missing values are stored as None.
+
+        Args:
+            ticker: Ticker symbol (e.g. "VAS.AX").
+
+        Returns:
+            SecurityRecord with metadata fields populated where available.
+        """
+        yf_symbol = ticker if ticker.endswith(".AX") else f"{ticker}.AX"
+        logger.debug("fetch_security_info: {}", yf_symbol)
+
+        t = self._yf_ticker(yf_symbol)
+        info = t.info  # yfinance untyped — returns Any, treated as dict
+
+        await asyncio.sleep(self._sleep_secs)
+
+        def _str(val: object) -> str | None:
+            return str(val) if val else None
+
+        return SecurityRecord(
+            ticker=ticker,
+            name=_str(info.get("longName") or info.get("shortName")),
+            exchange=_str(info.get("exchange")) or "ASX",
+            currency=_str(info.get("currency")) or "AUD",
+            sector=_str(info.get("sector")),
+            industry=_str(info.get("industry")),
+        )
 
     async def fetch_fx_rates(
         self,

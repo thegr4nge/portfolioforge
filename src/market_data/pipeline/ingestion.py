@@ -94,6 +94,21 @@ class IngestionOrchestrator:
         result = IngestionResult(ticker=ticker)
         security_id = self._get_or_create_security(ticker, adapter.source_name)
 
+        # Enrich security metadata (name, sector, industry) if the adapter supports it.
+        # fetch_security_info is optional — not part of the base DataAdapter protocol.
+        if hasattr(adapter, "fetch_security_info"):
+            try:
+                sec_info = await adapter.fetch_security_info(ticker)
+                security_id = self._writer.upsert_security(sec_info)
+                logger.debug(
+                    "ingest_ticker: enriched {} sector={} industry={}",
+                    ticker,
+                    sec_info.sector,
+                    sec_info.industry,
+                )
+            except Exception as exc:
+                logger.warning("ingest_ticker: security info fetch failed for {} — {}", ticker, exc)
+
         # --- OHLCV ---
         ohlcv_gaps = self._tracker.get_gaps(
             security_id, "ohlcv", adapter.source_name, from_date, to_date
@@ -107,14 +122,21 @@ class IngestionOrchestrator:
                 patched = [r.model_copy(update={"security_id": security_id}) for r in records]
                 self._writer.upsert_ohlcv(patched)
                 self._tracker.record_coverage(
-                    security_id, "ohlcv", adapter.source_name,
-                    gap.from_date, gap.to_date, len(patched),
+                    security_id,
+                    "ohlcv",
+                    adapter.source_name,
+                    gap.from_date,
+                    gap.to_date,
+                    len(patched),
                 )
                 self._log_fetch(ticker, "ohlcv", gap.from_date, gap.to_date, len(patched), "ok")
                 result.ohlcv_records += len(patched)
                 logger.info(
                     "ingest_ticker: {} ohlcv {} records [{}, {}]",
-                    ticker, len(patched), gap.from_date, gap.to_date,
+                    ticker,
+                    len(patched),
+                    gap.from_date,
+                    gap.to_date,
                 )
             except Exception as exc:
                 error_msg = str(exc)
@@ -137,8 +159,12 @@ class IngestionOrchestrator:
                 ]
                 self._writer.upsert_dividends(patched_divs)
                 self._tracker.record_coverage(
-                    security_id, "dividends", adapter.source_name,
-                    gap.from_date, gap.to_date, len(patched_divs),
+                    security_id,
+                    "dividends",
+                    adapter.source_name,
+                    gap.from_date,
+                    gap.to_date,
+                    len(patched_divs),
                 )
                 self._log_fetch(
                     ticker, "dividends", gap.from_date, gap.to_date, len(patched_divs), "ok"
@@ -146,16 +172,17 @@ class IngestionOrchestrator:
                 result.dividend_records += len(patched_divs)
                 logger.info(
                     "ingest_ticker: {} dividends {} records [{}, {}]",
-                    ticker, len(patched_divs), gap.from_date, gap.to_date,
+                    ticker,
+                    len(patched_divs),
+                    gap.from_date,
+                    gap.to_date,
                 )
             except Exception as exc:
                 error_msg = str(exc)
                 self._log_fetch(
                     ticker, "dividends", gap.from_date, gap.to_date, 0, "error", error_msg
                 )
-                result.errors.append(
-                    f"dividends [{gap.from_date}/{gap.to_date}]: {error_msg}"
-                )
+                result.errors.append(f"dividends [{gap.from_date}/{gap.to_date}]: {error_msg}")
                 logger.warning("ingest_ticker: dividends error for {} — {}", ticker, error_msg)
 
         # --- Splits ---
@@ -174,8 +201,12 @@ class IngestionOrchestrator:
                 ]
                 self._writer.upsert_splits(patched_splits)
                 self._tracker.record_coverage(
-                    security_id, "splits", adapter.source_name,
-                    gap.from_date, gap.to_date, len(patched_splits),
+                    security_id,
+                    "splits",
+                    adapter.source_name,
+                    gap.from_date,
+                    gap.to_date,
+                    len(patched_splits),
                 )
                 self._log_fetch(
                     ticker, "splits", gap.from_date, gap.to_date, len(patched_splits), "ok"
@@ -184,16 +215,15 @@ class IngestionOrchestrator:
                 new_splits.extend(patched_splits)
                 logger.info(
                     "ingest_ticker: {} splits {} records [{}, {}]",
-                    ticker, len(patched_splits), gap.from_date, gap.to_date,
+                    ticker,
+                    len(patched_splits),
+                    gap.from_date,
+                    gap.to_date,
                 )
             except Exception as exc:
                 error_msg = str(exc)
-                self._log_fetch(
-                    ticker, "splits", gap.from_date, gap.to_date, 0, "error", error_msg
-                )
-                result.errors.append(
-                    f"splits [{gap.from_date}/{gap.to_date}]: {error_msg}"
-                )
+                self._log_fetch(ticker, "splits", gap.from_date, gap.to_date, 0, "error", error_msg)
+                result.errors.append(f"splits [{gap.from_date}/{gap.to_date}]: {error_msg}")
                 logger.warning("ingest_ticker: splits error for {} — {}", ticker, error_msg)
 
         # --- Trigger adjustment for any new splits ---
@@ -213,7 +243,10 @@ class IngestionOrchestrator:
                 result.fx_records = len(fx_records)
                 logger.info(
                     "ingest_ticker: {} fx AUD/USD {} records [{}, {}]",
-                    ticker, len(fx_records), from_date, to_date,
+                    ticker,
+                    len(fx_records),
+                    from_date,
+                    to_date,
                 )
             except Exception as exc:
                 error_msg = str(exc)
@@ -240,15 +273,11 @@ class IngestionOrchestrator:
         Returns:
             Integer security_id from the securities table.
         """
-        row = self._conn.execute(
-            "SELECT id FROM securities WHERE ticker = ?", (ticker,)
-        ).fetchone()
+        row = self._conn.execute("SELECT id FROM securities WHERE ticker = ?", (ticker,)).fetchone()
 
         if row is not None:
             security_id: int = row[0]
-            logger.debug(
-                "_get_or_create_security: found ticker={} id={}", ticker, security_id
-            )
+            logger.debug("_get_or_create_security: found ticker={} id={}", ticker, security_id)
             return security_id
 
         # Insert a minimal placeholder record — exchange/currency will be resolved later.

@@ -37,6 +37,9 @@ market-data = "market_data.__main__:app"
 testpaths = ["tests"]
 asyncio_mode = "auto"
 
+[tool.black]
+line-length = 100
+
 [tool.ruff]
 line-length = 100
 src = ["src"]
@@ -45,7 +48,13 @@ src = ["src"]
 select = ["E", "F", "I", "UP", "B", "SIM"]
 ignore = [
     "B008",  # typer requires typer.Option/Argument in function defaults by design
+    "E501",  # black handles line length; unfixable string literals exempt via per-file-ignores
 ]
+
+[tool.ruff.lint.per-file-ignores]
+# CSV fixture strings in broker parser tests contain long header rows that cannot
+# be shortened without altering the fixture content (SelfWealth has 13 columns).
+"tests/test_broker_parsers.py" = ["E501"]
 
 [tool.mypy]
 strict = true

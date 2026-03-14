@@ -4,15 +4,13 @@ All tests patch YFinanceAdapter._yf_ticker to avoid real network calls.
 asyncio_mode = "auto" in pyproject.toml means no @pytest.mark.asyncio needed.
 """
 
-import asyncio
 from datetime import date
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 import pandas as pd
 import pytest
 
 from market_data.adapters.yfinance import YFinanceAdapter
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -135,6 +133,7 @@ async def test_fetch_ohlcv_timezone_normalized_to_utc(adapter: YFinanceAdapter) 
 
 async def test_fetch_ohlcv_empty_df_returns_empty_list(adapter: YFinanceAdapter) -> None:
     """Empty DataFrame from yfinance returns [] without raising."""
+
     def fake_yf_ticker(symbol: str) -> MagicMock:
         return make_fake_ticker(ohlcv_df=pd.DataFrame())
 
@@ -170,9 +169,9 @@ async def test_fetch_dividends_franking_always_none(adapter: YFinanceAdapter) ->
 
     assert len(records) == 2
     for record in records:
-        assert record.franking_credit_pct is None, (
-            f"Expected franking_credit_pct=None for yfinance record, got {record.franking_credit_pct}"
-        )
+        assert (
+            record.franking_credit_pct is None
+        ), f"Expected franking_credit_pct=None for yfinance record, got {record.franking_credit_pct}"
 
 
 async def test_fetch_dividends_date_filtering(adapter: YFinanceAdapter) -> None:

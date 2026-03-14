@@ -1,4 +1,5 @@
 """Tests for analysis/scenario.py — crash preset scoping, drawdown, recovery."""
+
 from datetime import date
 
 import pandas as pd

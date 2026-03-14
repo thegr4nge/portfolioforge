@@ -38,9 +38,7 @@ class CoverageTracker:
     def __init__(self, conn: sqlite3.Connection) -> None:
         self.conn = conn
 
-    def get_covered_ranges(
-        self, security_id: int, data_type: str, source: str
-    ) -> list[DateRange]:
+    def get_covered_ranges(self, security_id: int, data_type: str, source: str) -> list[DateRange]:
         """Return all coverage ranges for this security+data_type+source.
 
         Rows are returned sorted by from_date ascending.

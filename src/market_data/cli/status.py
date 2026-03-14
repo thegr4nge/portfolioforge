@@ -38,9 +38,7 @@ def _open_db(db_path: str) -> sqlite3.Connection:
 @status_app.callback(invoke_without_command=True)
 def status_default(
     ctx: typer.Context,
-    ticker: str | None = typer.Argument(
-        None, help="Ticker symbol for detailed view (e.g. AAPL)"
-    ),
+    ticker: str | None = typer.Argument(None, help="Ticker symbol for detailed view (e.g. AAPL)"),
     db_path: str = typer.Option(_DEFAULT_DB, "--db", help="Path to the SQLite database"),
 ) -> None:
     """Show data coverage and quality summary.
@@ -68,8 +66,7 @@ def status_default(
 
 def _show_all_tickers(conn: sqlite3.Connection) -> None:
     """Show one-row summary per ticker in the database."""
-    rows = conn.execute(
-        """
+    rows = conn.execute("""
         SELECT
             s.ticker,
             s.exchange,
@@ -81,8 +78,7 @@ def _show_all_tickers(conn: sqlite3.Connection) -> None:
         LEFT JOIN ingestion_coverage ic ON ic.security_id = s.id
         GROUP BY s.id
         ORDER BY s.ticker
-        """
-    ).fetchall()
+        """).fetchall()
 
     if not rows:
         console.print("[dim]No data ingested yet[/dim]")
@@ -99,7 +95,7 @@ def _show_all_tickers(conn: sqlite3.Connection) -> None:
 
     for row in rows:
         ticker_sym: str = row[0]
-        exchange: str = row[1] or ""
+        exchange: str = row[1] if row[1] and row[1] != "UNKNOWN" else "—"
         cov_from: str = row[2] or "—"
         cov_to: str = row[3] or "—"
         total_records: str = str(row[4]) if row[4] is not None else "0"
@@ -241,9 +237,7 @@ def quality_command(
     ticker = ticker.upper()
     conn = _open_db(db_path)
 
-    sec_row = conn.execute(
-        "SELECT id FROM securities WHERE ticker = ?", (ticker,)
-    ).fetchone()
+    sec_row = conn.execute("SELECT id FROM securities WHERE ticker = ?", (ticker,)).fetchone()
 
     if not sec_row:
         console.print(f"[yellow]No data found for {ticker}[/yellow]")
@@ -311,9 +305,7 @@ def gaps_command(
     ticker = ticker.upper()
     conn = _open_db(db_path)
 
-    sec_row = conn.execute(
-        "SELECT id FROM securities WHERE ticker = ?", (ticker,)
-    ).fetchone()
+    sec_row = conn.execute("SELECT id FROM securities WHERE ticker = ?", (ticker,)).fetchone()
 
     if not sec_row:
         console.print(f"[yellow]No data found for {ticker}[/yellow]")

@@ -74,9 +74,7 @@ def build_cgt_event_rows(disposed_lots: list[DisposedLot]) -> list[CgtEventRow]:
                 gain_aud=lot.gain_aud,
                 discount_eligible=lot.discount_applied,
                 discount_reason=(
-                    "held_over_12_months"
-                    if lot.discount_applied
-                    else "held_under_12_months"
+                    "held_over_12_months" if lot.discount_applied else "held_under_12_months"
                 ),
                 gain_type=gain_type,
             )

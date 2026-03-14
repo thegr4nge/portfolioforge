@@ -32,9 +32,7 @@ def _make_db(path: str) -> sqlite3.Connection:
 def _insert_security(conn: sqlite3.Connection, ticker: str = "AAPL") -> int:
     """Insert a minimal security record and return its id."""
     writer = DatabaseWriter(conn)
-    return writer.upsert_security(
-        SecurityRecord(ticker=ticker, exchange="NASDAQ", currency="USD")
-    )
+    return writer.upsert_security(SecurityRecord(ticker=ticker, exchange="NASDAQ", currency="USD"))
 
 
 def _insert_ohlcv(
@@ -49,19 +47,21 @@ def _insert_ohlcv(
     """
     writer = DatabaseWriter(conn)
     ohlcv_date = "2024-01-02"
-    writer.upsert_ohlcv([
-        OHLCVRecord(
-            security_id=security_id,
-            date=ohlcv_date,
-            open=185.0,
-            high=186.0,
-            low=184.0,
-            close=185.5,
-            volume=50_000_000,
-            adj_close=185.5,
-            adj_factor=1.0,
-        )
-    ])
+    writer.upsert_ohlcv(
+        [
+            OHLCVRecord(
+                security_id=security_id,
+                date=ohlcv_date,
+                open=185.0,
+                high=186.0,
+                low=184.0,
+                close=185.5,
+                volume=50_000_000,
+                adj_close=185.5,
+                adj_factor=1.0,
+            )
+        ]
+    )
     if quality_flags != 0:
         writer.update_quality_flags(security_id, ohlcv_date, quality_flags)
 

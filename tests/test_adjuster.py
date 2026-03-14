@@ -105,9 +105,9 @@ def test_aapl_4_to_1_split_adjusts_historical_prices(
             (sec_id, dt),
         ).fetchone()
         expected = raw_close * 0.25
-        assert abs(row[0] - expected) < 0.001, (
-            f"adj_close for {dt}: expected {expected:.4f}, got {row[0]:.4f}"
-        )
+        assert (
+            abs(row[0] - expected) < 0.001
+        ), f"adj_close for {dt}: expected {expected:.4f}, got {row[0]:.4f}"
 
 
 def test_aapl_split_factor_is_0_25(
@@ -122,9 +122,7 @@ def test_aapl_split_factor_is_0_25(
             "SELECT adj_factor FROM ohlcv WHERE security_id=? AND date=?",
             (sec_id, dt),
         ).fetchone()
-        assert abs(row[0] - 0.25) < 0.0001, (
-            f"adj_factor for {dt}: expected 0.25, got {row[0]}"
-        )
+        assert abs(row[0] - 0.25) < 0.0001, f"adj_factor for {dt}: expected 0.25, got {row[0]}"
 
 
 def test_post_split_rows_not_affected(
@@ -139,12 +137,10 @@ def test_post_split_rows_not_affected(
         (sec_id, POST_SPLIT_DATE),
     ).fetchone()
     # Post-split row should be untouched: adj_factor=1.0, adj_close=raw_close
-    assert abs(row[0] - POST_SPLIT_CLOSE) < 0.001, (
-        f"Post-split adj_close should be {POST_SPLIT_CLOSE}, got {row[0]}"
-    )
-    assert abs(row[1] - 1.0) < 0.0001, (
-        f"Post-split adj_factor should be 1.0, got {row[1]}"
-    )
+    assert (
+        abs(row[0] - POST_SPLIT_CLOSE) < 0.001
+    ), f"Post-split adj_close should be {POST_SPLIT_CLOSE}, got {row[0]}"
+    assert abs(row[1] - 1.0) < 0.0001, f"Post-split adj_factor should be 1.0, got {row[1]}"
 
 
 def test_rows_updated_count(
@@ -153,9 +149,9 @@ def test_rows_updated_count(
     """recalculate_for_split returns the number of rows updated (3 pre-split rows)."""
     _, sec_id, calc = setup
     rows_updated = calc.recalculate_for_split(sec_id, _aapl_split(sec_id))
-    assert rows_updated == len(PRE_SPLIT_DATES), (
-        f"Expected {len(PRE_SPLIT_DATES)} rows updated, got {rows_updated}"
-    )
+    assert rows_updated == len(
+        PRE_SPLIT_DATES
+    ), f"Expected {len(PRE_SPLIT_DATES)} rows updated, got {rows_updated}"
 
 
 # ---------------------------------------------------------------------------
@@ -182,12 +178,12 @@ def test_reverse_split_adjustment(
             (sec_id, dt),
         ).fetchone()
         expected_adj_close = raw_close * 10.0
-        assert abs(row[0] - expected_adj_close) < 0.01, (
-            f"Reverse split adj_close for {dt}: expected {expected_adj_close:.2f}, got {row[0]:.2f}"
-        )
-        assert abs(row[1] - 10.0) < 0.0001, (
-            f"Reverse split adj_factor for {dt}: expected 10.0, got {row[1]}"
-        )
+        assert (
+            abs(row[0] - expected_adj_close) < 0.01
+        ), f"Reverse split adj_close for {dt}: expected {expected_adj_close:.2f}, got {row[0]:.2f}"
+        assert (
+            abs(row[1] - 10.0) < 0.0001
+        ), f"Reverse split adj_factor for {dt}: expected 10.0, got {row[1]}"
 
 
 # ---------------------------------------------------------------------------
@@ -230,13 +226,11 @@ def test_recalculate_all_splits_resets_and_reapplies(
         "SELECT adj_factor, adj_close FROM ohlcv WHERE security_id=? AND date='2020-08-26'",
         (sec_id,),
     ).fetchone()
-    assert abs(row_26[0] - 0.125) < 0.0001, (
-        f"Expected cumulative adj_factor 0.125, got {row_26[0]}"
-    )
+    assert abs(row_26[0] - 0.125) < 0.0001, f"Expected cumulative adj_factor 0.125, got {row_26[0]}"
     expected_adj_close_26 = 502.0 * 0.125
-    assert abs(row_26[1] - expected_adj_close_26) < 0.01, (
-        f"Expected adj_close {expected_adj_close_26:.4f}, got {row_26[1]:.4f}"
-    )
+    assert (
+        abs(row_26[1] - expected_adj_close_26) < 0.01
+    ), f"Expected adj_close {expected_adj_close_26:.4f}, got {row_26[1]:.4f}"
 
     # Row from 2020-08-28: date >= 2020-08-27 (first split skips it), date < 2020-08-31
     # Only 4:1 split applies → adj_factor = 0.25
@@ -244,9 +238,9 @@ def test_recalculate_all_splits_resets_and_reapplies(
         "SELECT adj_factor FROM ohlcv WHERE security_id=? AND date='2020-08-28'",
         (sec_id,),
     ).fetchone()
-    assert abs(row_28[0] - 0.25) < 0.0001, (
-        f"Expected adj_factor 0.25 for 2020-08-28, got {row_28[0]}"
-    )
+    assert (
+        abs(row_28[0] - 0.25) < 0.0001
+    ), f"Expected adj_factor 0.25 for 2020-08-28, got {row_28[0]}"
 
 
 # ---------------------------------------------------------------------------

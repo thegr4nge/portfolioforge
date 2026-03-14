@@ -9,6 +9,8 @@ Annualisation constants:
 - Calendar year = 365.25 days  (CAGR)
 """
 
+import math
+
 import numpy as np
 import pandas as pd
 
@@ -52,9 +54,14 @@ def cagr(equity_curve: pd.Series) -> float:
     years = days / CALENDAR_DAYS_PER_YEAR
     if years <= 0:
         return 0.0
-    return float(
-        (equity_curve.iloc[-1] / equity_curve.iloc[0]) ** (1.0 / years) - 1.0
-    )
+    ratio = float(equity_curve.iloc[-1] / equity_curve.iloc[0])
+    if ratio <= 0:
+        return -1.0
+    # Log-space avoids float64 overflow when ratio is large or years is tiny.
+    try:
+        return math.exp(math.log(ratio) / years) - 1.0
+    except OverflowError:
+        return float("inf")
 
 
 def max_drawdown(equity_curve: pd.Series) -> float:

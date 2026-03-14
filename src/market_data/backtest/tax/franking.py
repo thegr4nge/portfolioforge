@@ -31,36 +31,36 @@ _FRANKING_THRESHOLD_AUD: float = 5000.0
 # Last reviewed: 2026-03-01.
 FRANKING_LOOKUP: dict[str, float] = {
     # ETFs
-    "VAS": 0.80,   # Vanguard Australian Shares ETF — mostly domestic, partially franked
-    "VGS": 0.00,   # Vanguard International Shares — foreign income, no franking
-    "STW": 0.75,   # SPDR S&P/ASX 200 — domestic index, mostly franked
-    "IVV": 0.00,   # iShares S&P 500 — US equities, no franking
-    "NDQ": 0.00,   # Betashares Nasdaq 100 — US equities, no franking
+    "VAS": 0.80,  # Vanguard Australian Shares ETF — mostly domestic, partially franked
+    "VGS": 0.00,  # Vanguard International Shares — foreign income, no franking
+    "STW": 0.75,  # SPDR S&P/ASX 200 — domestic index, mostly franked
+    "IVV": 0.00,  # iShares S&P 500 — US equities, no franking
+    "NDQ": 0.00,  # Betashares Nasdaq 100 — US equities, no franking
     "A200": 0.80,  # Betashares Australia 200 — ASX 200 index, mostly franked
-    "IOZ": 0.75,   # iShares Core S&P/ASX 200 — similar to STW
-    "VHY": 0.85,   # Vanguard Australian High Yield — high-yield domestic, highly franked
-    "MVW": 0.70,   # VanEck Australian Equal Weight — domestic, mostly franked
+    "IOZ": 0.75,  # iShares Core S&P/ASX 200 — similar to STW
+    "VHY": 0.85,  # Vanguard Australian High Yield — high-yield domestic, highly franked
+    "MVW": 0.70,  # VanEck Australian Equal Weight — domestic, mostly franked
     # Top 20 ASX stocks
-    "BHP": 1.00,   # BHP Group — fully franked (large domestic profits)
-    "CBA": 1.00,   # Commonwealth Bank — fully franked
-    "ANZ": 1.00,   # ANZ Group — fully franked
-    "WBC": 1.00,   # Westpac Banking — fully franked
-    "NAB": 1.00,   # National Australia Bank — fully franked
-    "CSL": 0.00,   # CSL Limited — large foreign earnings, unfranked
-    "WES": 1.00,   # Wesfarmers — fully franked (domestic retail)
-    "WOW": 0.80,   # Woolworths Group — mostly franked
-    "MQG": 0.60,   # Macquarie Group — partially franked (global banking mix)
-    "RIO": 0.30,   # Rio Tinto — partially franked (large foreign component)
-    "TLS": 1.00,   # Telstra Group — fully franked
-    "FMG": 0.40,   # Fortescue — partially franked
-    "TCL": 0.60,   # Transurban Group — partially franked (infrastructure)
-    "GMG": 0.20,   # Goodman Group — low franking (international property)
-    "WDS": 0.20,   # Woodside Energy — low franking (international operations)
-    "STO": 0.20,   # Santos — low franking (international)
-    "QBE": 0.50,   # QBE Insurance — partially franked (global insurer)
-    "SHL": 0.60,   # Sonic Healthcare — partially franked
-    "APA": 0.30,   # APA Group — low-mid franking (infrastructure/stapled)
-    "ASX": 1.00,   # ASX Limited — fully franked (domestic exchange)
+    "BHP": 1.00,  # BHP Group — fully franked (large domestic profits)
+    "CBA": 1.00,  # Commonwealth Bank — fully franked
+    "ANZ": 1.00,  # ANZ Group — fully franked
+    "WBC": 1.00,  # Westpac Banking — fully franked
+    "NAB": 1.00,  # National Australia Bank — fully franked
+    "CSL": 0.00,  # CSL Limited — large foreign earnings, unfranked
+    "WES": 1.00,  # Wesfarmers — fully franked (domestic retail)
+    "WOW": 0.80,  # Woolworths Group — mostly franked
+    "MQG": 0.60,  # Macquarie Group — partially franked (global banking mix)
+    "RIO": 0.30,  # Rio Tinto — partially franked (large foreign component)
+    "TLS": 1.00,  # Telstra Group — fully franked
+    "FMG": 0.40,  # Fortescue — partially franked
+    "TCL": 0.60,  # Transurban Group — partially franked (infrastructure)
+    "GMG": 0.20,  # Goodman Group — low franking (international property)
+    "WDS": 0.20,  # Woodside Energy — low franking (international operations)
+    "STO": 0.20,  # Santos — low franking (international)
+    "QBE": 0.50,  # QBE Insurance — partially franked (global insurer)
+    "SHL": 0.60,  # Sonic Healthcare — partially franked
+    "APA": 0.30,  # APA Group — low-mid franking (infrastructure/stapled)
+    "ASX": 1.00,  # ASX Limited — fully franked (domestic exchange)
 }
 
 
@@ -87,9 +87,7 @@ def compute_franking_credit(
     Returns:
         Franking credit in AUD (raw float; round at output layer only).
     """
-    return cash_dividend_aud * franking_pct * (
-        corporate_tax_rate / (1.0 - corporate_tax_rate)
-    )
+    return cash_dividend_aud * franking_pct * (corporate_tax_rate / (1.0 - corporate_tax_rate))
 
 
 def gross_up_dividend(cash_dividend_aud: float, franking_credit: float) -> float:
@@ -183,19 +181,31 @@ def resolve_franking_pct(
     return FRANKING_LOOKUP.get(base, 0.0)
 
 
-def should_apply_45_day_rule(total_credits_aud: float) -> bool:
+def should_apply_45_day_rule(
+    total_credits_aud: float,
+    smsf_mode: bool = False,
+) -> bool:
     """Determine if the 45-day holding rule applies based on the ATO threshold.
 
     ATO rule: If total franking credits claimed in the income year are less than
     $5,000, the 45-day holding rule is waived for all dividends in that year.
+    This small shareholder exemption applies to individuals only.
 
-    Source: ATO 45-day rule page — small shareholder exemption.
+    SMSFs: The $5,000 exemption does NOT apply to superannuation funds. The
+    45-day holding rule is always enforced for SMSF investors regardless of
+    the credit amount.
+
+    Source: ATO 45-day rule page — small shareholder exemption; confirmed
+    that SMSFs are excluded from the exemption.
 
     Args:
         total_credits_aud: Total franking credits (AUD) for the tax year.
+        smsf_mode: If True, always apply the 45-day rule (SMSF — no exemption).
 
     Returns:
-        True if the 45-day rule applies (credits >= $5,000).
-        False if the rule is waived (credits < $5,000).
+        True if the 45-day rule applies.
+        False if the rule is waived (individual with credits < $5,000 only).
     """
+    if smsf_mode:
+        return True
     return total_credits_aud >= _FRANKING_THRESHOLD_AUD

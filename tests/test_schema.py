@@ -39,9 +39,7 @@ def test_all_tables_created(mem_conn: sqlite3.Connection) -> None:
     """All 8 expected tables are present after running migrations."""
     tables = {
         r[0]
-        for r in mem_conn.execute(
-            "SELECT name FROM sqlite_master WHERE type='table'"
-        ).fetchall()
+        for r in mem_conn.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()
     }
     assert tables == EXPECTED_TABLES, f"Missing tables: {EXPECTED_TABLES - tables}"
 
@@ -59,12 +57,8 @@ def test_idempotency() -> None:
 
 def test_ohlcv_quality_flags_default(mem_conn: sqlite3.Connection) -> None:
     """Inserting an ohlcv row without quality_flags yields quality_flags == 0."""
-    mem_conn.execute(
-        "INSERT INTO securities (ticker, exchange) VALUES ('TEST', 'NYSE')"
-    )
-    security_id = mem_conn.execute(
-        "SELECT id FROM securities WHERE ticker = 'TEST'"
-    ).fetchone()[0]
+    mem_conn.execute("INSERT INTO securities (ticker, exchange) VALUES ('TEST', 'NYSE')")
+    security_id = mem_conn.execute("SELECT id FROM securities WHERE ticker = 'TEST'").fetchone()[0]
 
     mem_conn.execute(
         """
@@ -87,20 +81,14 @@ def test_ohlcv_quality_flags_default(mem_conn: sqlite3.Connection) -> None:
 def test_securities_exchange_currency_mandatory(mem_conn: sqlite3.Connection) -> None:
     """Inserting a security without exchange raises a NOT NULL constraint error."""
     with pytest.raises(sqlite3.IntegrityError):
-        mem_conn.execute(
-            "INSERT INTO securities (ticker) VALUES ('NOEXCH')"
-        )
+        mem_conn.execute("INSERT INTO securities (ticker) VALUES ('NOEXCH')")
         mem_conn.commit()
 
 
 def test_dividends_franking_fields_nullable(mem_conn: sqlite3.Connection) -> None:
     """US dividends with no franking data store NULLs for all three franking columns."""
-    mem_conn.execute(
-        "INSERT INTO securities (ticker, exchange) VALUES ('AAPL', 'NASDAQ')"
-    )
-    security_id = mem_conn.execute(
-        "SELECT id FROM securities WHERE ticker = 'AAPL'"
-    ).fetchone()[0]
+    mem_conn.execute("INSERT INTO securities (ticker, exchange) VALUES ('AAPL', 'NASDAQ')")
+    security_id = mem_conn.execute("SELECT id FROM securities WHERE ticker = 'AAPL'").fetchone()[0]
 
     mem_conn.execute(
         """
@@ -126,12 +114,8 @@ def test_dividends_franking_fields_nullable(mem_conn: sqlite3.Connection) -> Non
 
 def test_ingestion_coverage_unique_constraint(mem_conn: sqlite3.Connection) -> None:
     """Inserting duplicate ingestion_coverage records raises IntegrityError."""
-    mem_conn.execute(
-        "INSERT INTO securities (ticker, exchange) VALUES ('SPY', 'NYSE')"
-    )
-    security_id = mem_conn.execute(
-        "SELECT id FROM securities WHERE ticker = 'SPY'"
-    ).fetchone()[0]
+    mem_conn.execute("INSERT INTO securities (ticker, exchange) VALUES ('SPY', 'NYSE')")
+    security_id = mem_conn.execute("SELECT id FROM securities WHERE ticker = 'SPY'").fetchone()[0]
 
     insert_sql = """
         INSERT INTO ingestion_coverage

@@ -4,6 +4,7 @@ CRASH_PRESETS defines named market crash windows. scope_to_scenario() slices a
 BacktestResult equity curve to a preset window. All metric computation
 (drawdown, recovery) is on the sliced curve.
 """
+
 from __future__ import annotations
 
 from datetime import date
@@ -14,6 +15,7 @@ import pandas as pd
 # Dates define peak-to-trough windows per standard financial sources.
 CRASH_PRESETS: dict[str, tuple[date, date]] = {
     "2020-covid": (date(2020, 2, 19), date(2020, 3, 23)),
+    "2022-rba-hikes": (date(2022, 1, 4), date(2022, 10, 13)),
     "2008-gfc": (date(2007, 10, 9), date(2009, 3, 9)),
     "2000-dotcom": (date(2000, 3, 24), date(2002, 10, 9)),
 }
@@ -33,9 +35,7 @@ def scope_to_scenario(curve: pd.Series, scenario: str) -> pd.Series:
         ValueError: If scenario is unknown, or if the curve has no data in the window.
     """
     if scenario not in CRASH_PRESETS:
-        raise ValueError(
-            f"Unknown scenario: {scenario!r}. Valid: {sorted(CRASH_PRESETS)}"
-        )
+        raise ValueError(f"Unknown scenario: {scenario!r}. Valid: {sorted(CRASH_PRESETS)}")
     start, end = CRASH_PRESETS[scenario]
     sliced = curve.loc[pd.Timestamp(start) : pd.Timestamp(end)]
     if sliced.empty:

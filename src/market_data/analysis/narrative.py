@@ -6,6 +6,7 @@ definition (per CONTEXT.md audience requirements).
 
 Inflation baseline: RBA long-run target ~2.5% pa (named constant).
 """
+
 from __future__ import annotations
 
 # RBA long-run inflation target (approximate). Used as inflation comparison baseline.
@@ -15,6 +16,20 @@ _AUS_INFLATION_BASELINE_PCT: float = 2.5
 DISCLAIMER: str = (
     "This is not financial advice. "
     "Past performance is not a reliable indicator of future results."
+)
+
+# AMIT limitation notice — included in all CGT output sections.
+# Australian ETFs (VAS, VGS, STW, VHY) are Attribution Managed Investment
+# Trusts (AMITs). Capital gains distributed via AMMA statements use the
+# fund's holding period, not the investor's. This engine models unit-disposal
+# CGT events correctly but does not model AMMA-distributed capital gain
+# components (yfinance does not provide AMMA data). Verify annual AMMA
+# statements from the fund manager before lodging.
+AMIT_NOTE: str = (
+    "CGT calculations reflect unit-disposal events only. "
+    "AMMA-distributed capital gain components (where the fund's holding "
+    "period governs discount eligibility) are not modelled — verify annual "
+    "AMMA statements from each fund manager before lodgement."
 )
 
 

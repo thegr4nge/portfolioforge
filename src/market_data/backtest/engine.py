@@ -147,9 +147,7 @@ def _load_prices(
     df = pd.read_sql_query(price_sql, conn, params=params, parse_dates=["date"])
 
     if df.empty:
-        raise ValueError(
-            f"No price data found for tickers {tickers} between {start} and {end}."
-        )
+        raise ValueError(f"No price data found for tickers {tickers} between {start} and {end}.")
 
     # Validate coverage for each ticker.
     found_tickers = set(df["ticker"].unique())
@@ -164,9 +162,7 @@ def _load_prices(
     currency_sql = f"""
         SELECT DISTINCT currency FROM securities WHERE ticker IN ({placeholders})
     """
-    currencies = [
-        row[0] for row in conn.execute(currency_sql, list(tickers)).fetchall()
-    ]
+    currencies = [row[0] for row in conn.execute(currency_sql, list(tickers)).fetchall()]
     if len(currencies) > 1:
         raise ValueError(
             "Mixed-currency portfolios are not supported in Phase 2. "

@@ -5,6 +5,7 @@ aggregates portfolio weights by category. Missing data is grouped
 as 'Unknown' (sector) or 'Other' (geography) — never raises for
 missing metadata.
 """
+
 from __future__ import annotations
 
 import sqlite3

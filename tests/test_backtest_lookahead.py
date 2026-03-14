@@ -50,9 +50,7 @@ def two_day_conn() -> sqlite3.Connection:
     run_migrations(conn)
 
     writer = DatabaseWriter(conn)
-    vas_id = writer.upsert_security(
-        SecurityRecord(ticker="VAS.AX", exchange="ASX", currency="AUD")
-    )
+    vas_id = writer.upsert_security(SecurityRecord(ticker="VAS.AX", exchange="ASX", currency="AUD"))
 
     rows: list[OHLCVRecord] = [
         OHLCVRecord(
@@ -155,16 +153,16 @@ def test_single_day_backtest_uses_only_open_price(two_day_conn: sqlite3.Connecti
     result = _run_two_day(two_day_conn, start=_DAY1, end=_DAY1)
 
     # Exactly one day in the equity curve.
-    assert len(result.equity_curve) == 1, (
-        f"1-day backtest must have 1 equity curve entry, got {len(result.equity_curve)}"
-    )
+    assert (
+        len(result.equity_curve) == 1
+    ), f"1-day backtest must have 1 equity curve entry, got {len(result.equity_curve)}"
 
     day1_equity = float(result.equity_curve.iloc[0])
 
     # Equity must be below initial_capital: brokerage was paid on initial purchase.
-    assert day1_equity < 10_000.0, (
-        f"Day-1 equity {day1_equity:.2f} must be < 10_000 — brokerage not applied."
-    )
+    assert (
+        day1_equity < 10_000.0
+    ), f"Day-1 equity {day1_equity:.2f} must be < 10_000 — brokerage not applied."
 
     # Exactly one trade (the initial BUY).
     assert len(result.trades) == 1, (
@@ -173,9 +171,9 @@ def test_single_day_backtest_uses_only_open_price(two_day_conn: sqlite3.Connecti
     )
 
     # That trade has a positive brokerage cost.
-    assert result.trades[0].cost > 0.0, (
-        "Initial buy trade must have cost > 0.0 — BrokerageModel must be applied."
-    )
+    assert (
+        result.trades[0].cost > 0.0
+    ), "Initial buy trade must have cost > 0.0 — BrokerageModel must be applied."
 
 
 def test_coverage_disclaimer_content(two_day_conn: sqlite3.Connection) -> None:
@@ -190,19 +188,19 @@ def test_coverage_disclaimer_content(two_day_conn: sqlite3.Connection) -> None:
     for cov in result.coverage:
         disclaimer = cov.disclaimer
         assert disclaimer, f"DataCoverage for {cov.ticker} returned empty disclaimer string"
-        assert cov.ticker in disclaimer, (
-            f"Ticker '{cov.ticker}' not found in disclaimer: {disclaimer!r}"
-        )
+        assert (
+            cov.ticker in disclaimer
+        ), f"Ticker '{cov.ticker}' not found in disclaimer: {disclaimer!r}"
         # Disclaimer must contain a date-like substring (from_date to to_date).
-        assert "to" in disclaimer, (
-            f"Disclaimer must describe a date range ('X to Y'), got: {disclaimer!r}"
-        )
+        assert (
+            "to" in disclaimer
+        ), f"Disclaimer must describe a date range ('X to Y'), got: {disclaimer!r}"
 
     # VAS.AX (portfolio ticker) must appear in the combined disclaimer text.
     all_disclaimers = "\n".join(c.disclaimer for c in result.coverage)
-    assert "VAS.AX" in all_disclaimers, (
-        f"VAS.AX not found in any coverage disclaimer. Got:\n{all_disclaimers}"
-    )
+    assert (
+        "VAS.AX" in all_disclaimers
+    ), f"VAS.AX not found in any coverage disclaimer. Got:\n{all_disclaimers}"
 
 
 def test_str_renders_all_four_metrics(two_day_conn: sqlite3.Connection) -> None:
@@ -216,25 +214,19 @@ def test_str_renders_all_four_metrics(two_day_conn: sqlite3.Connection) -> None:
     rendered = str(result)
 
     # All four metric labels must appear in the rendered string.
-    assert "Total Return" in rendered, (
-        f"'Total Return' not found in str(result). Rendered:\n{rendered[:500]}"
-    )
-    assert "CAGR" in rendered, (
-        f"'CAGR' not found in str(result). Rendered:\n{rendered[:500]}"
-    )
-    assert "Max Drawdown" in rendered, (
-        f"'Max Drawdown' not found in str(result). Rendered:\n{rendered[:500]}"
-    )
-    assert "Sharpe" in rendered, (
-        f"'Sharpe' not found in str(result). Rendered:\n{rendered[:500]}"
-    )
+    assert (
+        "Total Return" in rendered
+    ), f"'Total Return' not found in str(result). Rendered:\n{rendered[:500]}"
+    assert "CAGR" in rendered, f"'CAGR' not found in str(result). Rendered:\n{rendered[:500]}"
+    assert (
+        "Max Drawdown" in rendered
+    ), f"'Max Drawdown' not found in str(result). Rendered:\n{rendered[:500]}"
+    assert "Sharpe" in rendered, f"'Sharpe' not found in str(result). Rendered:\n{rendered[:500]}"
 
     # Data Coverage section must be present.
-    assert "Data Coverage" in rendered, (
-        f"'Data Coverage' not found in str(result). Rendered:\n{rendered[:500]}"
-    )
+    assert (
+        "Data Coverage" in rendered
+    ), f"'Data Coverage' not found in str(result). Rendered:\n{rendered[:500]}"
 
     # Portfolio ticker must appear in the coverage disclaimer.
-    assert "VAS.AX" in rendered, (
-        f"'VAS.AX' not found in str(result). Rendered:\n{rendered[:500]}"
-    )
+    assert "VAS.AX" in rendered, f"'VAS.AX' not found in str(result). Rendered:\n{rendered[:500]}"

@@ -73,8 +73,7 @@ class DataCoverage(BaseModel):
     @property
     def disclaimer(self) -> str:
         return (
-            f"{self.ticker}: {self.from_date} to {self.to_date} "
-            f"({self.records} trading days)"
+            f"{self.ticker}: {self.from_date} to {self.to_date} " f"({self.records} trading days)"
         )
 
 
@@ -165,6 +164,4 @@ def validate_portfolio(portfolio: dict[str, float]) -> None:
         )
     for ticker, weight in portfolio.items():
         if weight <= 0.0:
-            raise ValueError(
-                f"Weight for {ticker!r} must be > 0. Got {weight}."
-            )
+            raise ValueError(f"Weight for {ticker!r} must be > 0. Got {weight}.")

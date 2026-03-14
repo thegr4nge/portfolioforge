@@ -9,6 +9,7 @@ Usage::
     from market_data.analysis.exporter import export_report
     export_report(report, conn, Path("client_smith.docx"))
 """
+
 from __future__ import annotations
 
 import sqlite3
@@ -43,9 +44,11 @@ _GRAY_HEX = "F2F2F2"
 _NAVY = RGBColor(0x1F, 0x38, 0x64)
 _TEAL = RGBColor(0x00, 0x87, 0x8A)
 _WHITE = RGBColor(0xFF, 0xFF, 0xFF)
+_RED = RGBColor(0xC0, 0x00, 0x00)
 
 
 # ── low-level helpers ───────────────────────────────────────────────────────────
+
 
 def _shade_cell(cell: object, hex_color: str) -> None:
     """Set table cell background fill colour (hex string without #)."""
@@ -180,9 +183,8 @@ _CGT_RULES: list[tuple[str, str, str]] = [
 def _cgt_rule_annotation(row: CgtEventRow) -> str:
     """One-line ATO rule annotation for a single CGT event (PROF-01)."""
     acq = row.acquired_date.strftime("%d %b %Y")
-    months = (
-        (row.disposed_date.year - row.acquired_date.year) * 12
-        + (row.disposed_date.month - row.acquired_date.month)
+    months = (row.disposed_date.year - row.acquired_date.year) * 12 + (
+        row.disposed_date.month - row.acquired_date.month
     )
     if row.gain_type == "discountable_gain":
         return f"FIFO parcel {acq} — 50% CGT discount applied (held {months} months)"
@@ -193,17 +195,36 @@ def _cgt_rule_annotation(row: CgtEventRow) -> str:
 
 # ── section builders ────────────────────────────────────────────────────────────
 
-def _add_cover(doc: object, br: BacktestResult, after_tax_cagr: float | None = None) -> None:
-    """Cover page: title, period, 4 KPI boxes, optional after-tax CAGR line."""
+
+def _add_cover(
+    doc: object,
+    br: BacktestResult,
+    after_tax_cagr: float | None = None,
+    *,
+    sample_data: bool = False,
+) -> None:
+    """Cover page: title, period, 4 KPI boxes, optional after-tax CAGR line.
+
+    Args:
+        doc: python-docx Document object.
+        br: BacktestResult supplying portfolio, metrics, and curve dates.
+        after_tax_cagr: After-tax CAGR to display instead of pre-tax CAGR, or None.
+        sample_data: When True, adds a visible "SAMPLE DATA" banner below the title.
+    """
     title_para = doc.add_paragraph()  # type: ignore[attr-defined]
     title_run = title_para.add_run("PortfolioForge — Analysis Report")
     title_run.bold = True
     title_run.font.size = Pt(22)
     title_run.font.color.rgb = _NAVY
 
-    tickers = ", ".join(
-        f"{t} ({w:.0%})" for t, w in br.portfolio.items()
-    )
+    if sample_data:
+        banner_para = doc.add_paragraph()  # type: ignore[attr-defined]
+        banner_run = banner_para.add_run("*** SAMPLE DATA — NOT BASED ON A REAL CLIENT RUN ***")
+        banner_run.bold = True
+        banner_run.font.size = Pt(12)
+        banner_run.font.color.rgb = _RED
+
+    tickers = ", ".join(f"{t} ({w:.0%})" for t, w in br.portfolio.items())
     sub = doc.add_paragraph()  # type: ignore[attr-defined]
     sub.add_run(f"Portfolio: {tickers}").font.size = Pt(10)
 
@@ -222,10 +243,7 @@ def _add_cover(doc: object, br: BacktestResult, after_tax_cagr: float | None = N
     # headline number for SMSF accountants. Pre-tax CAGR remains in the
     # Performance vs Benchmark table below.
     cagr_label = "After-Tax CAGR" if after_tax_cagr is not None else "CAGR"
-    cagr_value = (
-        f"{after_tax_cagr:.1%}" if after_tax_cagr is not None
-        else f"{br.metrics.cagr:.1%}"
-    )
+    cagr_value = f"{after_tax_cagr:.1%}" if after_tax_cagr is not None else f"{br.metrics.cagr:.1%}"
     kpi_table = doc.add_table(rows=2, cols=4)  # type: ignore[attr-defined]
     kpi_labels = ["Total Return", cagr_label, "Max Drawdown", "Sharpe Ratio"]
     kpi_values = [
@@ -315,20 +333,31 @@ def _add_tax_analysis(doc: object, tax_result: TaxAwareResult) -> None:
 
     tax = tax_result.tax
     table = doc.add_table(rows=1, cols=6)  # type: ignore[attr-defined]
-    _header_row(table, [
-        "Tax Year", "CGT Events", "CGT Payable (AUD)",
-        "Franking Credits (AUD)", "Dividend Income (AUD)", "Carry-Fwd Loss (AUD)",
-    ])
+    _header_row(
+        table,
+        [
+            "Tax Year",
+            "CGT Events",
+            "CGT Payable (AUD)",
+            "Franking Credits (AUD)",
+            "Dividend Income (AUD)",
+            "Carry-Fwd Loss (AUD)",
+        ],
+    )
 
     for i, yr in enumerate(tax.years):
-        _body_row(table, [
-            f"FY{yr.ending_year}",
-            str(yr.cgt_events),
-            f"${yr.cgt_payable:,.2f}",
-            f"${yr.franking_credits_claimed:,.2f}",
-            f"${yr.dividend_income:,.2f}",
-            f"${yr.carried_forward_loss:,.2f}",
-        ], shade=(i % 2 == 1))
+        _body_row(
+            table,
+            [
+                f"FY{yr.ending_year}",
+                str(yr.cgt_events),
+                f"${yr.cgt_payable:,.2f}",
+                f"${yr.franking_credits_claimed:,.2f}",
+                f"${yr.dividend_income:,.2f}",
+                f"${yr.carried_forward_loss:,.2f}",
+            ],
+            shade=(i % 2 == 1),
+        )
     _add_cell_borders(table)
 
     p = doc.add_paragraph()  # type: ignore[attr-defined]
@@ -357,21 +386,35 @@ def _add_cgt_log(doc: object, tax_result: TaxAwareResult) -> None:
         return
 
     table = doc.add_table(rows=1, cols=7)  # type: ignore[attr-defined]
-    _header_row(table, [
-        "#", "Tax Year", "Ticker", "Acquired", "Disposed",
-        "Gain/Loss (AUD)", "ATO Rule Applied",
-    ], font_size=8)
+    _header_row(
+        table,
+        [
+            "#",
+            "Tax Year",
+            "Ticker",
+            "Acquired",
+            "Disposed",
+            "Gain/Loss (AUD)",
+            "ATO Rule Applied",
+        ],
+        font_size=8,
+    )
 
     for i, row in enumerate(rows):
-        _body_row(table, [
-            str(i + 1),
-            row.tax_year_label,
-            row.ticker,
-            row.acquired_date.strftime("%d %b %Y"),
-            row.disposed_date.strftime("%d %b %Y"),
-            f"${row.gain_aud:,.2f}",
-            _cgt_rule_annotation(row),
-        ], shade=(i % 2 == 1), font_size=8)
+        _body_row(
+            table,
+            [
+                str(i + 1),
+                row.tax_year_label,
+                row.ticker,
+                row.acquired_date.strftime("%d %b %Y"),
+                row.disposed_date.strftime("%d %b %Y"),
+                f"${row.gain_aud:,.2f}",
+                _cgt_rule_annotation(row),
+            ],
+            shade=(i % 2 == 1),
+            font_size=8,
+        )
 
     _set_col_widths(table, [0.4, 1.5, 1.5, 2.0, 2.0, 2.1, 6.5])
     _add_cell_borders(table)
@@ -379,20 +422,37 @@ def _add_cgt_log(doc: object, tax_result: TaxAwareResult) -> None:
 
 
 def _add_coverage(doc: object, br: BacktestResult) -> None:
-    """Data coverage table: ticker, date range, record count."""
+    """Data coverage table: ticker, date range, record count, quality status.
+
+    Quality status is always "validated" because the backtest engine applies a
+    quality_flags=0 filter on all price queries — only records that passed the
+    full ValidationSuite are used in the simulation.
+    """
     _section_heading(doc, "Data Coverage")
 
-    table = doc.add_table(rows=1, cols=4)  # type: ignore[attr-defined]
-    _header_row(table, ["Ticker", "From", "To", "Records"])
+    table = doc.add_table(rows=1, cols=5)  # type: ignore[attr-defined]
+    _header_row(table, ["Ticker", "From", "To", "Records", "Quality Status"])
 
     for i, cov in enumerate(br.coverage):
-        _body_row(table, [
-            cov.ticker,
-            cov.from_date.strftime("%d %b %Y"),
-            cov.to_date.strftime("%d %b %Y"),
-            str(cov.records),
-        ], shade=(i % 2 == 1))
+        _body_row(
+            table,
+            [
+                cov.ticker,
+                cov.from_date.strftime("%d %b %Y"),
+                cov.to_date.strftime("%d %b %Y"),
+                str(cov.records),
+                "validated",
+            ],
+            shade=(i % 2 == 1),
+        )
     _add_cell_borders(table)
+
+    note = doc.add_paragraph()  # type: ignore[attr-defined]
+    note.add_run(
+        "Quality status 'validated': price records passed all quality checks "
+        "(quality_flags=0 filter applied). Only validated records are used in backtests."
+    ).font.size = Pt(8)
+
     doc.add_paragraph()  # type: ignore[attr-defined]
 
 
@@ -447,6 +507,52 @@ def _add_methodology(doc: object, tax_result: TaxAwareResult | None = None) -> N
     doc.add_paragraph()  # type: ignore[attr-defined]
 
 
+def _add_page_numbers(doc: object) -> None:
+    """Add 'Page X of Y' footer to all sections via OOXML field codes."""
+    for section in doc.sections:  # type: ignore[attr-defined]
+        footer = section.footer
+        footer.is_linked_to_previous = False
+        para = footer.paragraphs[0] if footer.paragraphs else footer.add_paragraph()
+        para.clear()
+        para.alignment = 2  # WD_ALIGN_PARAGRAPH.RIGHT = 2
+
+        run = para.add_run("Page ")
+        run.font.size = Pt(8)
+        run.font.color.rgb = _NAVY
+
+        # PAGE field
+        fld_page = OxmlElement("w:fldChar")
+        fld_page.set(qn("w:fldCharType"), "begin")
+        run._r.append(fld_page)
+        instr = OxmlElement("w:instrText")
+        instr.set(qn("xml:space"), "preserve")
+        instr.text = " PAGE "
+        run._r.append(instr)
+        fld_end = OxmlElement("w:fldChar")
+        fld_end.set(qn("w:fldCharType"), "end")
+        run._r.append(fld_end)
+
+        run2 = para.add_run(" of ")
+        run2.font.size = Pt(8)
+        run2.font.color.rgb = _NAVY
+
+        # NUMPAGES field
+        fld_np = OxmlElement("w:fldChar")
+        fld_np.set(qn("w:fldCharType"), "begin")
+        run2._r.append(fld_np)
+        instr2 = OxmlElement("w:instrText")
+        instr2.set(qn("xml:space"), "preserve")
+        instr2.text = " NUMPAGES "
+        run2._r.append(instr2)
+        fld_end2 = OxmlElement("w:fldChar")
+        fld_end2.set(qn("w:fldCharType"), "end")
+        run2._r.append(fld_end2)
+
+        run3 = para.add_run("   |   PortfolioForge")
+        run3.font.size = Pt(8)
+        run3.font.color.rgb = _NAVY
+
+
 def _add_disclaimer(doc: object) -> None:
     """Mandatory disclaimer — always the final section."""
     _section_heading(doc, "Disclaimer")
@@ -459,10 +565,13 @@ def _add_disclaimer(doc: object) -> None:
 
 # ── public entry point ──────────────────────────────────────────────────────────
 
+
 def export_report(
     report: AnalysisReport,
     conn: sqlite3.Connection,
     output_path: Path,
+    *,
+    sample_data: bool = False,
 ) -> None:
     """Export an AnalysisReport to a .docx file.
 
@@ -477,6 +586,9 @@ def export_report(
         report: AnalysisReport wrapping a BacktestResult or TaxAwareResult.
         conn: SQLite connection (used for sector/geo — reserved for future use).
         output_path: Destination .docx path. Parent directory must exist.
+        sample_data: When True, adds a visible "SAMPLE DATA" banner on the cover
+            page. Use this for demos and presentations not based on a real client
+            run, to comply with the AFSL disclaimer requirement.
 
     Raises:
         ValueError: If output_path does not have a .docx extension.
@@ -496,11 +608,10 @@ def export_report(
         section.right_margin = Cm(2.5)
 
     after_tax_cagr = (
-        report.result.tax.after_tax_cagr
-        if isinstance(report.result, TaxAwareResult)
-        else None
+        report.result.tax.after_tax_cagr if isinstance(report.result, TaxAwareResult) else None
     )
-    _add_cover(doc, br, after_tax_cagr=after_tax_cagr)
+    _add_page_numbers(doc)
+    _add_cover(doc, br, after_tax_cagr=after_tax_cagr, sample_data=sample_data)
     _add_composition(doc, br)
     _add_performance(doc, br)
 

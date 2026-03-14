@@ -45,6 +45,22 @@ Trade Date,Settlement Date,Reference,Security,Details,Debit($),Credit($),Balance
 Total,,,,,,,,
 """
 
+# FRAGILE POINT: price with a '$' prefix after '@' — the regex handles this via
+# '@\s*\$?' so '@ $95.50' is parsed correctly.
+COMMSEC_CSV_PRICE_WITH_DOLLAR = """\
+Trade Date,Settlement Date,Reference,Security,Details,Debit($),Credit($),Balance($)
+06/03/2026,10/03/2026,T77777,VAS.AX,"Bought 100 VAS.AX @ $95.50 Brokerage 19.95",9571.95,,9571.95
+"""
+
+# FRAGILE POINT: brokerage with a ':' separator — the regex expects 'Brokerage <num>'
+# (space, no colon). 'Brokerage: 19.95' does NOT match group 4; brokerage_aud falls
+# to 0.0. The trade itself is still parsed correctly. The validator will warn about
+# zero brokerage. If CommSec exports this format, add brokerage manually after import.
+COMMSEC_CSV_BROKERAGE_WITH_COLON = """\
+Trade Date,Settlement Date,Reference,Security,Details,Debit($),Credit($),Balance($)
+06/03/2026,10/03/2026,T88888,VAS.AX,"Bought 100 VAS.AX @ 95.50 Brokerage: 19.95",9571.95,,9571.95
+"""
+
 
 class TestCommSecParser:
     def test_parse_buy(self) -> None:
@@ -90,9 +106,40 @@ class TestCommSecParser:
         assert len(records) == 1
 
     def test_returns_empty_list_for_headeronly_csv(self) -> None:
-        csv = "Trade Date,Settlement Date,Reference,Security,Details,Debit($),Credit($),Balance($)\n"
+        csv = (
+            "Trade Date,Settlement Date,Reference,Security,Details,Debit($),Credit($),Balance($)\n"
+        )
         records = parse_commsec(csv)
         assert records == []
+
+    def test_price_with_dollar_sign_prefix_parsed_correctly(self) -> None:
+        """'@ $95.50' (dollar sign before price) is handled by the regex ('@\\s*\\$?').
+
+        ASSUMED FORMAT: CommSec sometimes emits '@ $95.50' with a dollar sign.
+        The regex '@ \\s*\\$?(...)' explicitly handles this — not a fragile point.
+        """
+        records = parse_commsec(COMMSEC_CSV_PRICE_WITH_DOLLAR)
+        assert len(records) == 1
+        assert records[0].price_aud == 95.50
+        assert records[0].brokerage_aud == 19.95
+        assert records[0].action == "BUY"
+
+    def test_brokerage_with_colon_separator_gives_zero_brokerage(self) -> None:
+        """'Brokerage: 19.95' (colon after label) — trade parsed, brokerage=0.0.
+
+        FRAGILE POINT: The Details regex expects 'Brokerage 19.95' (space, no colon).
+        'Brokerage: 19.95' does not match group 4 so brokerage_aud defaults to 0.0.
+        The trade itself (action, quantity, price) is still extracted correctly.
+        The validator will emit a 'Brokerage not recorded' warning; the user should
+        check and manually correct brokerage before relying on cost-basis calculations.
+        If CommSec ever exports this format, update _COMMSEC_DETAILS_RE to add '\\:?'.
+        """
+        records = parse_commsec(COMMSEC_CSV_BROKERAGE_WITH_COLON)
+        assert len(records) == 1
+        assert records[0].action == "BUY"
+        assert records[0].price_aud == 95.50
+        # Brokerage is lost — known fragile point documented above
+        assert records[0].brokerage_aud == 0.0
 
 
 # ---------------------------------------------------------------------------
@@ -223,6 +270,7 @@ class TestSelfWealthParser:
 # ---------------------------------------------------------------------------
 # Dispatcher
 # ---------------------------------------------------------------------------
+
 
 class TestDispatcher:
     def test_commsec_dispatched(self) -> None:

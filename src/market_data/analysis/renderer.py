@@ -8,6 +8,7 @@ Three rendering entry points:
 DISCLAIMER is enforced unconditionally at the top-level of each entry point.
 It is never conditional on verbosity level or output mode.
 """
+
 from __future__ import annotations
 
 import sqlite3
@@ -18,6 +19,7 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.rule import Rule
 from rich.table import Table
+from rich.text import Text
 
 from market_data.analysis.breakdown import get_geo_exposure, get_sector_exposure
 from market_data.analysis.charts import (
@@ -45,7 +47,88 @@ def _get_backtest(report: AnalysisReport) -> BacktestResult:
     return result
 
 
+def _render_header(br: BacktestResult, c: Console) -> None:
+    """Print a branded header with portfolio composition and analysis period."""
+    portfolio_str = "  ·  ".join(
+        f"[bold]{ticker}[/bold] {weight:.0%}" for ticker, weight in sorted(br.portfolio.items())
+    )
+    period_str = (
+        f"[dim]{br.start_date} → {br.end_date}"
+        f"  ·  Benchmark: {br.benchmark.ticker}"
+        f"  ·  Capital: ${br.initial_capital:,.0f}[/dim]"
+    )
+    c.print(Rule(" PortfolioForge  ·  ATO-Validated Portfolio Analysis ", style="bold cyan"))
+    c.print()
+    c.print(f"  {portfolio_str}")
+    c.print(f"  {period_str}")
+    c.print()
+
+
+def _render_kpi_cards(br: BacktestResult) -> Columns:
+    """Four color-coded KPI panels: portfolio vs benchmark, side by side."""
+
+    def _card(
+        title: str,
+        port_str: str,
+        bench_str: str,
+        delta_str: str,
+        outperforms: bool,
+    ) -> Panel:
+        color = "green" if outperforms else "red"
+        arrow = "▲" if outperforms else "▼"
+        body = Text(justify="center")
+        body.append(f"\n{port_str}\n", style=f"bold {color}")
+        body.append(f"bm  {bench_str}\n", style="dim")
+        body.append(f"{arrow} {delta_str}", style=color)
+        return Panel(body, title=f"[dim]{title}[/dim]", padding=(0, 1))
+
+    m = br.metrics
+    bm = br.benchmark
+
+    tr_delta = (m.total_return - bm.total_return) * 100
+    cagr_delta = (m.cagr - bm.cagr) * 100
+    # For drawdown: less negative is better, so positive delta = less pain
+    dd_delta = (abs(bm.max_drawdown) - abs(m.max_drawdown)) * 100
+    sr_delta = m.sharpe_ratio - bm.sharpe_ratio
+
+    return Columns(
+        [
+            _card(
+                "Total Return",
+                f"{m.total_return:+.2%}",
+                f"{bm.total_return:.2%}",
+                f"{tr_delta:+.1f}pp",
+                m.total_return >= bm.total_return,
+            ),
+            _card(
+                "CAGR / Year",
+                f"{m.cagr:+.2%}",
+                f"{bm.cagr:.2%}",
+                f"{cagr_delta:+.1f}pp",
+                m.cagr >= bm.cagr,
+            ),
+            _card(
+                "Max Drawdown",
+                f"{m.max_drawdown:.2%}",
+                f"{bm.max_drawdown:.2%}",
+                f"{dd_delta:+.1f}pp severity",
+                m.max_drawdown > bm.max_drawdown,
+            ),
+            _card(
+                "Sharpe Ratio",
+                f"{m.sharpe_ratio:.2f}",
+                f"{bm.sharpe_ratio:.2f}",
+                f"{sr_delta:+.2f} risk-adj",
+                m.sharpe_ratio >= bm.sharpe_ratio,
+            ),
+        ],
+        equal=True,
+        expand=True,
+    )
+
+
 def _render_metrics_table(br: BacktestResult) -> Table:
+    """Compact metrics table — used in comparison panels (narrow context)."""
     table = Table(show_header=True, header_style="bold", box=None)
     table.add_column("Metric", style="dim", min_width=20)
     table.add_column("Portfolio", justify="right")
@@ -55,11 +138,7 @@ def _render_metrics_table(br: BacktestResult) -> Table:
         f"{br.metrics.total_return:.2%}",
         f"{br.benchmark.total_return:.2%}",
     )
-    table.add_row(
-        "CAGR",
-        f"{br.metrics.cagr:.2%}",
-        f"{br.benchmark.cagr:.2%}",
-    )
+    table.add_row("CAGR", f"{br.metrics.cagr:.2%}", f"{br.benchmark.cagr:.2%}")
     table.add_row(
         "Max Drawdown",
         f"{br.metrics.max_drawdown:.2%}",
@@ -83,7 +162,14 @@ def _render_breakdown_table(
     table.add_column("Category")
     table.add_column("Weight", justify="right")
     for s, w in sector.items():
-        table.add_row("Sector", s, f"{w:.1%}")
+        if s == "Unknown":
+            table.add_row(
+                "Sector",
+                Text("Unclassified (ASX — no sector data)", style="dim italic"),
+                Text(f"{w:.1%}", style="dim"),
+            )
+        else:
+            table.add_row("Sector", s, f"{w:.1%}")
     for region, w in geo.items():
         table.add_row("Geography", region, f"{w:.1%}")
     if asx_note:
@@ -120,50 +206,70 @@ def render_report(
         report: AnalysisReport with BacktestResult or TaxAwareResult.
         conn: SQLite connection for sector/geo lookup.
         verbose: If True, include per-year tax table, per-trade detail.
+        risk_free_rate: Risk-free rate used for Sharpe; shown in summary note.
         console: Rich Console; uses default Console if None.
     """
     c = console or Console()
     br = _get_backtest(report)
 
-    # Metrics table
-    c.print(_render_metrics_table(br))
+    # Header — portfolio identity + period
+    _render_header(br, c)
 
-    # Narrative sentences
-    for sentence in _narrative_block(br):
-        c.print(f"  {sentence}")
-
-    if risk_free_rate == 0.0:
-        c.print(
-            "  [dim](Sharpe calculated with 0% risk-free rate"
-            " — use --risk-free-rate 0.043 for RBA cash rate comparison)[/dim]"
-        )
+    # KPI cards — four metrics vs benchmark
+    c.print(_render_kpi_cards(br))
     c.print()
 
-    # Equity + drawdown charts
-    chart_str = render_equity_chart(br.equity_curve, br.benchmark_curve)
-    c.print(Panel(chart_str, title="Portfolio vs Benchmark"))
-    dd_str = render_drawdown_chart(br.equity_curve)
-    c.print(Panel(dd_str, title="Drawdown"))
+    # Narrative summary in a soft panel
+    sentences = _narrative_block(br)
+    if risk_free_rate == 0.0:
+        sentences.append(
+            "[dim](Sharpe calculated with 0% risk-free rate"
+            " — use --risk-free-rate 0.043 for RBA cash rate comparison)[/dim]"
+        )
+    c.print(
+        Panel(
+            "\n".join(f"  {s}" for s in sentences),
+            title="[dim]Analysis Summary[/dim]",
+            border_style="dim",
+            padding=(0, 1),
+        )
+    )
+    c.print()
 
-    # Sector and geo breakdown — always shown
+    # Charts — fill terminal width
+    chart_w = max(60, c.width - 4)
+    chart_str = render_equity_chart(br.equity_curve, br.benchmark_curve, width=chart_w)
+    c.print(Panel(chart_str, title="Portfolio vs Benchmark", border_style="cyan"))
+    dd_str = render_drawdown_chart(br.equity_curve, width=chart_w, height=10)
+    c.print(Panel(dd_str, title="Drawdown", border_style="red"))
+
+    # Sector and geo breakdown
     sector = get_sector_exposure(br.portfolio, conn)
     geo = get_geo_exposure(br.portfolio, conn)
     asx_note = sector.get("Unknown", 0.0) > 0.5
+    c.print(Rule("[dim]Exposure Breakdown[/dim]", style="dim"))
     c.print(_render_breakdown_table(sector, geo, asx_note=asx_note))
 
     # Verbose extras: tax summary table, coverage, trade count
     if verbose:
         result = report.result
         if isinstance(result, TaxAwareResult):
-            c.print(result)  # TaxAwareResult.__rich_console__ renders tax table
-        c.print("[bold]Data Coverage[/bold]")
+            c.print(result)
+        c.print(Rule("[dim]Data Coverage[/dim]", style="dim"))
         for cov in br.coverage:
             c.print(f"  [dim]{cov.disclaimer}[/dim]")
         c.print(f"  [dim]Trades executed: {len(br.trades)}[/dim]")
 
     # Disclaimer — ALWAYS last, ALWAYS present
-    c.print(Rule(style="dim"))
-    c.print(f"[dim italic]{DISCLAIMER}[/dim italic]")
+    c.print()
+    c.print(
+        Panel(
+            f"[yellow]{DISCLAIMER}[/yellow]",
+            title="[yellow]Notice[/yellow]",
+            border_style="yellow",
+            padding=(0, 2),
+        )
+    )
 
 
 def _render_tax_comparison_table(
@@ -196,8 +302,11 @@ def _render_tax_comparison_table(
         ("After-tax CAGR", f"{tax_a.after_tax_cagr:.2%}", f"{tax_b.after_tax_cagr:.2%}"),
         ("Total tax paid (AUD)", f"${tax_a.total_tax_paid:,.2f}", f"${tax_b.total_tax_paid:,.2f}"),
         ("Franking credits (AUD)", f"${total_franking_a:,.2f}", f"${total_franking_b:,.2f}"),
-        ("CGT events", str(sum(yr.cgt_events for yr in tax_a.years)),
-         str(sum(yr.cgt_events for yr in tax_b.years))),
+        (
+            "CGT events",
+            str(sum(yr.cgt_events for yr in tax_a.years)),
+            str(sum(yr.cgt_events for yr in tax_b.years)),
+        ),
     ]
     for metric, val_a, val_b in rows:
         table.add_row(metric, val_a, val_b)
@@ -258,8 +367,15 @@ def render_comparison(
         c.print(_render_tax_comparison_table(report_a.result, report_b.result, label_a, label_b))
 
     # Disclaimer — ALWAYS last, ALWAYS present (even in comparison mode)
-    c.print(Rule(style="dim"))
-    c.print(f"[dim italic]{DISCLAIMER}[/dim italic]")
+    c.print()
+    c.print(
+        Panel(
+            f"[yellow]{DISCLAIMER}[/yellow]",
+            title="[yellow]Notice[/yellow]",
+            border_style="yellow",
+            padding=(0, 2),
+        )
+    )
 
 
 def report_to_json(

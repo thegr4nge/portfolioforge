@@ -72,9 +72,7 @@ class PolygonAdapter:
             await asyncio.sleep(self._rate_limit_secs)
             return data
 
-    async def _get_all_pages(
-        self, url: str, params: dict[str, str]
-    ) -> list[dict[str, Any]]:
+    async def _get_all_pages(self, url: str, params: dict[str, str]) -> list[dict[str, Any]]:
         """Follow next_url pagination chain and return all result items."""
         results: list[dict[str, Any]] = []
         current_url: str = url
@@ -101,9 +99,7 @@ class PolygonAdapter:
     # Public fetch methods
     # ------------------------------------------------------------------
 
-    async def fetch_ohlcv(
-        self, ticker: str, from_date: date, to_date: date
-    ) -> list[OHLCVRecord]:
+    async def fetch_ohlcv(self, ticker: str, from_date: date, to_date: date) -> list[OHLCVRecord]:
         """Fetch unadjusted daily OHLCV bars from Polygon aggregates endpoint.
 
         Timestamps are converted from Unix milliseconds (UTC) to ISO 8601 date
@@ -127,9 +123,7 @@ class PolygonAdapter:
         records: list[OHLCVRecord] = []
         for r in raw:
             t_ms = r["t"]
-            bar_date = datetime.fromtimestamp(
-                int(t_ms) / 1000, tz=UTC
-            ).date().isoformat()
+            bar_date = datetime.fromtimestamp(int(t_ms) / 1000, tz=UTC).date().isoformat()
             records.append(
                 OHLCVRecord(
                     security_id=0,
@@ -195,13 +189,14 @@ class PolygonAdapter:
 
         logger.debug(
             "fetch_dividends({}, {}, {}): {} records",
-            ticker, from_date, to_date, len(records),
+            ticker,
+            from_date,
+            to_date,
+            len(records),
         )
         return records
 
-    async def fetch_splits(
-        self, ticker: str, from_date: date, to_date: date
-    ) -> list[SplitRecord]:
+    async def fetch_splits(self, ticker: str, from_date: date, to_date: date) -> list[SplitRecord]:
         """Fetch stock splits from Polygon reference/splits endpoint.
 
         Results filtered to execution_date in [from_date, to_date].
@@ -237,7 +232,10 @@ class PolygonAdapter:
 
         logger.debug(
             "fetch_splits({}, {}, {}): {} records",
-            ticker, from_date, to_date, len(records),
+            ticker,
+            from_date,
+            to_date,
+            len(records),
         )
         return records
 

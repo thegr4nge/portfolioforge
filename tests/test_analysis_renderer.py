@@ -1,4 +1,5 @@
 """Tests for analysis/renderer.py — output modes and disclaimer enforcement."""
+
 from __future__ import annotations
 
 import io

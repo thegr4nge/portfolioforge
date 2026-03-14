@@ -23,6 +23,20 @@ from datetime import date
 
 from market_data.backtest.tax.models import DisposedLot, TaxYearResult
 
+# Named constants for CGT anniversary date computation (ATO s.115-25 holding period).
+_ANNIVERSARY_FALLBACK_MONTH: int = 3   # March -- day after Feb 28 in a non-leap year
+_ANNIVERSARY_FALLBACK_DAY: int = 1     # 1st
+
+# NOTE: Feb 29 acquisition anniversary -- ATO does not publish explicit guidance on
+# this edge case. The current implementation uses Mar 1 of the following year, which
+# is the most conservative interpretation (benefits the taxpayer by extending the
+# holding period). TODO: Confirm with ATO CGT technical team or obtain private ruling.
+#
+# NOTE: ATO uses contract date (trade date) for both acquisition and disposal,
+# not settlement date. Confirmed: ATO CGT guide s.109-5 "when a CGT asset is acquired"
+# and "time of a CGT event". TODO: Verify contract-date assumption against any
+# broker-specific edge cases (off-market transfers, scrip-for-scrip rollovers).
+
 
 def qualifies_for_discount(acquired_date: date, disposed_date: date) -> bool:
     """Return True if the asset was held strictly more than 12 months.
@@ -46,9 +60,10 @@ def qualifies_for_discount(acquired_date: date, disposed_date: date) -> bool:
     try:
         one_year_after = acquired_date.replace(year=acquired_date.year + 1)
     except ValueError:
-        # Feb 29 in a leap year: the anniversary in the non-leap year is Mar 1.
-        # Step forward from Feb 29 to Mar 1 in the same leap year, then add a year.
-        one_year_after = date(acquired_date.year + 1, 3, 1)
+        # Feb 29 acquisition -- see _ANNIVERSARY_FALLBACK_MONTH / _ANNIVERSARY_FALLBACK_DAY above.
+        one_year_after = date(
+            acquired_date.year + 1, _ANNIVERSARY_FALLBACK_MONTH, _ANNIVERSARY_FALLBACK_DAY
+        )
     return disposed_date > one_year_after
 
 

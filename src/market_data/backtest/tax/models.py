@@ -10,6 +10,7 @@ from __future__ import annotations
 import io
 from dataclasses import dataclass
 from datetime import date
+from decimal import Decimal
 
 from rich.console import Console, ConsoleOptions, RenderResult
 from rich.table import Table
@@ -27,8 +28,8 @@ class OpenLot:
     ticker: str
     acquired_date: date
     quantity: float
-    cost_basis_aud: float
-    cost_basis_usd: float | None
+    cost_basis_aud: Decimal
+    cost_basis_usd: Decimal | None
 
 
 @dataclass(frozen=True)
@@ -43,8 +44,8 @@ class DisposedLot:
     acquired_date: date
     disposed_date: date
     quantity: float
-    cost_basis_usd: float | None
-    cost_basis_aud: float
+    cost_basis_usd: Decimal | None
+    cost_basis_aud: Decimal
     proceeds_usd: float | None
     proceeds_aud: float
     gain_aud: float

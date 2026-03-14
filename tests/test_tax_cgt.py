@@ -7,6 +7,7 @@ Tests cover:
 """
 
 from datetime import date
+from decimal import Decimal
 
 import pytest
 
@@ -29,7 +30,7 @@ def _make_lot(
     ticker: str = "TEST",
     acquired_date: date,
     disposed_date: date,
-    cost_basis_aud: float = 1000.0,
+    cost_basis_aud: Decimal = Decimal("1000.0"),
     proceeds_aud: float = 1000.0,
     gain_aud: float = 0.0,
     discount_applied: bool = False,
@@ -144,7 +145,7 @@ def test_ato_example_12_sonya() -> None:
         ticker="TLP",
         acquired_date=date(2023, 1, 15),
         disposed_date=date(2023, 10, 20),
-        cost_basis_aud=1500.0,
+        cost_basis_aud=Decimal("1500.0"),
         proceeds_aud=2300.0,
         gain_aud=800.0,
         discount_applied=False,

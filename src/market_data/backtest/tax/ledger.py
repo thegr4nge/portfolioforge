@@ -23,13 +23,14 @@ from __future__ import annotations
 from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import date
+from decimal import Decimal
 from typing import Literal
 
 from market_data.backtest.tax.models import DisposedLot, OpenLot
 
 # Residual quantity below this threshold is treated as zero (floating-point
 # arithmetic accumulates tiny errors over many partial sells).
-_FLOAT_TOLERANCE = 0.001
+_FLOAT_TOLERANCE: Decimal = Decimal("0.001")
 
 ParcelMethod = Literal["fifo", "highest_cost"]
 
@@ -78,7 +79,7 @@ class CostBasisLedger:
         else:  # highest_cost
             ordered_indices = sorted(
                 range(len(queue)),
-                key=lambda i: queue[i].cost_basis_aud / max(queue[i].quantity, 1e-9),
+                key=lambda i: float(queue[i].cost_basis_aud) / max(queue[i].quantity, 1e-9),
                 reverse=True,
             )
 
@@ -88,11 +89,11 @@ class CostBasisLedger:
         partial: dict[int, OpenLot] = {}
 
         for idx in ordered_indices:
-            if remaining <= _FLOAT_TOLERANCE:
+            if Decimal(str(remaining)) <= _FLOAT_TOLERANCE:
                 break
             lot = queue[idx]
 
-            if lot.quantity <= remaining + _FLOAT_TOLERANCE:
+            if lot.quantity <= remaining + float(_FLOAT_TOLERANCE):
                 # Consume this lot entirely.
                 disposed.append(
                     _make_disposed(lot, lot.quantity, lot.cost_basis_aud, disposed_date)
@@ -100,8 +101,8 @@ class CostBasisLedger:
                 remaining -= lot.quantity
                 consumed.add(idx)
             else:
-                # Partial consumption — split the lot.
-                proportion = remaining / lot.quantity
+                # Partial consumption -- split the lot.
+                proportion = Decimal(str(remaining)) / Decimal(str(lot.quantity))
                 taken_basis_aud = lot.cost_basis_aud * proportion
                 taken_basis_usd = (
                     lot.cost_basis_usd * proportion if lot.cost_basis_usd is not None else None
@@ -121,7 +122,7 @@ class CostBasisLedger:
                 )
                 remaining = 0.0
 
-        if remaining > _FLOAT_TOLERANCE:
+        if Decimal(str(remaining)) > _FLOAT_TOLERANCE:
             raise ValueError(
                 f"Cannot sell {quantity} of {ticker}: "
                 f"position insufficient (residual {remaining:.6f} shares)"
@@ -138,7 +139,7 @@ class CostBasisLedger:
 def _make_disposed(
     lot: OpenLot,
     quantity: float,
-    cost_basis_aud: float,
+    cost_basis_aud: Decimal,
     disposed_date: date,
 ) -> DisposedLot:
     """Build a DisposedLot from an OpenLot with sentinel CGT fields.

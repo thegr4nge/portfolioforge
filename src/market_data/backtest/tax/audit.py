@@ -69,7 +69,7 @@ def build_cgt_event_rows(disposed_lots: list[DisposedLot]) -> list[CgtEventRow]:
                 acquired_date=lot.acquired_date,
                 disposed_date=lot.disposed_date,
                 quantity=lot.quantity,
-                cost_basis_aud=lot.cost_basis_aud,
+                cost_basis_aud=float(lot.cost_basis_aud),
                 proceeds_aud=lot.proceeds_aud,
                 gain_aud=lot.gain_aud,
                 discount_eligible=lot.discount_applied,

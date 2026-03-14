@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import sqlite3
 from datetime import date
+from decimal import Decimal
 
 # Tax engine version — stamped into every TaxYearResult for audit traceability.
 # Increment on any change to CGT calculation logic, discount fractions, or
@@ -148,7 +149,7 @@ def _build_disposed_lot_with_cgt(
     proceeds_usd: float | None,
 ) -> DisposedLot:
     """Construct a complete DisposedLot with CGT fields filled in."""
-    gain_aud = proceeds_aud - raw.cost_basis_aud
+    gain_aud = proceeds_aud - float(raw.cost_basis_aud)
     discount_applied = qualifies_for_discount(raw.acquired_date, raw.disposed_date)
     return DisposedLot(
         ticker=raw.ticker,
@@ -315,8 +316,8 @@ def run_backtest_tax(
                     ticker=trade.ticker,
                     acquired_date=trade.date,
                     quantity=float(trade.shares),
-                    cost_basis_aud=cost_aud,
-                    cost_basis_usd=cost_usd,
+                    cost_basis_aud=Decimal(str(cost_aud)),
+                    cost_basis_usd=Decimal(str(cost_usd)),
                 )
             else:
                 cost_aud = trade.shares * trade.price + trade.cost
@@ -324,7 +325,7 @@ def run_backtest_tax(
                     ticker=trade.ticker,
                     acquired_date=trade.date,
                     quantity=float(trade.shares),
-                    cost_basis_aud=cost_aud,
+                    cost_basis_aud=Decimal(str(cost_aud)),
                     cost_basis_usd=None,
                 )
             ledger.buy(trade.ticker, lot)

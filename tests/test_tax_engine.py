@@ -256,7 +256,7 @@ def test_fixture_a_short_term_no_discount() -> None:
     expected_proceeds = 1000 * 2.35 - _BROKERAGE  # 2300.0
     expected_gain = expected_proceeds - expected_cost_basis  # 750.0
 
-    assert abs(lot.cost_basis_aud - expected_cost_basis) < 0.01
+    assert abs(float(lot.cost_basis_aud) - expected_cost_basis) < 0.01
     assert abs(lot.proceeds_aud - expected_proceeds) < 0.01
     assert abs(lot.gain_aud - expected_gain) < 0.01
 
@@ -516,7 +516,7 @@ def test_fixture_c_fifo_oldest_parcel_first() -> None:
     expected_proceeds = 100 * 110.0 - _BROKERAGE  # 10950.0
     expected_gain = expected_proceeds - expected_cost  # 1900.0
 
-    assert abs(lot.cost_basis_aud - expected_cost) < 0.01
+    assert abs(float(lot.cost_basis_aud) - expected_cost) < 0.01
     assert abs(lot.proceeds_aud - expected_proceeds) < 0.01
     assert abs(lot.gain_aud - expected_gain) < 0.01
 

@@ -40,7 +40,7 @@ st.set_page_config(
     page_title="PortfolioForge — CGT Analysis",
     page_icon="📊",
     layout="centered",
-    initial_sidebar_state="collapsed",
+    initial_sidebar_state="expanded",
 )
 
 # ---------------------------------------------------------------------------
@@ -199,6 +199,29 @@ def _parse_portfolio(raw: str) -> dict[str, float]:
 # UI
 # ---------------------------------------------------------------------------
 
+# Sidebar — pricing and contact CTA
+with st.sidebar:
+    st.markdown("### PortfolioForge")
+    st.markdown(
+        "ATO-validated CGT workpapers for Australian SMSF accountants and auditors. "
+        "FIFO cost basis, franking credits, carry-forward losses — automated."
+    )
+    st.divider()
+    st.markdown("**Pricing**")
+    st.markdown("$150 / portfolio / year")
+    st.markdown("$300 / month — practice subscription")
+    st.divider()
+    st.markdown("**Get access**")
+    st.markdown(
+        "Email [portfolioforge.au@gmail.com](mailto:portfolioforge.au@gmail.com) "
+        "to request a demo or early access."
+    )
+    st.divider()
+    st.caption(
+        "Validated against ATO published CGT examples (Sonya, Mei-Ling, multi-parcel FIFO). "
+        "Not financial advice."
+    )
+
 st.markdown("## PortfolioForge")
 st.markdown(
     "**ATO-validated CGT workpapers** for Australian SMSF trustees and accountants.  \n"
@@ -209,7 +232,9 @@ st.divider()
 # ---------------------------------------------------------------------------
 # Tabs — CSV tab rendered first to avoid st.stop() in manual tab blocking it
 # ---------------------------------------------------------------------------
-tab_manual, tab_csv = st.tabs(["Manual Entry / Backtest", "Import Broker CSV"])
+tab_manual, tab_csv, tab_verify = st.tabs(
+    ["Simulate Portfolio", "Import Broker CSV", "Verify Workpaper"]
+)
 
 # ── TAB 2: Broker CSV import ─────────────────────────────────────────────────
 with tab_csv:
@@ -331,7 +356,7 @@ with tab_csv:
                                 )
 
                                 pdf_path = Path(tmpdir) / "PortfolioForge_CGT_Actual.pdf"
-                                export_trades_cgt_workpaper(
+                                _wid = export_trades_cgt_workpaper(
                                     trades=validation.valid,
                                     tax=tax_summary,
                                     output_path=report_path,
@@ -347,6 +372,7 @@ with tab_csv:
                                 )
 
                                 st.success("CGT workpaper generated from actual trades.")
+                                st.info(f"Verification ID: **{_wid}**  (printed on workpaper cover page — auditors can verify at the Verify Workpaper tab)")
 
                                 # Summary metrics
                                 total_events = sum(y.cgt_events for y in tax_summary.years)
@@ -401,6 +427,12 @@ with tab_csv:
                                     "Verify dividend and franking data against registry statements before ATO lodgement."
                                 )
 
+                                st.info(
+                                    "**Want to use PortfolioForge for your practice?**  \n"
+                                    "$150/portfolio/year for SMSF accountants and auditors.  \n"
+                                    "Email [portfolioforge.au@gmail.com](mailto:portfolioforge.au@gmail.com) to get started."
+                                )
+
                             except Exception as exc:
                                 st.error(f"CGT calculation failed: {exc}")
                                 with st.expander("Error detail"):
@@ -412,7 +444,8 @@ with tab_csv:
             "|--------|-------------|\n"
             "| **CommSec** | Investor Login > Portfolio > Trade History > Export to CSV |\n"
             "| **SelfWealth** | Portfolio > Trade History > Export |\n"
-            "| **Stake** | Activity > Export CSV |\n\n"
+            "| **Stake** | Activity > Export CSV |\n"
+            "| **IBKR** | Reports > Flex Queries > Trade Confirmation |\n\n"
             "Note: These formats are based on publicly documented exports. "
             "Verify your CSV matches the expected columns if parsing fails."
         )
@@ -572,7 +605,7 @@ with tab_manual:
                 progress.progress(1.0, text="Generating document...")
                 status.caption("Exporting Word document…")
                 report = AnalysisReport(result=result)
-                export_report(report, conn, report_path, sample_data=True)
+                _wid = export_report(report, conn, report_path, sample_data=True)
                 pdf_report_path = Path(tmpdir) / "PortfolioForge_CGT.pdf"
                 export_pdf_report(result, pdf_report_path)
                 conn.close()
@@ -585,6 +618,7 @@ with tab_manual:
                 br = result.backtest
 
                 st.success("Report generated.")
+                st.info(f"Verification ID: **{_wid}**  (printed on workpaper cover page)")
 
                 m1, m2, m3, m4 = st.columns(4)
                 m1.metric("After-Tax CAGR", f"{tax.after_tax_cagr:.1%}")
@@ -628,6 +662,12 @@ with tab_manual:
                     "before ATO lodgement."
                 )
 
+                st.info(
+                    "**Want to use PortfolioForge for your practice?**  \n"
+                    "$150/portfolio/year for SMSF accountants and auditors.  \n"
+                    "Email [portfolioforge.au@gmail.com](mailto:portfolioforge.au@gmail.com) to get started."
+                )
+
             except Exception as exc:
                 progress.empty()
                 status.empty()
@@ -642,6 +682,46 @@ st.divider()
 col_a, col_b = st.columns([3, 1])
 col_a.caption(
     "PortfolioForge · ATO-validated CGT calculations · "
-    "Not financial advice · For professional use"
+    "Not financial advice · For professional use · "
+    "[portfolioforge.au@gmail.com](mailto:portfolioforge.au@gmail.com)"
 )
-col_b.caption("v1.0")
+col_b.caption("v1.0 · $150/portfolio/yr")
+
+# ---------------------------------------------------------------------------
+# Tab 3: Verify Workpaper
+# ---------------------------------------------------------------------------
+with tab_verify:
+    st.header("Verify a PortfolioForge Workpaper")
+    st.markdown(
+        "Enter the Verification ID from the cover page of a PortfolioForge workpaper "
+        "to confirm it was generated by this engine."
+    )
+
+    verify_input = st.text_input(
+        "Verification ID",
+        placeholder="PF-1.0.0-20260318-A3F9C2B1-D84E7A19",
+        help="Find this on the cover page of the workpaper, below the generation date.",
+    )
+
+    if st.button("Verify", type="primary"):
+        if not verify_input.strip():
+            st.warning("Enter a Verification ID.")
+        else:
+            from market_data.verification.workpaper_id import verify_workpaper_id
+
+            result = verify_workpaper_id(verify_input)
+            if result.valid:
+                st.success(
+                    f"Verified — generated by PortfolioForge engine v{result.engine_version} "
+                    f"on {result.display_date()}."
+                )
+                st.markdown(
+                    "This workpaper was produced by the PortfolioForge CGT engine "
+                    "and has not been tampered with. ATO-validated calculations apply."
+                )
+            else:
+                st.error(f"Cannot verify: {result.reason}")
+                st.markdown(
+                    "This ID could not be verified. It may be from an older engine version, "
+                    "manually modified, or not produced by PortfolioForge."
+                )

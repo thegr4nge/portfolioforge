@@ -37,6 +37,7 @@ from market_data.backtest.tax.engine import TAX_ENGINE_VERSION
 from market_data.backtest.tax.franking import resolve_franking_pct
 from market_data.backtest.tax.models import DisposedLot, TaxAwareResult, TaxSummary
 from market_data.backtest.tax.trade_record import TradeRecord
+from market_data.verification.workpaper_id import generate_workpaper_id
 
 # ── colour palette ──────────────────────────────────────────────────────────────
 _NAVY_HEX = "1F3864"
@@ -151,7 +152,7 @@ def _get_backtest(report: AnalysisReport) -> BacktestResult:
 # Tuple: (Rule, Election / Method, ATO Reference)
 _CGT_RULES: list[tuple[str, str, str]] = [
     ("Cost basis method", "First In, First Out (FIFO)", "ITAA 1997 s. 104-240"),
-    ("CGT discount", "50% for assets held strictly > 12 months", "ITAA 1997 s. 115-100"),
+    ("CGT discount", "50% for assets held strictly > 12 months (individual)", "ITAA 1997 s. 115-100"),
     (
         "Discount threshold",
         "Disposed strictly after 12-month anniversary of acquisition",
@@ -182,14 +183,15 @@ _CGT_RULES: list[tuple[str, str, str]] = [
 ]
 
 
-def _cgt_rule_annotation(row: CgtEventRow) -> str:
+def _cgt_rule_annotation(row: CgtEventRow, entity_type: str = "individual") -> str:
     """One-line ATO rule annotation for a single CGT event (PROF-01)."""
     acq = row.acquired_date.strftime("%d %b %Y")
     months = (row.disposed_date.year - row.acquired_date.year) * 12 + (
         row.disposed_date.month - row.acquired_date.month
     )
     if row.gain_type == "discountable_gain":
-        return f"FIFO parcel {acq} — 50% CGT discount applied (held {months} months)"
+        discount_label = "33.33% CGT discount applied (SMSF)" if entity_type == "smsf" else "50% CGT discount applied"
+        return f"FIFO parcel {acq} — {discount_label} (held {months} months)"
     if row.gain_type == "non_discountable_gain":
         return f"FIFO parcel {acq} — no discount (held {months} months, \u226412)"
     return f"FIFO parcel {acq} — capital loss (held {months} months)"
@@ -204,6 +206,7 @@ def _add_cover(
     after_tax_cagr: float | None = None,
     *,
     sample_data: bool = False,
+    workpaper_id: str = "",
 ) -> None:
     """Cover page: title, period, 4 KPI boxes, optional after-tax CAGR line.
 
@@ -237,6 +240,12 @@ def _add_cover(
         f"Period: {start.strftime('%d %b %Y')} – {end.strftime('%d %b %Y')}"
         f"   |   Generated: {date.today().strftime('%d %b %Y')}"
     ).font.size = Pt(10)
+
+    if workpaper_id:
+        vid_para = doc.add_paragraph()  # type: ignore[attr-defined]
+        vid_run = vid_para.add_run(f"Verification ID: {workpaper_id}")
+        vid_run.font.size = Pt(9)
+        vid_run.font.color.rgb = _NAVY
 
     doc.add_paragraph()  # type: ignore[attr-defined]
 
@@ -371,7 +380,7 @@ def _add_tax_analysis(doc: object, tax_result: TaxAwareResult) -> None:
     doc.add_paragraph()  # type: ignore[attr-defined]
 
 
-def _add_cgt_log(doc: object, tax_result: TaxAwareResult) -> None:
+def _add_cgt_log(doc: object, tax_result: TaxAwareResult, entity_type: str = "individual") -> None:
     """Individual CGT event log using structured audit rows.
 
     7 columns at fixed widths to fit A4 portrait (16 cm usable):
@@ -412,7 +421,7 @@ def _add_cgt_log(doc: object, tax_result: TaxAwareResult) -> None:
                 row.acquired_date.strftime("%d %b %Y"),
                 row.disposed_date.strftime("%d %b %Y"),
                 f"${row.gain_aud:,.2f}",
-                _cgt_rule_annotation(row),
+                _cgt_rule_annotation(row, entity_type),
             ],
             shade=(i % 2 == 1),
             font_size=8,
@@ -462,11 +471,29 @@ def _add_methodology(doc: object, tax_result: TaxAwareResult | None = None) -> N
     """ATO elections table (PROF-02) and plain-language methodology narrative."""
     _section_heading(doc, "Calculation Methodology")
 
-    # ATO elections & rules table
+    entity_type = tax_result.tax.entity_type if tax_result is not None else "individual"
+    is_smsf = entity_type == "smsf"
+
+    # ATO elections & rules table — override CGT discount row for SMSF entity type
+    rules = list(_CGT_RULES)
+    for idx, (rule, detail, ref) in enumerate(rules):
+        if rule == "CGT discount" and is_smsf:
+            rules[idx] = (
+                "CGT discount",
+                "33.33% for assets held strictly > 12 months (SMSF — ATO s.115-100)",
+                "ITAA 1997 s. 115-100",
+            )
+        if rule == "Franking credits" and is_smsf:
+            rules[idx] = (
+                "Franking credits",
+                "45-day holding rule per dividend; $5,000 small-shareholder exemption does NOT apply to SMSFs",
+                "ITAA 1936 s. 160APHO",
+            )
+
     table = doc.add_table(rows=1, cols=3)  # type: ignore[attr-defined]
     _header_row(table, ["Rule", "Election / Method", "ATO Reference"])
 
-    for i, (rule, detail, ref) in enumerate(_CGT_RULES):
+    for i, (rule, detail, ref) in enumerate(rules):
         _body_row(table, [rule, detail, ref], shade=(i % 2 == 1))
     _add_cell_borders(table)
 
@@ -583,7 +610,7 @@ def export_report(
     output_path: Path,
     *,
     sample_data: bool = False,
-) -> None:
+) -> str:
     """Export an AnalysisReport to a .docx file.
 
     All sections matching the data available are written. Tax sections
@@ -608,6 +635,7 @@ def export_report(
     if output_path.suffix.lower() != ".docx":
         raise ValueError(f"output_path must end in .docx, got: {output_path}")
 
+    workpaper_id = generate_workpaper_id()
     br = _get_backtest(report)
     doc = Document()
 
@@ -622,13 +650,14 @@ def export_report(
         report.result.tax.after_tax_cagr if isinstance(report.result, TaxAwareResult) else None
     )
     _add_page_numbers(doc)
-    _add_cover(doc, br, after_tax_cagr=after_tax_cagr, sample_data=sample_data)
+    _add_cover(doc, br, after_tax_cagr=after_tax_cagr, sample_data=sample_data, workpaper_id=workpaper_id)
     _add_composition(doc, br)
     _add_performance(doc, br)
 
     if isinstance(report.result, TaxAwareResult):
+        _entity_type = report.result.tax.entity_type
         _add_tax_analysis(doc, report.result)
-        _add_cgt_log(doc, report.result)
+        _add_cgt_log(doc, report.result, entity_type=_entity_type)
     else:
         p = doc.add_paragraph()
         p.add_run(
@@ -643,6 +672,7 @@ def export_report(
     _add_disclaimer(doc)
 
     doc.save(str(output_path))
+    return workpaper_id
 
 
 # ── CSV import workpaper helpers ────────────────────────────────────────────────
@@ -718,7 +748,7 @@ def _add_cgt_tax_summary(doc: object, tax: TaxSummary) -> None:
     doc.add_paragraph()  # type: ignore[attr-defined]
 
 
-def _add_cgt_event_log_from_lots(doc: object, lots: list[DisposedLot]) -> None:
+def _add_cgt_event_log_from_lots(doc: object, lots: list[DisposedLot], entity_type: str = "individual") -> None:
     """CGT event log from DisposedLot list (no TaxAwareResult needed)."""
     _section_heading(doc, "CGT Event Log")
 
@@ -743,7 +773,7 @@ def _add_cgt_event_log_from_lots(doc: object, lots: list[DisposedLot]) -> None:
                 row.acquired_date.strftime("%d %b %Y"),
                 row.disposed_date.strftime("%d %b %Y"),
                 f"${row.gain_aud:,.2f}",
-                _cgt_rule_annotation(row),
+                _cgt_rule_annotation(row, entity_type),
             ],
             shade=(i % 2 == 1),
             font_size=8,
@@ -760,7 +790,7 @@ def export_trades_cgt_workpaper(
     *,
     entity_type: str = "individual",
     broker: str = "unknown",
-) -> None:
+) -> str:
     """Export a CGT workpaper generated from actual broker trades (no backtest).
 
     Produces a Word document suitable for SMSF auditors. Includes the actual
@@ -781,6 +811,7 @@ def export_trades_cgt_workpaper(
     if output_path.suffix.lower() != ".docx":
         raise ValueError(f"output_path must end in .docx, got: {output_path}")
 
+    workpaper_id = generate_workpaper_id()
     doc = Document()
     for section in doc.sections:
         section.top_margin = Cm(2)
@@ -813,6 +844,11 @@ def export_trades_cgt_workpaper(
         f"   |   Generated: {date.today().strftime('%d %b %Y')}"
     ).font.size = Pt(10)
 
+    vid_para = doc.add_paragraph()  # type: ignore[attr-defined]
+    vid_run = vid_para.add_run(f"Verification ID: {workpaper_id}")
+    vid_run.font.size = Pt(9)
+    vid_run.font.color.rgb = _NAVY
+
     doc.add_paragraph()  # type: ignore[attr-defined]
 
     # KPI row: 3 boxes
@@ -842,8 +878,9 @@ def export_trades_cgt_workpaper(
 
     _add_trade_history_table(doc, trades)
     _add_cgt_tax_summary(doc, tax)
-    _add_cgt_event_log_from_lots(doc, tax.lots)
+    _add_cgt_event_log_from_lots(doc, tax.lots, entity_type=entity_type)
     _add_methodology(doc, tax_result=None)
     _add_disclaimer(doc)
 
     doc.save(str(output_path))
+    return workpaper_id

@@ -11,6 +11,7 @@ import pytest
 from docx import Document
 
 from market_data.analysis.exporter import export_report
+from market_data.verification.workpaper_id import verify_workpaper_id
 from market_data.analysis.models import AnalysisReport
 from market_data.analysis.narrative import DISCLAIMER
 from market_data.backtest.models import (
@@ -343,3 +344,253 @@ def test_methodology_table_row_count_semantic(tmp_path: Path) -> None:
     assert len(methodology_table.rows) >= 9, (
         f"Expected >= 9 rows in Methodology table, got {len(methodology_table.rows)}"
     )
+
+
+# ── export_trades_cgt_workpaper() tests ───────────────────────────────────────
+
+
+from market_data.analysis.exporter import export_trades_cgt_workpaper  # noqa: E402
+from market_data.backtest.tax.engine import run_cgt_from_trades  # noqa: E402
+from market_data.backtest.tax.trade_record import TradeRecord  # noqa: E402
+
+
+def _make_tr(
+    trade_date: date,
+    ticker: str,
+    action: str,
+    quantity: float,
+    price_aud: float,
+    brokerage_aud: float = 0.0,
+) -> TradeRecord:
+    return TradeRecord(
+        trade_date=trade_date,
+        ticker=ticker,
+        action=action,  # type: ignore[arg-type]
+        quantity=quantity,
+        price_aud=price_aud,
+        brokerage_aud=brokerage_aud,
+    )
+
+
+def _simple_trades_and_tax() -> tuple[list[TradeRecord], object]:
+    """One BUY + one short-term SELL: $750 gain, CGT $243.75."""
+    trades = [
+        _make_tr(date(2023, 1, 3), "VAS.AX", "BUY", 1000, 1.50, 50.0),
+        _make_tr(date(2023, 6, 1), "VAS.AX", "SELL", 1000, 2.35, 50.0),
+    ]
+    tax = run_cgt_from_trades(trades, marginal_tax_rate=0.325)
+    return trades, tax
+
+
+def test_workpaper_creates_docx_file(tmp_path: Path) -> None:
+    """export_trades_cgt_workpaper() writes a non-empty .docx file."""
+    trades, tax = _simple_trades_and_tax()
+    out = tmp_path / "workpaper.docx"
+
+    export_trades_cgt_workpaper(trades, tax, out, entity_type="individual", broker="commsec")
+
+    assert out.exists()
+    assert out.stat().st_size > 0
+
+
+def test_workpaper_rejects_non_docx_extension(tmp_path: Path) -> None:
+    """Non-.docx extension raises ValueError."""
+    trades, tax = _simple_trades_and_tax()
+
+    with pytest.raises(ValueError, match=".docx"):
+        export_trades_cgt_workpaper(trades, tax, tmp_path / "out.pdf")
+
+
+def test_workpaper_is_parseable_docx(tmp_path: Path) -> None:
+    """Resulting file can be opened by python-docx without error."""
+    trades, tax = _simple_trades_and_tax()
+    out = tmp_path / "workpaper.docx"
+    export_trades_cgt_workpaper(trades, tax, out)
+
+    # Should not raise
+    doc = Document(str(out))
+    assert len(doc.paragraphs) > 0
+
+
+def test_workpaper_contains_portfolioforge_branding(tmp_path: Path) -> None:
+    """Cover page includes 'PortfolioForge' branding."""
+    trades, tax = _simple_trades_and_tax()
+    out = tmp_path / "workpaper.docx"
+    export_trades_cgt_workpaper(trades, tax, out)
+
+    text = _all_text(out)
+    assert "PortfolioForge" in text
+
+
+def test_workpaper_disclaimer_always_present(tmp_path: Path) -> None:
+    """DISCLAIMER constant must appear in every workpaper output."""
+    trades, tax = _simple_trades_and_tax()
+    out = tmp_path / "workpaper.docx"
+    export_trades_cgt_workpaper(trades, tax, out)
+
+    text = _all_text(out)
+    assert DISCLAIMER[:50] in text
+
+
+def test_workpaper_entity_type_appears(tmp_path: Path) -> None:
+    """Entity type is shown in uppercase on the cover page."""
+    trades = [_make_tr(date(2023, 1, 3), "BHP.AX", "BUY", 50, 40.0)]
+    tax = run_cgt_from_trades(trades, entity_type="smsf")
+    out = tmp_path / "smsf.docx"
+
+    export_trades_cgt_workpaper(trades, tax, out, entity_type="smsf", broker="selfwealth")
+
+    text = _all_text(out)
+    assert "SMSF" in text
+
+
+def test_workpaper_broker_name_appears_title_cased(tmp_path: Path) -> None:
+    """Broker name appears title-cased on the cover page."""
+    trades, tax = _simple_trades_and_tax()
+    out = tmp_path / "workpaper.docx"
+
+    export_trades_cgt_workpaper(trades, tax, out, broker="commsec")
+
+    text = _all_text(out)
+    assert "Commsec" in text
+
+
+def test_workpaper_ticker_appears_in_document(tmp_path: Path) -> None:
+    """Security ticker appears in the trade history section."""
+    trades, tax = _simple_trades_and_tax()
+    out = tmp_path / "workpaper.docx"
+    export_trades_cgt_workpaper(trades, tax, out)
+
+    text = _all_text(out)
+    assert "VAS.AX" in text
+
+
+def test_workpaper_cgt_summary_section_present(tmp_path: Path) -> None:
+    """'Australian Tax Analysis' section heading appears in workpaper."""
+    trades, tax = _simple_trades_and_tax()
+    out = tmp_path / "workpaper.docx"
+    export_trades_cgt_workpaper(trades, tax, out)
+
+    text = _all_text(out)
+    assert "Australian Tax Analysis" in text
+
+
+def test_workpaper_trade_history_section_present(tmp_path: Path) -> None:
+    """Trade History section heading appears in workpaper."""
+    trades, tax = _simple_trades_and_tax()
+    out = tmp_path / "workpaper.docx"
+    export_trades_cgt_workpaper(trades, tax, out)
+
+    text = _all_text(out)
+    assert "Trade History" in text
+
+
+def test_workpaper_trade_history_table_row_count(tmp_path: Path) -> None:
+    """Trade history table has exactly header + N data rows (one per trade)."""
+    trades = [
+        _make_tr(date(2023, 1, 3), "VAS.AX", "BUY", 100, 100.0, 50.0),
+        _make_tr(date(2023, 3, 1), "VGS.AX", "BUY", 50, 200.0, 50.0),
+        _make_tr(date(2023, 6, 1), "VAS.AX", "SELL", 100, 110.0, 50.0),
+    ]
+    tax = run_cgt_from_trades(trades)
+    out = tmp_path / "workpaper.docx"
+    export_trades_cgt_workpaper(trades, tax, out)
+
+    doc = Document(str(out))
+    # Trade history table has 7 columns.
+    seven_col_tables = [t for t in doc.tables if len(t.columns) == 7]
+    # At least one 7-column table (may share with CGT event log — also 7 cols).
+    assert len(seven_col_tables) >= 1
+
+    # The first 7-column table is the trade history: header + 3 data rows = 4 rows.
+    trade_table = seven_col_tables[0]
+    assert len(trade_table.rows) == 4, (
+        f"Expected 4 rows (1 header + 3 trades), got {len(trade_table.rows)}"
+    )
+
+
+def test_workpaper_cgt_total_appears(tmp_path: Path) -> None:
+    """Total CGT payable dollar amount appears in the workpaper."""
+    trades, tax = _simple_trades_and_tax()
+    out = tmp_path / "workpaper.docx"
+    export_trades_cgt_workpaper(trades, tax, out)
+
+    text = _all_text(out)
+    # CGT for this fixture = 750 * 0.325 = $243.75
+    assert "243.75" in text
+
+
+def test_workpaper_no_disposal_events_message(tmp_path: Path) -> None:
+    """Buy-only trades produce 'No disposal events' message in CGT event log."""
+    trades = [_make_tr(date(2023, 1, 3), "VAS.AX", "BUY", 100, 100.0)]
+    tax = run_cgt_from_trades(trades)
+    out = tmp_path / "no_disposals.docx"
+    export_trades_cgt_workpaper(trades, tax, out)
+
+    text = _all_text(out)
+    assert "No disposal events" in text
+
+
+def test_workpaper_multiple_tickers_all_appear(tmp_path: Path) -> None:
+    """All tickers in a multi-ticker trade list appear in the workpaper."""
+    trades = [
+        _make_tr(date(2023, 1, 3), "VAS.AX", "BUY", 100, 100.0),
+        _make_tr(date(2023, 1, 3), "CBA.AX", "BUY", 50, 80.0),
+        _make_tr(date(2023, 6, 1), "VAS.AX", "SELL", 100, 110.0),
+        _make_tr(date(2023, 6, 1), "CBA.AX", "SELL", 50, 90.0),
+    ]
+    tax = run_cgt_from_trades(trades)
+    out = tmp_path / "multi.docx"
+    export_trades_cgt_workpaper(trades, tax, out)
+
+    text = _all_text(out)
+    assert "VAS.AX" in text
+    assert "CBA.AX" in text
+
+
+def test_workpaper_methodology_section_present(tmp_path: Path) -> None:
+    """Calculation Methodology section always appears."""
+    trades, tax = _simple_trades_and_tax()
+    out = tmp_path / "workpaper.docx"
+    export_trades_cgt_workpaper(trades, tax, out)
+
+    text = _all_text(out)
+    assert "Calculation Methodology" in text
+    assert "ITAA 1997" in text
+
+
+# ── verification ID tests ─────────────────────────────────────────────────────
+
+
+def test_export_report_returns_verification_id(tmp_path: Path) -> None:
+    """export_report must return a valid workpaper ID string."""
+    br = _make_backtest()
+    report = AnalysisReport(result=br)
+    conn = get_connection(":memory:")
+    out = tmp_path / "out.docx"
+    wid = export_report(report, conn, out)
+    assert isinstance(wid, str)
+    result = verify_workpaper_id(wid)
+    assert result.valid is True
+
+
+def test_export_trades_cgt_workpaper_returns_verification_id(tmp_path: Path) -> None:
+    """export_trades_cgt_workpaper must return a valid workpaper ID string."""
+    trades, tax = _simple_trades_and_tax()
+    out = tmp_path / "out.docx"
+    wid = export_trades_cgt_workpaper(trades, tax, out)
+    assert isinstance(wid, str)
+    result = verify_workpaper_id(wid)
+    assert result.valid is True
+
+
+def test_export_report_embeds_id_in_document(tmp_path: Path) -> None:
+    """The verification ID must appear in the document text."""
+    br = _make_backtest()
+    report = AnalysisReport(result=br)
+    conn = get_connection(":memory:")
+    out = tmp_path / "out.docx"
+    wid = export_report(report, conn, out)
+    doc = Document(str(out))
+    full_text = " ".join(p.text for p in doc.paragraphs)
+    assert wid in full_text

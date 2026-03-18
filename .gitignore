@@ -30,3 +30,6 @@ demo_output.txt
 
 # Runtime logs
 logs/
+
+# Credentials — never commit
+credentials.json.json

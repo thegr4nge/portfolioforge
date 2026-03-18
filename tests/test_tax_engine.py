@@ -905,3 +905,327 @@ def test_fx_fallback_raises_after_max_days() -> None:
 
     with pytest.raises(ValueError, match="Re-ingest FX data"):
         get_aud_usd_rate(conn, lookup_date)
+
+
+# ---------------------------------------------------------------------------
+# run_cgt_from_trades() tests
+# ---------------------------------------------------------------------------
+
+
+from market_data.backtest.tax.engine import run_cgt_from_trades  # noqa: E402
+from market_data.backtest.tax.trade_record import TradeRecord  # noqa: E402
+
+
+def _make_trade(
+    trade_date: date,
+    ticker: str,
+    action: str,
+    quantity: float,
+    price_aud: float,
+    brokerage_aud: float = 0.0,
+) -> TradeRecord:
+    return TradeRecord(
+        trade_date=trade_date,
+        ticker=ticker,
+        action=action,  # type: ignore[arg-type]
+        quantity=quantity,
+        price_aud=price_aud,
+        brokerage_aud=brokerage_aud,
+    )
+
+
+def test_cgt_from_trades_short_term_no_discount() -> None:
+    """Short-term hold (< 12 months): full gain taxed at marginal rate.
+
+    ATO Sonya fixture numbers (adapted for broker CSV flow):
+      BUY  2023-01-03: 1000 shares @ $1.50; brokerage $50 → cost $1550
+      SELL 2023-06-01: 1000 shares @ $2.35; brokerage $50 → proceeds $2300
+      gain = $750; no discount; CGT = 750 * 0.325 = $243.75
+    """
+    trades = [
+        _make_trade(date(2023, 1, 3), "VAS.AX", "BUY", 1000, 1.50, 50.0),
+        _make_trade(date(2023, 6, 1), "VAS.AX", "SELL", 1000, 2.35, 50.0),
+    ]
+    result = run_cgt_from_trades(trades, marginal_tax_rate=0.325)
+
+    assert len(result.lots) == 1
+    lot = result.lots[0]
+    assert lot.discount_applied is False
+    assert lot.cost_basis_usd is None
+    assert lot.proceeds_usd is None
+
+    assert abs(float(lot.cost_basis_aud) - 1550.0) < 0.01
+    assert abs(lot.proceeds_aud - 2300.0) < 0.01
+    assert abs(lot.gain_aud - 750.0) < 0.01
+
+    total_cgt = sum(yr.cgt_payable for yr in result.years)
+    assert abs(total_cgt - 243.75) < 0.01
+
+
+def test_cgt_from_trades_long_term_individual_50pct_discount() -> None:
+    """Individual entity: 50% CGT discount for assets held > 12 months.
+
+      BUY  2022-01-03: 100 shares @ $100; brokerage $50 → cost $10050
+      SELL 2023-07-10: 100 shares @ $150; brokerage $50 → proceeds $14950
+      gain = $4900; 50% discount → discounted gain $2450
+      CGT = 2450 * 0.325 = $796.25
+    """
+    trades = [
+        _make_trade(date(2022, 1, 3), "CBA.AX", "BUY", 100, 100.0, 50.0),
+        _make_trade(date(2023, 7, 10), "CBA.AX", "SELL", 100, 150.0, 50.0),
+    ]
+    result = run_cgt_from_trades(trades, marginal_tax_rate=0.325, entity_type="individual")
+
+    assert len(result.lots) == 1
+    lot = result.lots[0]
+    assert lot.discount_applied is True
+    assert abs(lot.gain_aud - 4900.0) < 0.01
+
+    total_cgt = sum(yr.cgt_payable for yr in result.years)
+    assert abs(total_cgt - 796.25) < 0.01
+
+
+def test_cgt_from_trades_smsf_one_third_discount() -> None:
+    """SMSF entity: 33.33% CGT discount (ATO s.115-100) — higher tax than individual.
+
+      BUY 100 @ $100; brokerage $50 → cost $10050
+      SELL 100 @ $200; brokerage $50 → proceeds $19950; gain = $9900
+      individual: discounted gain = 9900 * 0.5 = 4950 → CGT = 4950 * 0.325 = 1608.75
+      SMSF:       discounted gain = 9900 * 2/3  = 6600 → CGT = 6600 * 0.325 = 2145.00
+    """
+    trades = [
+        _make_trade(date(2022, 1, 3), "VGS.AX", "BUY", 100, 100.0, 50.0),
+        _make_trade(date(2023, 7, 10), "VGS.AX", "SELL", 100, 200.0, 50.0),
+    ]
+    individual_result = run_cgt_from_trades(trades, marginal_tax_rate=0.325, entity_type="individual")
+    smsf_result = run_cgt_from_trades(trades, marginal_tax_rate=0.325, entity_type="smsf")
+
+    individual_cgt = sum(yr.cgt_payable for yr in individual_result.years)
+    smsf_cgt = sum(yr.cgt_payable for yr in smsf_result.years)
+
+    # SMSF gets a smaller discount → pays more CGT
+    assert smsf_cgt > individual_cgt
+
+    assert abs(individual_cgt - 1608.75) < 0.01
+    assert abs(smsf_cgt - 2145.00) < 0.01
+
+    assert smsf_result.entity_type == "smsf"
+    assert individual_result.entity_type == "individual"
+
+
+def test_cgt_from_trades_pension_phase_raises() -> None:
+    """SMSF pension_phase=True raises NotImplementedError with 'ECPI'."""
+    trades = [_make_trade(date(2023, 1, 3), "VAS.AX", "BUY", 100, 100.0)]
+
+    with pytest.raises(NotImplementedError, match="ECPI"):
+        run_cgt_from_trades(trades, entity_type="smsf", pension_phase=True)
+
+
+def test_cgt_from_trades_individual_pension_phase_ignored() -> None:
+    """Individual entity with pension_phase=True must not raise (guard is SMSF-only)."""
+    trades = [_make_trade(date(2023, 1, 3), "VAS.AX", "BUY", 100, 100.0)]
+    result = run_cgt_from_trades(trades, entity_type="individual", pension_phase=True)
+    assert result is not None
+    assert result.lots == []
+
+
+def test_cgt_from_trades_buys_only_no_disposals() -> None:
+    """Buy-only trades: no disposal events, no CGT."""
+    trades = [
+        _make_trade(date(2023, 1, 3), "VAS.AX", "BUY", 100, 100.0, 50.0),
+        _make_trade(date(2023, 3, 1), "VGS.AX", "BUY", 50, 200.0, 50.0),
+    ]
+    result = run_cgt_from_trades(trades)
+
+    assert result.lots == []
+    assert result.years == []
+    assert result.total_tax_paid == 0.0
+    assert result.after_tax_cagr == 0.0
+
+
+def test_cgt_from_trades_empty_list() -> None:
+    """Empty trade list returns a zero TaxSummary with no lots or years."""
+    result = run_cgt_from_trades([])
+
+    assert result.lots == []
+    assert result.years == []
+    assert result.total_tax_paid == 0.0
+    assert result.after_tax_cagr == 0.0
+
+
+def test_cgt_from_trades_after_tax_cagr_always_zero() -> None:
+    """after_tax_cagr is always 0.0 — no equity curve available in broker CSV flow."""
+    trades = [
+        _make_trade(date(2022, 1, 3), "VAS.AX", "BUY", 100, 100.0),
+        _make_trade(date(2023, 7, 3), "VAS.AX", "SELL", 100, 200.0),
+    ]
+    result = run_cgt_from_trades(trades)
+    assert result.after_tax_cagr == 0.0
+
+
+def test_cgt_from_trades_fifo_ordering() -> None:
+    """FIFO: oldest parcel disposed first; younger parcel remains open.
+
+      Parcel 1: BUY 2022-01-03, 100 shares @ $90; brokerage $50 → cost $9050
+      Parcel 2: BUY 2023-06-01, 100 shares @ $60; brokerage $50 → cost $6050
+      SELL      2023-07-17, 100 shares @ $110; brokerage $50    → proceeds $10950
+
+    FIFO uses Parcel 1 (oldest, cost $9050):
+      gain = 10950 - 9050 = $1900; held > 12 months → discount applied.
+    """
+    trades = [
+        _make_trade(date(2022, 1, 3), "FIFO.AX", "BUY", 100, 90.0, 50.0),
+        _make_trade(date(2023, 6, 1), "FIFO.AX", "BUY", 100, 60.0, 50.0),
+        _make_trade(date(2023, 7, 17), "FIFO.AX", "SELL", 100, 110.0, 50.0),
+    ]
+    result = run_cgt_from_trades(trades, parcel_method="fifo")
+
+    assert len(result.lots) == 1
+    lot = result.lots[0]
+    assert lot.acquired_date == date(2022, 1, 3), "FIFO: oldest parcel should be used"
+    assert lot.discount_applied is True
+    assert abs(float(lot.cost_basis_aud) - 9050.0) < 0.01
+    assert abs(lot.proceeds_aud - 10950.0) < 0.01
+    assert abs(lot.gain_aud - 1900.0) < 0.01
+
+
+def test_cgt_from_trades_highest_cost_parcel() -> None:
+    """highest_cost method selects the most expensive parcel regardless of age.
+
+      Parcel 1: BUY 2023-01-03, 100 shares @ $50; brokerage $50 → cost $5050
+      Parcel 2: BUY 2023-02-01, 100 shares @ $80; brokerage $50 → cost $8050 (highest)
+      SELL      2023-08-01, 100 shares @ $100; brokerage $50    → proceeds $9950
+
+    highest_cost uses Parcel 2 ($8050):
+      gain = 9950 - 8050 = $1900.
+    """
+    trades = [
+        _make_trade(date(2023, 1, 3), "HCA.AX", "BUY", 100, 50.0, 50.0),
+        _make_trade(date(2023, 2, 1), "HCA.AX", "BUY", 100, 80.0, 50.0),
+        _make_trade(date(2023, 8, 1), "HCA.AX", "SELL", 100, 100.0, 50.0),
+    ]
+    result = run_cgt_from_trades(trades, parcel_method="highest_cost")
+
+    assert len(result.lots) == 1
+    lot = result.lots[0]
+    # highest_cost: Parcel 2 has cost $8050 vs Parcel 1 at $5050
+    assert abs(float(lot.cost_basis_aud) - 8050.0) < 0.01
+    assert abs(lot.gain_aud - 1900.0) < 0.01
+
+
+def test_cgt_from_trades_multi_ticker() -> None:
+    """Multiple tickers are processed independently — each produces its own lot."""
+    trades = [
+        _make_trade(date(2023, 1, 3), "VAS.AX", "BUY", 100, 100.0, 50.0),
+        _make_trade(date(2023, 1, 3), "VGS.AX", "BUY", 50, 200.0, 50.0),
+        _make_trade(date(2023, 6, 1), "VAS.AX", "SELL", 100, 110.0, 50.0),
+        _make_trade(date(2023, 6, 1), "VGS.AX", "SELL", 50, 220.0, 50.0),
+    ]
+    result = run_cgt_from_trades(trades, marginal_tax_rate=0.325)
+
+    assert len(result.lots) == 2
+    tickers = {lot.ticker for lot in result.lots}
+    assert tickers == {"VAS.AX", "VGS.AX"}
+
+    # Each lot: gain > 0 (sold above cost) and no discount (held < 12 months)
+    for lot in result.lots:
+        assert lot.gain_aud > 0
+        assert lot.discount_applied is False
+
+    total_cgt = sum(yr.cgt_payable for yr in result.years)
+    assert total_cgt > 0
+
+
+def test_cgt_from_trades_cross_year_loss_carry_forward() -> None:
+    """Capital loss in FY2023 carries forward and reduces FY2024 CGT.
+
+      FY2023 LOSS: BUY 2022-07-01 @ $100 + $50 brok, SELL 2022-12-01 @ $50 - $50 brok
+      FY2024 GAIN: BUY 2023-07-01 @ $100 + $50 brok, SELL 2024-06-01 @ $200 - $50 brok
+
+    FY2023: cost=$10050, proceeds=$4950, loss=$5100, carried forward
+    FY2024: cost=$10050, proceeds=$19950, raw gain=$9900
+            After absorbing $5100 loss: net gain=$4800; CGT=4800*0.325=$1560
+    Total CGT < raw FY2024 CGT (what it would be without carry-forward).
+    """
+    trades = [
+        _make_trade(date(2022, 7, 1), "LOSS.AX", "BUY", 100, 100.0, 50.0),
+        _make_trade(date(2022, 12, 1), "LOSS.AX", "SELL", 100, 50.0, 50.0),
+        _make_trade(date(2023, 7, 1), "GAIN.AX", "BUY", 100, 100.0, 50.0),
+        _make_trade(date(2024, 6, 1), "GAIN.AX", "SELL", 100, 200.0, 50.0),
+    ]
+    result = run_cgt_from_trades(trades, marginal_tax_rate=0.325)
+
+    fy2023 = next((yr for yr in result.years if yr.ending_year == 2023), None)
+    fy2024 = next((yr for yr in result.years if yr.ending_year == 2024), None)
+
+    assert fy2023 is not None, "FY2023 tax year should exist"
+    assert fy2023.cgt_payable == 0.0
+    assert fy2023.carried_forward_loss > 0.0
+
+    assert fy2024 is not None, "FY2024 tax year should exist"
+    assert fy2024.cgt_payable > 0.0
+
+    # Total CGT is less than it would be without the carry-forward loss.
+    # Raw FY2024 gain = $9900 (no discount, held 11 months); CGT without loss = 9900 * 0.325
+    total_cgt = sum(yr.cgt_payable for yr in result.years)
+    assert total_cgt < 9900 * 0.325
+
+
+def test_cgt_from_trades_partial_sell_splits_proceeds() -> None:
+    """Selling a fraction of a parcel correctly apportions cost basis and proceeds.
+
+      BUY  100 shares @ $100; brokerage $50 → total cost $10050
+      SELL  50 shares @ $120; brokerage $50 → net proceeds $5950
+
+    For the disposed lot of 50 shares (50% of the parcel):
+      cost_basis = 50% of $10050 = $5025
+      proceeds   = $5950
+      gain       = $5950 - $5025 = $925
+    """
+    trades = [
+        _make_trade(date(2023, 1, 3), "ANZ.AX", "BUY", 100, 100.0, 50.0),
+        _make_trade(date(2023, 6, 1), "ANZ.AX", "SELL", 50, 120.0, 50.0),
+    ]
+    result = run_cgt_from_trades(trades)
+
+    assert len(result.lots) == 1
+    lot = result.lots[0]
+    assert abs(float(lot.cost_basis_aud) - 5025.0) < 0.01
+    assert abs(lot.proceeds_aud - 5950.0) < 0.01
+    assert abs(lot.gain_aud - 925.0) < 0.01
+
+
+def test_cgt_from_trades_loss_trade_zero_cgt() -> None:
+    """A loss-making disposal produces zero CGT payable (no negative tax)."""
+    trades = [
+        _make_trade(date(2023, 1, 3), "DOG.AX", "BUY", 100, 100.0),
+        _make_trade(date(2023, 6, 1), "DOG.AX", "SELL", 100, 50.0),
+    ]
+    result = run_cgt_from_trades(trades, marginal_tax_rate=0.325)
+
+    assert len(result.lots) == 1
+    assert result.lots[0].gain_aud < 0.0  # loss
+
+    total_cgt = sum(yr.cgt_payable for yr in result.years)
+    assert total_cgt == 0.0  # no negative tax
+    assert result.total_tax_paid == 0.0
+
+
+def test_cgt_from_trades_brokerage_included_in_cost_and_proceeds() -> None:
+    """Brokerage is added to cost basis (BUY) and deducted from proceeds (SELL).
+
+      BUY  100 shares @ $50; brokerage $20 → cost_basis = 5020
+      SELL 100 shares @ $60; brokerage $20 → proceeds = 5980
+      gain = 5980 - 5020 = 960
+    """
+    trades = [
+        _make_trade(date(2023, 1, 3), "BHP.AX", "BUY", 100, 50.0, 20.0),
+        _make_trade(date(2023, 6, 1), "BHP.AX", "SELL", 100, 60.0, 20.0),
+    ]
+    result = run_cgt_from_trades(trades)
+
+    assert len(result.lots) == 1
+    lot = result.lots[0]
+    assert abs(float(lot.cost_basis_aud) - 5020.0) < 0.01
+    assert abs(lot.proceeds_aud - 5980.0) < 0.01
+    assert abs(lot.gain_aud - 960.0) < 0.01

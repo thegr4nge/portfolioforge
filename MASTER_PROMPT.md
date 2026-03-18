@@ -8,6 +8,8 @@
 
 Edan — 22, physics graduate, MSc in Astronomy and Astrophysics at ANU. Dual Australian/British citizenship. Strong Python developer. Limited budget. Every decision must be justified by existing revenue or near-term necessity.
 
+ABN: 51 640 478 545 (sole trader, registered March 2026)
+
 Working pattern: Edan runs Claude Code sessions. He reviews output, runs verifications, makes judgment calls. Build fast and completely — he doesn't want specs, he wants working things.
 
 ---

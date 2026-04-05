@@ -22,6 +22,7 @@ Python 3.12   •   238 tests   •   ASX + NYSE/NASDAQ/LSE/TSX   •   AUD-nati
 | `compare` | DCA vs lump sum — which would have won historically? |
 | `stress-test` | Crisis scenario impact — GFC, COVID, rate shock, or custom |
 | `rebalance` | Drift analysis, trade lists, and rebalancing strategy comparison |
+| `div296` | Division 296 tax projection for super balances above $3M |
 | `save` / `load` | Save portfolio configs and reuse across all commands |
 
 ---

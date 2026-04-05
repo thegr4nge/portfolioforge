@@ -1165,3 +1165,112 @@ def rebalance(
         rows = flatten_rebalance_metrics(result)
         export_csv(rows, Path(export_csv_path).resolve())
         console.print(f"[green]Metrics exported to {export_csv_path}[/green]")
+
+
+@app.command(name="div296")
+def div296(
+    tsb: Annotated[
+        float,
+        typer.Option(help="Current Total Super Balance in AUD (e.g. 4000000)"),
+    ],
+    return_rate: Annotated[
+        float,
+        typer.Option("--return-rate", help="Expected annual investment return (e.g. 0.07 for 7%)"),
+    ] = 0.07,
+    years: Annotated[
+        int,
+        typer.Option(help="Number of years to project (1-30)"),
+    ] = 10,
+    concessional: Annotated[
+        float,
+        typer.Option(help="Gross annual concessional contributions in AUD (employer + salary sacrifice)"),
+    ] = 0.0,
+    non_concessional: Annotated[
+        float,
+        typer.Option("--non-concessional", help="Annual non-concessional (after-tax) contributions in AUD"),
+    ] = 0.0,
+    pension: Annotated[
+        float,
+        typer.Option(help="Annual pension payments or withdrawals in AUD"),
+    ] = 0.0,
+    threshold: Annotated[
+        float,
+        typer.Option(help="Div 296 threshold in AUD (default $3,000,000)"),
+    ] = 3_000_000.0,
+    explain: Annotated[
+        bool,
+        typer.Option("--explain/--no-explain", help="Show plain-English explanations"),
+    ] = True,
+    export_json_path: Annotated[
+        str | None,
+        typer.Option("--export-json", help="Export results to JSON file"),
+    ] = None,
+    export_csv_path: Annotated[
+        str | None,
+        typer.Option("--export-csv", help="Export year-by-year data to CSV file"),
+    ] = None,
+) -> None:
+    """Project Division 296 tax liability for a superannuation balance above $3M.
+
+    Division 296 is an additional 15% tax on super earnings for members whose
+    Total Super Balance (TSB) exceeds $3,000,000. Effective 1 July 2025.
+
+    Examples:
+
+        pf div296 --tsb 4000000
+
+        pf div296 --tsb 4000000 --return-rate 0.07 --years 10 --concessional 27500
+
+        pf div296 --tsb 5500000 --return-rate 0.08 --pension 120000 --years 15
+    """
+    from portfolioforge.output.div296 import render_div296_results
+    from portfolioforge.services.div296 import run_div296_analysis
+
+    try:
+        result = run_div296_analysis(
+            tsb_start=tsb,
+            annual_return=return_rate,
+            annual_concessional=concessional,
+            annual_non_concessional=non_concessional,
+            annual_pension_payments=pension,
+            projection_years=years,
+            threshold=threshold,
+        )
+    except ValueError as exc:
+        console.print(f"[red]Div 296 error: {exc}[/red]")
+        raise typer.Exit(code=1) from None
+
+    render_div296_results(result, console, explain=explain)
+
+    if export_json_path:
+        from pathlib import Path
+
+        from portfolioforge.engines.export import export_json
+
+        export_json(result, Path(export_json_path).resolve())
+        console.print(f"[green]Results exported to {export_json_path}[/green]")
+
+    if export_csv_path:
+        from pathlib import Path
+        import csv
+
+        path = Path(export_csv_path).resolve()
+        with path.open("w", newline="") as f:
+            writer = csv.DictWriter(f, fieldnames=[
+                "financial_year", "tsb_start", "tsb_end",
+                "super_earnings", "earnings_proportion",
+                "div296_tax", "cumulative_tax", "is_liable",
+            ])
+            writer.writeheader()
+            for yr in result.years:
+                writer.writerow({
+                    "financial_year": yr.financial_year_label,
+                    "tsb_start": round(yr.tsb_start, 2),
+                    "tsb_end": round(yr.tsb_end, 2),
+                    "super_earnings": round(yr.super_earnings, 2),
+                    "earnings_proportion": round(yr.earnings_proportion, 6),
+                    "div296_tax": round(yr.div296_tax, 2),
+                    "cumulative_tax": round(yr.cumulative_tax, 2),
+                    "is_liable": yr.is_liable,
+                })
+        console.print(f"[green]Year-by-year data exported to {export_csv_path}[/green]")

@@ -48,6 +48,9 @@ class BacktestConfig(BaseModel):
         if abs(total - 1.0) > 0.01:
             msg = f"Weights must sum to ~1.0, got {total:.4f}"
             raise ValueError(msg)
+        if not 1 <= self.period_years <= 50:
+            msg = f"period_years must be between 1 and 50, got {self.period_years}"
+            raise ValueError(msg)
         return self
 
 

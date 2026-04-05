@@ -6,6 +6,8 @@ from datetime import date, timedelta
 from unittest.mock import MagicMock, patch
 
 import numpy as np
+import pytest
+from pydantic import ValidationError
 
 from portfolioforge.models.contribution import CompareConfig, CompareResult
 from portfolioforge.models.portfolio import FetchResult, PriceData
@@ -131,3 +133,40 @@ class TestRunCompare:
         result = run_compare(config)
         assert result.rolling_windows_tested > 0
         assert 0.0 <= result.lump_win_pct <= 1.0
+
+
+class TestCompareConfigWeightValidation:
+    def test_weights_summing_to_one_are_accepted(self) -> None:
+        config = CompareConfig(
+            tickers=["AAPL", "MSFT"],
+            weights=[0.5, 0.5],
+            total_capital=10_000,
+        )
+        assert config.weights == [0.5, 0.5]
+
+    def test_weights_within_1pct_tolerance_accepted(self) -> None:
+        """Weights summing to 1.005 (within 1% tolerance) should be valid."""
+        config = CompareConfig(
+            tickers=["AAPL", "MSFT"],
+            weights=[0.5, 0.505],
+            total_capital=10_000,
+        )
+        assert config.weights is not None
+
+    def test_weights_outside_1pct_tolerance_rejected(self) -> None:
+        """Weights summing to 1.02 (outside 1%) should raise."""
+        with pytest.raises(ValidationError, match="Weights must sum to"):
+            CompareConfig(
+                tickers=["AAPL", "MSFT"],
+                weights=[0.5, 0.52],
+                total_capital=10_000,
+            )
+
+    def test_weights_summing_to_0_96_rejected(self) -> None:
+        """Weights summing to 0.96 (would pass old 5% check) should now fail."""
+        with pytest.raises(ValidationError, match="Weights must sum to"):
+            CompareConfig(
+                tickers=["AAPL", "MSFT"],
+                weights=[0.5, 0.46],
+                total_capital=10_000,
+            )

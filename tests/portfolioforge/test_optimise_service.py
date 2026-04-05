@@ -193,3 +193,28 @@ class TestRunValidate:
         result = run_validate(config)
 
         assert result.user_weights == {"AAPL": 0.5, "MSFT": 0.5}
+
+
+class TestOptimiseConfigPeriodYears:
+    def test_zero_period_years_rejected(self) -> None:
+        from pydantic import ValidationError
+        with pytest.raises(ValidationError, match="period_years"):
+            OptimiseConfig(tickers=["AAPL", "MSFT"], period_years=0, max_weight=0.60)
+
+    def test_negative_period_years_rejected(self) -> None:
+        from pydantic import ValidationError
+        with pytest.raises(ValidationError, match="period_years"):
+            OptimiseConfig(tickers=["AAPL", "MSFT"], period_years=-1, max_weight=0.60)
+
+    def test_valid_period_years_accepted(self) -> None:
+        config = OptimiseConfig(tickers=["AAPL", "MSFT"], period_years=5, max_weight=0.60)
+        assert config.period_years == 5
+
+    def test_max_period_years_accepted(self) -> None:
+        config = OptimiseConfig(tickers=["AAPL", "MSFT"], period_years=50, max_weight=0.60)
+        assert config.period_years == 50
+
+    def test_over_max_period_years_rejected(self) -> None:
+        from pydantic import ValidationError
+        with pytest.raises(ValidationError, match="period_years"):
+            OptimiseConfig(tickers=["AAPL", "MSFT"], period_years=51, max_weight=0.60)

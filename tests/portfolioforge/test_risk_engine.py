@@ -37,8 +37,8 @@ class TestComputeVarCvar:
         result = compute_var_cvar(returns)
 
         assert result["var"] > 0
-        assert result["cvar"] >= result["var"] or result["cvar"] <= result["var"]
-        # For all-positive, CVaR is the mean of the bottom 5% which is still positive
+        # For all-positive returns, CVaR ~= VaR (bottom 5% are all the same value)
+        assert result["cvar"] == pytest.approx(result["var"], abs=1e-9)
         assert result["cvar"] > 0
 
     def test_custom_confidence(self) -> None:

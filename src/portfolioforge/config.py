@@ -31,6 +31,10 @@ SUPPORTED_MARKETS: dict[str, str] = {
     ".L": "GBP",
     ".PA": "EUR",
     ".DE": "EUR",
+    ".TO": "CAD",
+    ".HK": "HKD",
+    ".SI": "SGD",
+    ".NZ": "NZD",
 }
 
 # External APIs

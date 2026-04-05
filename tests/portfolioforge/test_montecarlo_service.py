@@ -6,7 +6,9 @@ from datetime import date, timedelta
 from io import StringIO
 from unittest.mock import MagicMock, patch
 
+import pytest
 import numpy as np
+from pydantic import ValidationError
 from rich.console import Console
 
 from portfolioforge.models.montecarlo import (
@@ -278,3 +280,39 @@ class TestRenderFanChart:
         """Rendering fan chart with goal (target line) doesn't crash."""
         result = _make_projection_result(with_goal=True)
         render_fan_chart(result)
+
+
+class TestProjectionConfigPeriodYears:
+    """Tests for period_years validation in ProjectionConfig."""
+
+    def _base_kwargs(self) -> dict:
+        return dict(
+            tickers=["AAPL", "MSFT"],
+            weights=[0.6, 0.4],
+            initial_capital=10000.0,
+            years=10,
+        )
+
+    def test_zero_period_years_rejected(self) -> None:
+        with pytest.raises(ValidationError, match="period_years"):
+            ProjectionConfig(**self._base_kwargs(), period_years=0)
+
+    def test_negative_period_years_rejected(self) -> None:
+        with pytest.raises(ValidationError, match="period_years"):
+            ProjectionConfig(**self._base_kwargs(), period_years=-1)
+
+    def test_over_max_period_years_rejected(self) -> None:
+        with pytest.raises(ValidationError, match="period_years"):
+            ProjectionConfig(**self._base_kwargs(), period_years=51)
+
+    def test_valid_period_years_accepted(self) -> None:
+        config = ProjectionConfig(**self._base_kwargs(), period_years=5)
+        assert config.period_years == 5
+
+    def test_max_period_years_accepted(self) -> None:
+        config = ProjectionConfig(**self._base_kwargs(), period_years=50)
+        assert config.period_years == 50
+
+    def test_min_period_years_accepted(self) -> None:
+        config = ProjectionConfig(**self._base_kwargs(), period_years=1)
+        assert config.period_years == 1

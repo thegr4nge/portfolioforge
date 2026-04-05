@@ -86,10 +86,12 @@ def compute_metrics(
     volatility = float(daily_returns.std() * np.sqrt(252))
     sharpe = float((ann_return - risk_free_rate) / volatility) if volatility > 0 else 0.0
 
-    downside_returns = daily_returns[daily_returns < 0]
-    if len(downside_returns) > 1:
-        downside_std = float(downside_returns.std() * np.sqrt(252))
-        sortino = float((ann_return - risk_free_rate) / downside_std) if downside_std > 0 else 0.0
+    # Downside deviation: RMS of returns below zero, annualised
+    clipped = np.minimum(daily_returns.values, 0.0)
+    downside_variance = float(np.mean(clipped ** 2))
+    if downside_variance > 0:
+        downside_dev = float(np.sqrt(downside_variance * 252))
+        sortino = float((ann_return - risk_free_rate) / downside_dev)
     else:
         sortino = 0.0
 

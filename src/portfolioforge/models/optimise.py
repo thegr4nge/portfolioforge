@@ -32,6 +32,11 @@ class OptimiseConfig(BaseModel):
                 msg = f"Weights must sum to ~1.0, got {total:.4f}"
                 raise ValueError(msg)
 
+        # Validate period_years
+        if not 1 <= self.period_years <= 50:
+            msg = f"period_years must be between 1 and 50, got {self.period_years}"
+            raise ValueError(msg)
+
         # Validate weight bounds
         if not (0 <= self.min_weight < self.max_weight <= 1):
             msg = (

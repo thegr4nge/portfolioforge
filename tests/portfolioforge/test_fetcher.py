@@ -23,13 +23,14 @@ def _mock_yf_dataframe(
         dates = pd.bdate_range(end=end_date, periods=days)
     else:
         dates = pd.bdate_range(start="2024-01-02", periods=days)
+    n = len(dates)
     df = pd.DataFrame(
         {
-            "Open": [close_base + i * 0.1 for i in range(days)],
-            "High": [close_base + i * 0.1 + 1 for i in range(days)],
-            "Low": [close_base + i * 0.1 - 1 for i in range(days)],
-            "Close": [close_base + i * 0.1 for i in range(days)],
-            "Volume": [1_000_000] * days,
+            "Open": [close_base + i * 0.1 for i in range(n)],
+            "High": [close_base + i * 0.1 + 1 for i in range(n)],
+            "Low": [close_base + i * 0.1 - 1 for i in range(n)],
+            "Close": [close_base + i * 0.1 for i in range(n)],
+            "Volume": [1_000_000] * n,
         },
         index=dates,
     )

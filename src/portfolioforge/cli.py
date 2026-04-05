@@ -173,7 +173,8 @@ def fetch(
             continue
 
         pd = result.price_data
-        assert pd is not None  # guarded by error check
+        if pd is None:  # should not happen; error check above guarantees price_data exists
+            continue
 
         market = detect_market(pd.ticker)
         currency = detect_currency(pd.ticker)

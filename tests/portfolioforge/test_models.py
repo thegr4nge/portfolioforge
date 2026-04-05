@@ -33,6 +33,18 @@ class TestDetectMarket:
     def test_euronext_de_suffix(self) -> None:
         assert detect_market("SAP.DE") == Market.EURONEXT
 
+    def test_tsx_suffix(self) -> None:
+        assert detect_market("RY.TO") == Market.TSX
+
+    def test_hkex_suffix(self) -> None:
+        assert detect_market("0700.HK") == Market.HKEX
+
+    def test_sgx_suffix(self) -> None:
+        assert detect_market("D05.SI") == Market.SGX
+
+    def test_nzx_suffix(self) -> None:
+        assert detect_market("AIR.NZ") == Market.NZX
+
 
 class TestDetectCurrency:
     def test_asx_returns_aud(self) -> None:
@@ -43,6 +55,18 @@ class TestDetectCurrency:
 
     def test_lse_returns_gbp(self) -> None:
         assert detect_currency("BP.L") == Currency.GBP
+
+    def test_tsx_returns_cad(self) -> None:
+        assert detect_currency("RY.TO") == Currency.CAD
+
+    def test_hkex_returns_hkd(self) -> None:
+        assert detect_currency("0700.HK") == Currency.HKD
+
+    def test_sgx_returns_sgd(self) -> None:
+        assert detect_currency("D05.SI") == Currency.SGD
+
+    def test_nzx_returns_nzd(self) -> None:
+        assert detect_currency("AIR.NZ") == Currency.NZD
 
 
 class TestPortfolio:

@@ -51,8 +51,8 @@ def run_stress_test(config: StressConfig) -> StressResult:
                 from portfolioforge.data.sector import fetch_sectors
 
                 sectors = fetch_sectors(config.tickers, cache)
-                assert scenario.shock_sector is not None
-                assert scenario.shock_pct is not None
+                if scenario.shock_sector is None or scenario.shock_pct is None:
+                    raise ValueError("Custom shock scenario must have shock_sector and shock_pct set")
                 result_dict = apply_custom_shock(
                     aligned, weights, sectors,
                     scenario.shock_sector, scenario.shock_pct,

@@ -8,6 +8,8 @@ from unittest.mock import patch
 import pytest
 from typer.testing import CliRunner
 
+from pydantic import ValidationError
+
 from portfolioforge.cli import app
 from portfolioforge.models.backtest import BacktestConfig, RebalanceFrequency
 from portfolioforge.models.portfolio import FetchResult, PriceData
@@ -44,8 +46,8 @@ def _make_fetch_result(
     """Create a FetchResult with synthetic data or an error."""
     if error:
         return FetchResult(ticker=ticker, error=error)
-    pd = _make_price_data(ticker, **kwargs)  # type: ignore[arg-type]
-    return FetchResult(ticker=ticker, price_data=pd)
+    price_data = _make_price_data(ticker, **kwargs)  # type: ignore[arg-type]
+    return FetchResult(ticker=ticker, price_data=price_data)
 
 
 class TestRunBacktest:
@@ -196,3 +198,25 @@ class TestCLIBacktest:
         )
         assert result.exit_code == 1
         assert "sum to" in result.output.lower()
+
+
+class TestBacktestConfigPeriodYears:
+    def test_zero_period_years_rejected(self) -> None:
+        with pytest.raises(ValidationError, match="period_years"):
+            BacktestConfig(tickers=["AAPL"], weights=[1.0], period_years=0)
+
+    def test_negative_period_years_rejected(self) -> None:
+        with pytest.raises(ValidationError, match="period_years"):
+            BacktestConfig(tickers=["AAPL"], weights=[1.0], period_years=-1)
+
+    def test_valid_period_years_accepted(self) -> None:
+        config = BacktestConfig(tickers=["AAPL"], weights=[1.0], period_years=10)
+        assert config.period_years == 10
+
+    def test_max_period_years_accepted(self) -> None:
+        config = BacktestConfig(tickers=["AAPL"], weights=[1.0], period_years=50)
+        assert config.period_years == 50
+
+    def test_over_max_period_years_rejected(self) -> None:
+        with pytest.raises(ValidationError, match="period_years"):
+            BacktestConfig(tickers=["AAPL"], weights=[1.0], period_years=51)

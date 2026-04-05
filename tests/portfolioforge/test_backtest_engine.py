@@ -144,6 +144,26 @@ class TestComputeMetrics:
         metrics = compute_metrics(cumulative)
         assert metrics["sharpe_ratio"] == 0.0
 
+    def test_sortino_uses_rms_not_std(self) -> None:
+        """Sortino uses RMS of downside returns, not std of negative subset.
+
+        The old std()-based formula returns 0.0 when there is only one negative
+        return day (std of a single value is NaN). The RMS formula always produces
+        a meaningful result.
+        """
+        dates = pd.to_datetime([date(2024, 1, d) for d in range(1, 11)])
+        # Flat for 3 days, one -10% day, flat for 6 more days
+        cumulative = pd.Series(
+            [1.0, 1.0, 1.0, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9],
+            index=dates,
+        )
+        metrics = compute_metrics(cumulative, risk_free_rate=0.0)
+        # Return is negative (portfolio lost 10%), so Sortino should be < 0
+        assert metrics["sortino_ratio"] < 0
+        # Old formula: std() of a single negative return = NaN -> sortino = 0.0
+        # New formula: RMS gives a non-zero downside_dev -> sortino != 0.0
+        assert metrics["sortino_ratio"] != 0.0
+
 
 class TestComputeFinalWeights:
     def test_one_doubles_one_flat(self) -> None:

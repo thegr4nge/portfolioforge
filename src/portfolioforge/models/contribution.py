@@ -64,7 +64,7 @@ class CompareConfig(BaseModel):
     @field_validator("weights")
     @classmethod
     def _weights_sum(cls, v: list[float]) -> list[float]:
-        if abs(sum(v) - 1.0) > 0.05:
+        if abs(sum(v) - 1.0) > 0.01:
             msg = f"Weights must sum to ~1.0, got {sum(v):.4f}"
             raise ValueError(msg)
         return v

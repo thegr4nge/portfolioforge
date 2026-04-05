@@ -182,6 +182,6 @@ def fetch_multiple(
         )
         result = fetch_with_fx(ticker, period_years, cache, fx_rate_cache)
         results.append(result)
-        if i < len(tickers) - 1:
+        if i < len(tickers) - 1 and not result.from_cache:
             time.sleep(0.3)
     return results

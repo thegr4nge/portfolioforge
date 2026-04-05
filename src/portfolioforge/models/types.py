@@ -12,6 +12,10 @@ class Currency(str, Enum):
     USD = "USD"
     EUR = "EUR"
     GBP = "GBP"
+    CAD = "CAD"
+    HKD = "HKD"
+    SGD = "SGD"
+    NZD = "NZD"
 
 
 class Market(str, Enum):
@@ -22,6 +26,10 @@ class Market(str, Enum):
     NASDAQ = "NASDAQ"
     LSE = "LSE"
     EURONEXT = "EURONEXT"
+    TSX = "TSX"
+    HKEX = "HKEX"
+    SGX = "SGX"
+    NZX = "NZX"
 
     @property
     def suffix(self) -> str:
@@ -38,6 +46,10 @@ _MARKET_SUFFIX: dict[Market, str] = {
     Market.NASDAQ: "",
     Market.LSE: ".L",
     Market.EURONEXT: ".PA",
+    Market.TSX: ".TO",
+    Market.HKEX: ".HK",
+    Market.SGX: ".SI",
+    Market.NZX: ".NZ",
 }
 
 _MARKET_CURRENCY: dict[Market, Currency] = {
@@ -46,6 +58,10 @@ _MARKET_CURRENCY: dict[Market, Currency] = {
     Market.NASDAQ: Currency.USD,
     Market.LSE: Currency.GBP,
     Market.EURONEXT: Currency.EUR,
+    Market.TSX: Currency.CAD,
+    Market.HKEX: Currency.HKD,
+    Market.SGX: Currency.SGD,
+    Market.NZX: Currency.NZD,
 }
 
 # Reverse mapping: suffix -> Market (for detection)
@@ -54,6 +70,10 @@ _SUFFIX_TO_MARKET: dict[str, Market] = {
     ".L": Market.LSE,
     ".PA": Market.EURONEXT,
     ".DE": Market.EURONEXT,
+    ".TO": Market.TSX,
+    ".HK": Market.HKEX,
+    ".SI": Market.SGX,
+    ".NZ": Market.NZX,
 }
 
 # Index tickers with known markets (no suffix to detect from)

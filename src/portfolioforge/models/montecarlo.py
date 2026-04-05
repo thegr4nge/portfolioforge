@@ -59,6 +59,10 @@ class ProjectionConfig(BaseModel):
             msg = f"initial_capital must be > 0, got {self.initial_capital}"
             raise ValueError(msg)
 
+        if not 1 <= self.period_years <= 50:
+            msg = f"period_years must be between 1 and 50, got {self.period_years}"
+            raise ValueError(msg)
+
         if self.target_years is not None and self.target_years > self.years:
             msg = (
                 f"target_years ({self.target_years}) must be <= "

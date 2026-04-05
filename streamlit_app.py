@@ -232,8 +232,8 @@ st.divider()
 # ---------------------------------------------------------------------------
 # Tabs — CSV tab rendered first to avoid st.stop() in manual tab blocking it
 # ---------------------------------------------------------------------------
-tab_manual, tab_csv, tab_verify = st.tabs(
-    ["Simulate Portfolio", "Import Broker CSV", "Verify Workpaper"]
+tab_manual, tab_csv, tab_div296, tab_verify = st.tabs(
+    ["Simulate Portfolio", "Import Broker CSV", "Div 296 Modelling", "Verify Workpaper"]
 )
 
 # ── TAB 2: Broker CSV import ─────────────────────────────────────────────────
@@ -674,6 +674,173 @@ with tab_manual:
                 st.error(f"Analysis failed: {exc}")
                 with st.expander("Error detail"):
                     st.exception(exc)
+
+# ── TAB 3: Div 296 Modelling ─────────────────────────────────────────────────
+with tab_div296:
+    st.markdown("### Division 296 Tax Modelling")
+    st.markdown(
+        "Model your client's Division 296 exposure over time. "
+        "Enter the member's Total Super Balance and assumptions — "
+        "the tool projects annual tax liability and compares planning scenarios."
+    )
+    st.info(
+        "**Division 296** is an additional 15% tax on super earnings for members whose "
+        "Total Super Balance exceeds **$3,000,000**. Effective 1 July 2025. "
+        "Unrealised gains on property and unlisted assets are included."
+    )
+
+    col_a, col_b = st.columns(2)
+    with col_a:
+        d296_tsb = st.number_input(
+            "Total Super Balance (AUD)",
+            min_value=0,
+            max_value=50_000_000,
+            value=4_000_000,
+            step=100_000,
+            help="Member's current Total Super Balance across all accounts.",
+        )
+        d296_return = st.number_input(
+            "Expected annual return (%)",
+            min_value=0.0,
+            max_value=30.0,
+            value=7.0,
+            step=0.5,
+            help="Expected annual investment return (e.g. 7.0 for 7%).",
+        )
+        d296_years = st.slider("Projection years", min_value=1, max_value=30, value=10)
+
+    with col_b:
+        d296_cc = st.number_input(
+            "Annual concessional contributions (AUD)",
+            min_value=0,
+            max_value=500_000,
+            value=0,
+            step=1_000,
+            help="Gross employer + salary sacrifice contributions. Fund pays 15% contributions tax.",
+        )
+        d296_pension = st.number_input(
+            "Annual pension / withdrawals (AUD)",
+            min_value=0,
+            max_value=5_000_000,
+            value=0,
+            step=10_000,
+            help="Annual pension payments or lump-sum withdrawals from the fund.",
+        )
+        d296_ncc = st.number_input(
+            "Annual non-concessional contributions (AUD)",
+            min_value=0,
+            max_value=1_000_000,
+            value=0,
+            step=5_000,
+            help="After-tax contributions. Excluded from Div 296 earnings per the ATO formula.",
+        )
+
+    run_d296 = st.button("Calculate Div 296 Exposure", type="primary", use_container_width=True)
+
+    if run_d296:
+        if d296_tsb <= 0:
+            st.error("Enter a Total Super Balance greater than zero.")
+        else:
+            DIV296_THRESHOLD = 3_000_000.0
+            rate = d296_return / 100.0
+
+            # --- Projection engine (inline — no CLI dependency) ---
+            def _d296_project(tsb_start, annual_return, cc, ncc, pension, years):
+                net_cc = cc * 0.85
+                results = []
+                tsb = tsb_start
+                cumulative = 0.0
+                for i in range(years):
+                    yr_start = tsb
+                    tsb_end = max(yr_start * (1 + annual_return) + net_cc + ncc - pension, 0.0)
+                    earnings = tsb_end + pension - yr_start - ncc
+                    if earnings > 0 and tsb_end > DIV296_THRESHOLD:
+                        proportion = (tsb_end - DIV296_THRESHOLD) / tsb_end
+                        tax = earnings * proportion * 0.15
+                    else:
+                        proportion = 0.0
+                        tax = 0.0
+                    cumulative += tax
+                    results.append({
+                        "Year": f"FY{2025 + i}-{str(2026 + i)[2:]}",
+                        "TSB Start": yr_start,
+                        "TSB End": tsb_end,
+                        "Super Earnings": earnings,
+                        "Above $3M (%)": proportion * 100,
+                        "Div 296 Tax": tax,
+                        "Cumulative Tax": cumulative,
+                    })
+                    tsb = tsb_end
+                return results
+
+            rows = _d296_project(d296_tsb, rate, d296_cc, d296_ncc, d296_pension, d296_years)
+            total_tax = rows[-1]["Cumulative Tax"]
+            liable_rows = [r for r in rows if r["Div 296 Tax"] > 0]
+
+            # Summary metrics
+            m1, m2, m3, m4 = st.columns(4)
+            m1.metric(f"Total Div 296 ({d296_years} yrs)", f"${total_tax:,.0f}")
+            m2.metric(
+                "First liable year",
+                liable_rows[0]["Year"] if liable_rows else "None",
+            )
+            m3.metric(
+                "Peak annual tax",
+                f"${max((r['Div 296 Tax'] for r in rows), default=0):,.0f}",
+            )
+            m4.metric("Years liable", str(len(liable_rows)))
+
+            if total_tax == 0:
+                st.success(
+                    "No Division 296 liability projected over this period — "
+                    "balance stays below $3,000,000 or fund returns are negative."
+                )
+            else:
+                # Year-by-year table
+                df = pd.DataFrame(rows)
+                df["TSB Start"] = df["TSB Start"].apply(lambda x: f"${x:,.0f}")
+                df["TSB End"] = df["TSB End"].apply(lambda x: f"${x:,.0f}")
+                df["Super Earnings"] = df["Super Earnings"].apply(lambda x: f"${x:,.0f}")
+                df["Above $3M (%)"] = df["Above $3M (%)"].apply(lambda x: f"{x:.1f}%")
+                df["Div 296 Tax"] = df["Div 296 Tax"].apply(lambda x: f"${x:,.0f}")
+                df["Cumulative Tax"] = df["Cumulative Tax"].apply(lambda x: f"${x:,.0f}")
+                st.dataframe(df, use_container_width=True, hide_index=True)
+
+                # Scenario comparison
+                st.markdown("#### Planning Scenario Comparison")
+                rows_no_cc = _d296_project(d296_tsb, rate, 0, d296_ncc, d296_pension, d296_years)
+                extra_draw = max(0.0, d296_tsb - DIV296_THRESHOLD) * 0.15
+                rows_drawdown = _d296_project(
+                    d296_tsb, rate, d296_cc, d296_ncc, d296_pension + extra_draw, d296_years
+                )
+                sc_data = [
+                    {"Scenario": "Status quo", "Total Div 296 Tax": f"${total_tax:,.0f}", "Saving": "—"},
+                    {
+                        "Scenario": "Stop concessional contributions",
+                        "Total Div 296 Tax": f"${rows_no_cc[-1]['Cumulative Tax']:,.0f}",
+                        "Saving": f"${total_tax - rows_no_cc[-1]['Cumulative Tax']:,.0f}",
+                    },
+                    {
+                        "Scenario": "Accelerated pension drawdown",
+                        "Total Div 296 Tax": f"${rows_drawdown[-1]['Cumulative Tax']:,.0f}",
+                        "Saving": f"${total_tax - rows_drawdown[-1]['Cumulative Tax']:,.0f}",
+                    },
+                ]
+                st.dataframe(pd.DataFrame(sc_data), use_container_width=True, hide_index=True)
+
+                st.caption(
+                    "Div 296 formula: super earnings = TSB_end + withdrawals − TSB_start − "
+                    "non-concessional contributions. Proportion = (TSB_end − $3M) ÷ TSB_end. "
+                    "Tax = max(0, earnings) × proportion × 15%. "
+                    "Concessional contributions net of 15% fund tax. Not financial advice."
+                )
+
+                st.info(
+                    "**Want to run this on a real client scenario?**  \n"
+                    "$150/portfolio/year or $300/month for practice subscription.  \n"
+                    "Email [portfolioforge.au@gmail.com](mailto:portfolioforge.au@gmail.com)"
+                )
+
 
 # ---------------------------------------------------------------------------
 # Footer

@@ -482,6 +482,68 @@ footer{
   .auditor-grid{grid-template-columns:1fr}
   .auditor-verify-box{flex-direction:column;gap:12px}
 }
+/* ── DIVISION 296 SECTION ── */
+.d296-outer{background:var(--white);border-bottom:1px solid var(--border)}
+.d296-inner{max-width:1060px;margin:0 auto;padding:5rem 2.5rem}
+.d296-inner h2{
+  font-size:clamp(1.6rem,2.8vw,2.2rem);font-weight:700;letter-spacing:-0.025em;
+  line-height:1.2;margin-bottom:0.75rem;
+}
+.d296-inner .sub{color:var(--ink-mid);font-size:0.95rem;max-width:560px;margin-bottom:3rem}
+.d296-doc{
+  border:1px solid var(--border);border-top:2px solid #C0392B;
+  font-family:var(--mono);font-size:0.72rem;margin-bottom:3rem;overflow:hidden;
+}
+.d296-doc-hdr{
+  background:var(--bg);padding:0.65rem 1.5rem;border-bottom:1px solid var(--border);
+  display:flex;justify-content:space-between;align-items:baseline;gap:1rem;
+}
+.d296-doc-hdr-title{font-size:0.58rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-mid)}
+.d296-doc-hdr-right{font-size:0.56rem;letter-spacing:0.08em;color:#C0392B;font-weight:600;text-transform:uppercase}
+.d296-tbl{width:100%;border-collapse:collapse}
+.d296-tbl th{
+  padding:0.42rem 0.9rem;background:var(--bg);border-bottom:1px solid var(--border);
+  font-size:0.48rem;letter-spacing:0.1em;text-transform:uppercase;
+  color:var(--ink-dim);text-align:left;font-weight:600;
+}
+.d296-tbl th:not(:first-child){text-align:right}
+.d296-tbl td{
+  padding:0.48rem 0.9rem;border-bottom:1px solid var(--border);
+  color:var(--ink-mid);font-size:0.66rem;
+}
+.d296-tbl td:not(:first-child){text-align:right}
+.d296-tbl td.yr{color:var(--ink);font-weight:600}
+.d296-tbl td.tax{color:#C0392B;font-weight:700}
+.d296-tbl td.notax{color:var(--ink-dim)}
+.d296-tbl td.prop{color:var(--amber)}
+.d296-tbl tr.d296-tot td{
+  background:#FDF2F1;font-weight:700;color:var(--ink);
+  border-top:1px solid #E8C4BF;
+}
+.d296-tbl tr.d296-tot td.tax{color:#C0392B}
+.d296-footer{
+  padding:0.55rem 1.5rem;font-size:0.52rem;
+  letter-spacing:0.05em;color:var(--ink-dim);
+  border-top:1px solid var(--border);background:var(--bg);
+}
+.d296-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:1.25rem;margin-bottom:2.5rem}
+.d296-card{
+  border:1px solid var(--border);padding:1.5rem;background:var(--white);
+}
+.d296-card-eyebrow{
+  font-family:var(--mono);font-size:0.5rem;letter-spacing:0.12em;text-transform:uppercase;
+  color:#C0392B;margin-bottom:0.6rem;
+}
+.d296-card-title{font-size:0.9rem;font-weight:600;color:var(--ink);margin-bottom:0.5rem;line-height:1.3}
+.d296-card-body{font-size:0.82rem;color:var(--ink-mid);line-height:1.65}
+.d296-card-body code{font-family:var(--mono);font-size:0.78rem;color:var(--ink);background:var(--bg);padding:0.05rem 0.25rem}
+.d296-cta{display:flex;gap:0.75rem;flex-wrap:wrap}
+@media(max-width:900px){
+  .d296-cards{grid-template-columns:1fr}
+  .d296-inner{padding-left:1.5rem;padding-right:1.5rem}
+  .d296-doc{overflow-x:auto}
+}
+
 /* ── AUDITOR SECTION ── */
 .auditor-section{background:#0A1628;color:#e8eaf0;padding:80px 0}
 .auditor-inner{max-width:860px;margin:0 auto;padding:0 24px}
@@ -519,6 +581,7 @@ footer{
     <li><a href="#how">How it works</a></li>
     <li><a href="#schedule">The workpaper</a></li>
     <li><a href="#auditors">Auditors</a></li>
+    <li><a href="#div296">Div 296</a></li>
     <li><a href="#pricing">Pricing</a></li>
     <li><a href="#faq">FAQ</a></li>
   </ul>
@@ -887,6 +950,89 @@ footer{
   </div>
 </section>
 
+<!-- DIVISION 296 -->
+<section class="d296-outer" id="div296">
+  <div class="d296-inner">
+    <span class="section-eyebrow">New — effective 1 July 2025</span>
+    <h2>Division 296. Know your exposure before the ATO does.</h2>
+    <p class="sub">An additional 15% tax on superannuation earnings for members whose Total Super Balance exceeds $3 million. Legislated November 2024. PortfolioForge models your liability year by year — and shows exactly how contributions strategy and pension drawdowns change the number.</p>
+
+    <div class="d296-doc">
+      <div class="d296-doc-hdr">
+        <span class="d296-doc-hdr-title">Division 296 Projection &mdash; Meridian Family SMSF &middot; TSB: $3,800,000 &middot; Return: 7.00% &middot; 10 years</span>
+        <span class="d296-doc-hdr-right">15% additional tax</span>
+      </div>
+      <table class="d296-tbl">
+        <thead>
+          <tr>
+            <th>Financial Year</th>
+            <th>TSB (Start)</th>
+            <th>TSB (End)</th>
+            <th>Super Earnings</th>
+            <th>Above $3M</th>
+            <th>Div 296 Tax</th>
+            <th>Cumulative</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="yr">FY2025&ndash;26</td>
+            <td>$3,800,000</td><td>$4,066,000</td><td>$266,000</td>
+            <td class="prop">6.54%</td><td class="tax">$2,612</td><td>$2,612</td>
+          </tr>
+          <tr>
+            <td class="yr">FY2026&ndash;27</td>
+            <td>$4,066,000</td><td>$4,350,620</td><td>$284,620</td>
+            <td class="prop">31.03%</td><td class="tax">$13,242</td><td>$15,854</td>
+          </tr>
+          <tr>
+            <td class="yr">FY2027&ndash;28</td>
+            <td>$4,350,620</td><td>$4,655,163</td><td>$304,543</td>
+            <td class="prop">35.54%</td><td class="tax">$16,255</td><td>$32,109</td>
+          </tr>
+          <tr>
+            <td class="yr">FY2028&ndash;29</td>
+            <td>$4,655,163</td><td>$4,981,025</td><td>$325,861</td>
+            <td class="prop">39.78%</td><td class="tax">$19,462</td><td>$51,571</td>
+          </tr>
+          <tr>
+            <td colspan="3" style="color:var(--ink-dim);font-style:italic;font-size:0.62rem;padding-left:0.9rem">Remaining 6 years &mdash; full projection in Streamlit demo</td>
+            <td></td><td></td><td></td><td></td>
+          </tr>
+          <tr class="d296-tot">
+            <td colspan="5" style="text-align:right;font-size:0.6rem;letter-spacing:0.06em;text-transform:uppercase">Total Division 296 tax &mdash; 10 years</td>
+            <td class="tax">$248,410</td><td style="color:var(--ink-dim)">$248,410</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="d296-footer">ATO formula: super_earnings = TSB_end &minus; TSB_start + benefits_paid &minus; non_concessional_contributions &nbsp;&bull;&nbsp; Proportion: (TSB_end &minus; $3M) &div; TSB_end &nbsp;&bull;&nbsp; Tax: earnings &times; proportion &times; 15%</div>
+    </div>
+
+    <div class="d296-cards">
+      <div class="d296-card">
+        <div class="d296-card-eyebrow">ATO formula</div>
+        <div class="d296-card-title">Exact calculation, not an estimate</div>
+        <div class="d296-card-body">Hard-wires the ATO formula: <code>super_earnings = TSB_end + benefits_paid &minus; TSB_start &minus; NCC</code>. Concessional contributions reduce the effective threshold. Non-concessional contributions are excluded from earnings but raise the taxable proportion — the gotcha in most DIY models.</div>
+      </div>
+      <div class="d296-card">
+        <div class="d296-card-eyebrow">Planning scenarios</div>
+        <div class="d296-card-title">Three strategies, side by side</div>
+        <div class="d296-card-body">Every projection runs three automatic scenarios: status quo, stop concessional contributions, and accelerated pension drawdown. Quantifies the saving from each strategy in dollar terms — not qualitative advice, actual numbers.</div>
+      </div>
+      <div class="d296-card">
+        <div class="d296-card-eyebrow">SMSF trustees</div>
+        <div class="d296-card-title">The cash-flow problem for illiquid assets</div>
+        <div class="d296-card-body">Unrealised gains on property and unlisted assets flow through to the TSB — and therefore into the Division 296 calculation. The tax liability exists even if the asset has not been sold. PortfolioForge flags years where the tax liability is material relative to liquid holdings.</div>
+      </div>
+    </div>
+
+    <div class="d296-cta">
+      <a href="https://portfolioforge-vupb82qsizvlzjte4jilg4.streamlit.app/" class="btn-primary">Model your Div 296 exposure &rarr;</a>
+      <a href="mailto:portfolioforge.au@gmail.com?subject=Division%20296%20modelling" class="btn-secondary">Request a projection</a>
+    </div>
+  </div>
+</section>
+
 <!-- PRICING -->
 <section class="pricing-outer" id="pricing">
   <div class="pricing-inner">
@@ -951,6 +1097,11 @@ footer{
       <div class="faq-a">The 50% CGT discount applies to individuals. SMSFs are taxed at 15% and receive a one-third (33.33%) discount per ITAA 1997 s.115-100. PortfolioForge hard-wires the correct rate for SMSF entity type &mdash; this is one of the most common errors in manual CGT calculations.</div>
     </div>
     <div class="faq-item">
+      <input type="checkbox" id="fq5" class="faq-chk" aria-controls="fq5-answer" aria-expanded="false">
+      <label class="faq-q" for="fq5">Does PortfolioForge model Division 296 tax?</label>
+      <div class="faq-a">Yes. The Division 296 module projects your Total Super Balance year by year and calculates the ATO formula exactly: super earnings = TSB at year end, plus benefits paid, minus TSB at start, minus non-concessional contributions. The taxable proportion is (TSB_end &minus; $3M) &divide; TSB_end. The tool runs three planning scenarios automatically &mdash; status quo, stop concessional contributions, and accelerated pension drawdown &mdash; and shows the dollar saving from each. Try it via the Streamlit demo or email us for a projection on your fund.</div>
+    </div>
+    <div class="faq-item">
       <input type="checkbox" id="fq4" class="faq-chk" aria-controls="fq4-answer" aria-expanded="false">
       <label class="faq-q" for="fq4">How do I get started?</label>
       <div class="faq-a">Download the example report to see exactly what you will receive, or email portfolioforge.au@gmail.com with a broker CSV and we will run the numbers and return the Word workpaper within 24 hours. No commitment required.</div>
@@ -981,6 +1132,7 @@ footer{
       <li><a href="https://portfolioforge-vupb82qsizvlzjte4jilg4.streamlit.app/">Live demo</a></li>
       <li><a href="docs/example/PortfolioForge_Example_Report.docx">Example report</a></li>
       <li><a href="#pricing">Pricing</a></li>
+      <li><a href="#div296">Division 296 modelling</a></li>
     </ul>
   </div>
   <div class="footer-col">
